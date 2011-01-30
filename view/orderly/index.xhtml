@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Live CallCenter &middot; #{h @agent}</title>
+
+    <meta name="viewport" content="width=device-width" />
+
+    <link rel="stylesheet" href="/css/1140.css" type="text/css" media="screen" />
+
+    <!--[if lte IE 9]>
+    <link rel="stylesheet" href="/css/ie.css" type="text/css" media="screen" />
+    <![endif]-->
+
+    <link rel="stylesheet" href="/css/typeimg.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="/css/smallerscreen.css" media="only screen and (max-width: 1023px)" />
+    <link rel="stylesheet" href="/css/mobile.css" media="handheld, only screen and (max-width: 767px)" />
+    <link rel="stylesheet" href="/css/smoothness/jquery-ui-1.8.6.custom.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="/css/orderly-layout.css" type="text/css" media="screen" />
+
+    <script type="text/javascript" src="/js/jquery-1.4.4.js"></script>
+    <script type="text/javascript" src="/js/jquery-ui-1.8.6.custom.min.js"></script>
+    <script type="text/javascript" src="/js/orderly.js"></script>
+  </head>
+  <body>
+    <nav class="aspects">
+      <ul>
+        <li><a href="#">All</a></li>
+        <li class="trash"><a href="#">Trash</a></li>
+      </ul>
+      <nav>
+        <a href="#" title="Settings" class="settings"><span class="ui-icon ui-icon-gear"></span></a>
+      </nav>
+    </nav>
+
+    <div id="content">
+      <div id="agents">
+      </div>
+
+      <div id='status-dialog' class="status-dialog">
+        <span class="agent-name"></span>
+        <button class="calltap ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" role="button" aria-disabled="false">
+          <span class="ui-button-text">Tap Call</span>
+        </button>
+        <h2>Status</h2>
+        <div class="status">
+          <a class="available" href="#">Available</a>
+          <a class="available-on-demand" href="#">Available (On Demand)</a>
+          <a class="on-break" href="#">On Break</a>
+          <a class="logged-out" href="#">Logged Out</a>
+        </div>
+      </div>
+
+      <div id='settings-dialog' class='settings-dialog'>
+        <div class="tabs">
+          <ul>
+            <li><a href="#settings-aspects">Aspects</a></li>
+            <li><a href="#settings-debug">Debug</a></li>
+          </ul>
+          <div id="settings-aspects">
+            <h2>Manage Aspects</h2>
+            <ul class="aspects">
+            </ul>
+            <form class="add-aspect">
+              <input id="input-text-add-aspect" type="text" />
+              <button class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" role="button" aria-disabled="false">
+                <span class="ui-button-text">Add Aspect</span>
+              </button>
+            </form>
+          </div>
+          <div id="settings-debug">
+            <button id="total-reset" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" role="button" aria-disabled="false">
+              <span class="ui-button-text">Reset LocalStorage</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <span id="agent_name">#{h @agent}</span>
+        <span id="server">#{h @server}</span>
+        <div id="copyright">Live CallCenter &copy; by The Rubyists LLC. 2010</div>
+      </footer>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,76 @@
+#status {
+  width: 6em;
+  float: left;
+  margin: 0em 0.5em;
+}
+
+#disposition {
+  position: absolute;
+  top: 0em;
+  width: 100%;
+  clear: both;
+  text-align: center;
+}
+
+#disposition li {
+  overflow: hidden;
+  display: inline;
+}
+
+#disposition a .hotkey {
+  font-size: xx-small;
+  vertical-align: top;
+}
+
+#disposition li a {
+  width: 16.6666666%; /* OMG */
+  line-height: 2em;
+  display: block;
+  float: left;
+  background: #fff;
+  color: #f00;
+}
+
+#disposition li a:hover {
+  background: #f00;
+  color: #fff;
+}
+
+#information {
+}
+
+ul {
+  list-style: none;
+}
+
+ul li {
+  text-align: center;
+}
+
+a {
+  display: block;
+  border: none;
+  background: #aaf;
+  color: #666;
+}
+
+a.inactive:hover {
+  -webkit-transition: all 0.61s linear;
+  -moz-transition: all 0.61s linear;
+  transition: all 0.61s linear;
+  background: #aff;
+}
+
+a.active {
+  background: #afa;
+  color: #000;
+}
+
+table td {
+  text-align: center;
+  width: 16%;
+}
+
+#server {
+  display: none;
+}

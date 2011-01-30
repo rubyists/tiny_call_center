@@ -1,0 +1,49 @@
+<div id="ws">
+  <ul id="status">
+    <li><a href="/update_status/available" id="available">Available</a></li>
+    <li><a href="/update_status/on_break" id="on_break">On Break</a></li>
+  </ul>
+  <table id="information">
+    <thead>
+      <tr>
+        <th class="agent"     >Agent</th>
+        <th class="state"     >State</th>
+        <th class="cid-name"  >CID Name</th>
+        <th class="cid-number">CID Number</th>
+        <th class="answered"  >Answered (Talking)</th>
+        <th class="called"    >Called (Waiting)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="agent"      id="agent_name">#{h @agent}</td>
+        <td class="state"      id="state"     >Waiting</td>
+        <td class="cid-name"   id="cid-name"  ></td>
+        <td class="cid-number" id="cid-number"></td>
+        <td class="answered"   id="answered"  ></td>
+        <td class="called"     id="called"    ></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <ul id="disposition">
+    <li><a href="#" id="disp-900" class="key-112"><span class="hotkey">[F1]</span>  Talked to Right Party</a></li>
+    <li><a href="#" id="disp-901" class="key-113"><span class="hotkey">[F2]</span>  Left Message on Machine</a></li>
+    <li><a href="#" id="disp-902" class="key-114"><span class="hotkey">[F3]</span>  Left Message with 3rd Party</a></li>
+    <li><a href="#" id="disp-903" class="key-115"><span class="hotkey">[F4]</span>  Promise Made</a></li>
+    <li><a href="#" id="disp-904" class="key-116"><span class="hotkey">[F5]</span>  Payment Made</a></li>
+    <li><a href="#" id="disp-905" class="key-117"><span class="hotkey">[F6]</span>  Disconnected Number</a></li>
+    <li><a href="#" id="disp-906" class="key-118"><span class="hotkey">[F7]</span>  No Answer</a></li>
+    <li><a href="#" id="disp-907" class="key-119"><span class="hotkey">[F8]</span>  Disputed Debt</a></li>
+    <li><a href="#" id="disp-908" class="key-120"><span class="hotkey">[F9]</span>  Wrong Number</a></li>
+    <li><a href="#" id="disp-909" class="key-121"><span class="hotkey">[F10]</span> Busy/Fax detected</a></li>
+    <li><a href="#" id="disp-910" class="key-122"><span class="hotkey">[F11]</span> No Calls to POE</a></li>
+    <li><a href="#" id="disp-911" class="key-123"><span class="hotkey">[F12]</span> Transfer to Spanish speaker</a></li>
+  </ul>
+
+  <div id="console">
+    <span id="server">#{h @server}</span>
+    <div id="error"></div>
+    <div id="debug"></div>
+  </div>
+</div>

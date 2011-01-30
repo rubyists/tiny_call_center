@@ -1,0 +1,141 @@
+header {
+  float: left;
+  padding: 0.5em;
+  -webkit-box-shadow: 2px 2px 7px black;
+  -moz-box-shadow:    2px 2px 7px black;
+  box-shadow:         2px 2px 7px black;
+}
+
+header h1 {
+  margin: 0px auto;
+  text-align: center;
+}
+
+header h2 {
+  margin: 0px auto;
+  text-align: center;
+}
+
+header nav ul {
+  -webkit-padding-start: 0px;
+  -moz-padding-start: 0px;
+  padding-start: 0px;
+  list-style: none;
+  font-weight: bold;
+}
+
+header nav ul ul {
+  -webkit-padding-start: 1em;
+  -moz-padding-start: 1em;
+  padding-start: 1em;
+  font-weight: normal;
+}
+
+#content {
+  float: left;
+  padding: 0em 2em;
+  margin: auto;
+}
+
+.available {           background: #afa; }
+.ready {               background: #efe; }
+.available-on-demand { background: #faf; }
+.on-break {            background: #ff6; }
+.unknown {             background: #eee; }
+.standby {             background: #fa9; }
+.logged-out {          background: #f66; }
+
+h2 {
+  margin-bottom: 1em;
+  font-size: 1.5em;
+}
+
+.table {
+  display: table;
+  
+}
+
+.table .row {
+  display: table-row;
+  border: solid 1px #00f;
+}
+
+.table label, .table select, .table input{
+  display: table-cell;
+}
+
+.table label {
+  padding-right: 1em;
+}
+
+.table .head {
+  color: #00f;
+  font-weight: bold;
+  text-align: center;
+  background: #aff;
+}
+
+.table .head .desc:after {
+  content: "\2191";
+}
+
+.table .head .asc:after {
+  content: "\2193";
+}
+
+.table .row > * {
+  padding: 0em 1em;
+  display: table-cell;
+  text-align: center;
+  font-size: 14px;
+  margin: 0.5em 0em;
+}
+#agents_new {
+  background-color: #EDF2F7;
+}
+
+#agents_new label:after {
+  content: ":";
+}
+
+#agents_new .row > * {
+  text-align: left;
+  padding: 0 0;
+}
+
+#agents_new input[type="text"], #agents_new select {
+  border: solid 1px #85b1de;
+  width: 300px;
+  font-size: 13px;
+  background-color: #fff;
+ 
+}
+
+.button { 
+  border: 1px solid #006;
+  color:#000; 
+  font: small ,helvetica,sans-serif; 
+ } 
+
+select {
+  border: solid 1px #85b1de;
+  font-size: 13px;
+  background-color: #fff;
+ 
+}
+input[type="submit"]
+{
+  border: solid 1px #85b1de;
+  font-size: 13px;
+  background-color: #fff;
+  vertical-align: top; 
+}
+
+input[type="text"], input[type="password"]
+{
+  border: solid 1px #85b1de;
+  font-size: 13px;
+  background-color: #fff;
+  vertical-align: top; 
+}
+

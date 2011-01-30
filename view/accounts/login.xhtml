@@ -1,0 +1,10 @@
+<script>
+  $(function(){ $("#input-name").focus(); });
+</script>
+<form method="post" action="#{r :login}">
+  <label for="input-name">Name</label>
+  <input type="text" name="name" id="input-name" />
+  <label for="input-pass">Password</label>
+  <input type="password" name="pass" id="input-pass" />
+  <input type="submit" value="Log In" />
+</form>

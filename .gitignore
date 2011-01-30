@@ -1,0 +1,4 @@
+*~
+*.swp
+services/*/log/*
+services/*/supervise/*

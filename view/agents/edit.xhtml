@@ -1,0 +1,38 @@
+<div id="agents_new">
+  <h1>Edit #{@agent.name}</h1>
+  <form action="/agents/update/#{@agent.name}" method="post" class="table">
+    <div class="row">
+      <label for="input-extension">Extension</label>
+      <input type="text" name="extension" id="input-extension" value="#{@agent.name.split('-')[0]}" />
+    </div>
+    <div class="row">
+      <label for="input-name">Name (First Last)</label>
+      <input type="text" name="name" id="input-name" value="#{@agent.name.split('-')[1].gsub('_',' ')}" />
+    </div>
+    <div class="row">
+      <label for="select-type">Type</label>
+      <select name="type" id="select-type" />
+        <?r TinyCallCenter::Agents::TYPES.map do |tp| ?>
+        <option value="#{tp}" #{tp == "callback" ? '"selected=selected"' : '' }>#{tp}</option>
+        <?r end ?>
+      </select>
+    </div>
+    <div class="row">
+      <label for="input-contact">Contact (dialstring)
+      (Don't change this unless you know what you're doing)</label>
+      <input type="text" name="contact" id="input-contact" value="#{@agent.contact}"/>
+    </div>
+    <div class="row">
+      <label for="input-max_no_answer">Mark Agent 'On Break' after this many no-answers</label>
+      <input type="text" name="max_no_answer" value="3" id="input-max_no_answer" />
+    </div>
+    <div class="row">
+      <label for="input_wrap_up_time">Allow this many seconds wrap-up time after a completed call</label>
+      <input type="text" name="wrap_up_time" value="5" id="input-wrap_up_time" />
+    </div>
+    <div class="row">
+      <label for="submit-add">Click save to make this agent available in the Tiers view</label>
+      <input class="button" type="submit" value="Save" id="submit-update" />
+    </div>
+  </form>
+</div>
