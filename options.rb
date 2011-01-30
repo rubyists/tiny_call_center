@@ -23,5 +23,8 @@ module TinyCallCenter
 
     o "Agents Off-Hook instead of On-Hook", :off_hook,
       ENV["TinyCallCenter_OffHook"] || false
+
+    o "Sqlite Database File", :db,
+      ENV["TinyCallCenter_DB"] || File.expand_path(File.dirname(__FILE__) + "/db/call_center.db")
   end
 end

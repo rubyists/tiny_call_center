@@ -5,18 +5,17 @@
 desc "migrate to latest version of db"
 task :migrate, :version do |_, args|
   args.with_defaults(:version => nil)
-  require File.expand_path("../../lib/fxc", __FILE__)
-  require_relative "../lib/fxc/db"
+  require File.expand_path("../../lib/tiny_call_center", __FILE__)
+
+
+  require "tiny_call_center/db"
   require 'sequel/extensions/migration'
-
-  raise "No DB found" unless FXC.db
-
-  require_relative "../model/init"
+  raise "No DB found" unless DB = TinyCallCenter.db
 
   if args.version.nil?
-    Sequel::Migrator.apply(FXC.db, FXC::MIGRATION_ROOT)
+    Sequel::Migrator.apply(TinyCallCenter.db, TinyCallCenter::MIGRATION_ROOT)
   else
-    Sequel::Migrator.run(FXC.db, FXC::MIGRATION_ROOT, :target => args.version.to_i)
+    Sequel::Migrator.run(TinyCallCenter.db, TinyCallCenter::MIGRATION_ROOT, :target => args.version.to_i)
   end
 
 end
