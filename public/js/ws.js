@@ -1,8 +1,22 @@
 (function() {
-  var Call, agentStateChange, agentStatusChange, currentStatus, onClose, onError, onMessage, onOpen, p, setupWs, showError, store;
+  var Call, agentStateChange, agentStatusChange, currentStatus, keyCodes, onClose, onError, onMessage, onOpen, p, setupWs, showError, store;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   store = {
     calls: {}
+  };
+  keyCodes = {
+    F1: 112,
+    F2: 113,
+    F3: 114,
+    F4: 115,
+    F5: 116,
+    F6: 117,
+    F7: 118,
+    F8: 119,
+    F9: 120,
+    F10: 121,
+    F11: 122,
+    F12: 123
   };
   p = function(msg) {
     var _ref;
@@ -15,47 +29,55 @@
     function Call(uuid, msg) {
       var action;
       this.uuid = uuid;
-      this.waitingStart();
-      action = (msg.cc_action || msg.event_name || msg.ws_action).toLowerCase();
+      this.prepareDOM();
+      action = (msg.cc_action || msg.event_name || msg.tiny_action).toLowerCase();
       if (typeof this[action] === "function") {
         this[action](msg);
       }
     }
+    Call.prototype.prepareDOM = function() {
+      this.sel = store.call_template.clone();
+      $('#calls').append(this.sel);
+      return this.dom = {
+        state: $('.state', this.sel),
+        cidNumber: $('.cid-number', this.sel),
+        cidName: $('.cid-name', this.sel),
+        answered: $('.answered', this.sel),
+        called: $('.called', this.sel)
+      };
+    };
+    Call.prototype.call_start = function(msg) {
+      return p("call_start");
+    };
     Call.prototype.initial_status = function(msg) {
       switch (store.agent_ext) {
         case msg.caller_cid_num:
-          $('#cid-number').text(msg.callee_cid_num);
+          this.dom.cidNumber.text(msg.callee_cid_num);
           return this.talkingStart(new Date(Date.parse(msg.call_created)));
         case msg.callee_cid_num:
-          $('#cid-number').text(msg.caller_cid_num);
-          $('#cid-name').text(msg.caller_cid_name);
+          this.dom.cidNumber.text(msg.caller_cid_num);
+          this.dom.cidName.text(msg.caller_cid_name);
           return this.talkingStart(new Date(Date.parse(msg.call_created)));
       }
     };
     Call.prototype['bridge-agent-start'] = function(msg) {
-      $('#cid-name').text(msg.cc_caller_cid_name);
-      $('#cid-number').text(msg.cc_caller_cid_number);
+      this.dom.cidName.text(msg.cc_caller_cid_name);
+      this.dom.cidNumber.text(msg.cc_caller_cid_number);
       return this.talkingStart(new Date(Date.now()));
     };
     Call.prototype['bridge-agent-end'] = function(msg) {
-      $('#cid-name').text('');
-      $('#cid-number').text('');
+      this.dom.cidName.text('');
+      this.dom.cidNumber.text('');
       return this.talkingEnd();
     };
     Call.prototype.channel_hangup = function(msg) {
       if (msg.caller_unique_id === this.uuid) {
         if (msg.caller_destination_number === store.agent_ext) {
-          return this.hungupCall('Inbound Call', msg);
+          return this.talkingEnd();
         } else if (msg.caller_caller_id_number === store.agent_ext) {
-          return this.hungupCall('Outbound Call', msg);
+          return this.talkingEnd();
         }
       }
-    };
-    Call.prototype.hungupCall = function(direction, msg) {
-      $('#cid-number').text('');
-      $('#cid-name').text('');
-      $('#state').text('Waiting');
-      return this.talkingEnd();
     };
     Call.prototype.channel_answer = function(msg) {
       if (msg.caller_destination_number === store.agent_ext) {
@@ -65,11 +87,11 @@
       }
     };
     Call.prototype.answeredCall = function(direction, cidName, cidNumber, uuid) {
-      $('#cid-number').text(cidNumber);
+      this.dom.cidNumber.text(cidNumber);
       if (cidName != null) {
-        $('#cid-name').text(cidName);
+        this.dom.cidName.text(cidName);
       }
-      $('#state').text('On A Call');
+      this.dom.state.text('On A Call');
       return this.talkingStart(new Date(Date.now()));
     };
     Call.prototype.talkingStart = function(answeredTime) {
@@ -77,34 +99,19 @@
         return;
       }
       this.answered = answeredTime || new Date(Date.now());
-      this.answeredInterval = setInterval(__bind(function() {
+      return this.answeredInterval = setInterval(__bind(function() {
         var talkTime;
         talkTime = parseInt((Date.now() - this.answered) / 1000, 10);
-        return $('#answered').text("" + (this.answered.toLocaleTimeString()) + " (" + talkTime + "s)");
+        return this.dom.answered.text("" + (this.answered.toLocaleTimeString()) + " (" + talkTime + "s)");
       }, this), 1000);
-      return this.waitingEnd();
     };
     Call.prototype.talkingEnd = function() {
       this.answered = null;
       clearInterval(this.answeredInterval);
-      $('#answered').text('');
-      return this.waitingStart();
-    };
-    Call.prototype.waitingStart = function() {
-      if (this.called != null) {
-        return;
-      }
-      this.called = new Date(Date.now());
-      return this.calledInterval = setInterval(__bind(function() {
-        var waitTime;
-        waitTime = parseInt((Date.now() - this.called) / 1000, 10);
-        return $('#called').text("" + (this.called.toLocaleTimeString()) + " (" + waitTime + "s)");
+      return setTimeout(__bind(function() {
+        this.dom.remove();
+        return delete store.calls[this.uuid];
       }, this), 1000);
-    };
-    Call.prototype.waitingEnd = function() {
-      this.called = null;
-      clearInterval(this.calledInterval);
-      return $('#called').text('');
     };
     return Call;
   })();
@@ -133,24 +140,19 @@
     p(msg);
     switch (msg.cc_action) {
       case 'agent-status-change':
-        agentStatusChange(msg);
-        break;
+        return agentStatusChange(msg);
       case 'agent-state-change':
-        agentStateChange(msg);
-        break;
+        return agentStateChange(msg);
       default:
         uuid = msg.uuid || msg.call_uuid || msg.channel_call_uuid || msg.unique_id;
-        p(uuid);
         if (call = store.calls[uuid]) {
-          action = (msg.cc_action || msg.event_name || msg.ws_action).toLowerCase();
-          p(action);
-          call[action](msg);
+          action = (msg.cc_action || msg.event_name || msg.tiny_action).toLowerCase();
+          return call[action](msg);
         } else {
           call = new Call(uuid, msg);
-          store.calls[uuid] = call;
+          return store.calls[uuid] = call;
         }
     }
-    return p(store);
   };
   onOpen = function() {
     return this.send(JSON.stringify({
@@ -180,19 +182,23 @@
     store.server = $('#server').text();
     store.agent_name = $('#agent_name').text();
     store.agent_ext = store.agent_name.split('-', 2)[0];
-    $('#disposition a').click(function(event) {
-      return $('#disposition').hide();
+    store.call_template = $('#call-template').detach();
+    $('#disposition button').click(function(event) {
+      alert($(event.target).text());
+      $('#disposition').focus();
+      return false;
     });
-    $('#disposition').hide();
     $(document).keydown(function(event) {
       var bubble, keyCode;
       keyCode = event.keyCode;
+      p(event.keyCode);
       bubble = true;
-      $('#disposition a').each(function(x, a) {
-        var code, ja;
-        ja = $(a);
-        code = parseInt(ja.attr('class').split('-')[1], 10);
-        if (code === keyCode) {
+      $('#disposition button').each(function(i, button) {
+        var buttonKeyCode, jbutton, keyName;
+        jbutton = $(button);
+        keyName = jbutton.attr('accesskey');
+        buttonKeyCode = keyCodes[keyName];
+        if (keyCode === buttonKeyCode) {
           if (typeof event.stopPropagation === "function") {
             event.stopPropagation();
           }
@@ -200,11 +206,12 @@
             event.preventDefault();
           }
           bubble = false;
-          return ja.click();
+          return jbutton.click();
         }
       });
       return bubble;
     });
+    $('#disposition').focus();
     $('#status a').live('click', function(a) {
       var curStatus;
       try {

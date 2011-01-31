@@ -17,36 +17,18 @@ require_relative '../options'
 FSR::Log.level = Logger::DEBUG
 
 module TinyCallCenter
-  class Monitor < FSR::Listener::Inbound
-    def initialize(options, &callback)
-      @monitor_host = options.fetch(:host)
-      @monitor_port = options.fetch(:port)
-      super
-    end
 
+  module ChannelRelay
+    def relay(content)
+      # FSR::Log.debug "Channel << %p" % [content]
+      WebSocketReporter::Channel << content
+    end
+  end
+
+  class QueueReporter < FSR::Listener::Inbound
+    include ChannelRelay
     def before_session
-      [ :CHANNEL_ORIGINATE, # Call being placed/ringing
-        :CHANNEL_ANSWER,    # Call starts
-        :CHANNEL_HANGUP,    # Call ends
-      ].each{|flag| add_event(flag, &method(flag.to_s.downcase)) }
-
       add_event(:CUSTOM, "callcenter::info", &method(:callcenter_info))
-    end
-
-    def connection_completed
-      FSR::Log.info "Monitor connected to #{@monitor_host}:#{@monitor_port}"
-      authorize_and_register_for_events
-    end
-
-    # Don't remove that until we update FSR to do automatic reconnects
-    def post_init
-    end
-
-    def unbind
-      FSR::Log.warn "Monitor disconnected from #{@monitor_host}:#{@monitor_port}, reconnecting"
-      EM.add_timer 1 do
-        reconnect @monitor_host, @monitor_port
-      end
     end
 
     def callcenter_info(event)
@@ -62,10 +44,43 @@ module TinyCallCenter
       relay content
     end
 
+    def callcenter
+      @callcenter ||= FSR::Cmd::CallCenter.new(nil, :agent)
+    end
+
+    def callcenter!
+      yield callcenter
+      FSR::Log.info callcenter.raw
+      api callcenter.raw
+    end
+
+  end
+
+  class Monitor < FSR::Listener::Inbound
+    include ChannelRelay
+
+    def initialize(*args, &callback)
+      @channel_answers = {}
+      @channel_originates = {}
+      super
+    end
+
+    def before_session
+      [ :CHANNEL_ORIGINATE, # Call being placed/ringing
+        :CHANNEL_ANSWER,    # Call starts
+        :CHANNEL_HANGUP,    # Call ends
+      ].each{|flag| add_event(flag, &method(flag.to_s.downcase)) }
+    end
+
     def channel_originate(event)
       cont, uuid = event.content, event.content[:unique_id]
       FSR::Log.debug "Call Origniated: %s => %s (%s) (%s)" % [cont[:caller_caller_id_number], cont[:caller_destination_number], uuid, cont[:other_leg_unique_id]]
-      #FSR::Log.info cont.keys.select { |n| n.match /_id|uuid/ }.sort
+      FSR::Log.info cont.inspect
+
+      clean_event = cleanup_msg(cont)
+      @channel_originates[uuid] = clean_event
+      @channel_originates[cont[:other_leg_unique_id]] = clean_event
+      try_call_dispatch(uuid, cont[:other_leg_unique_id])
     end
 
     def channel_answer(event)
@@ -78,7 +93,8 @@ module TinyCallCenter
         content[:unique_id],
       ]
 
-      relay answer_and_hangup_msg(content)
+      @channel_answers[content[:unique_id]] = cleanup_msg(content)
+      try_call_dispatch(content[:unique_id])
     end
 
     def channel_hangup(event)
@@ -91,10 +107,10 @@ module TinyCallCenter
         content[:unique_id],
       ]
 
-      relay answer_and_hangup_msg(content)
+      relay cleanup_msg(content)
     end
 
-    def answer_and_hangup_msg(content)
+    def cleanup_msg(content)
       msg = content.reject do |key, value|
         key =~ /^variable_/
       end
@@ -106,24 +122,72 @@ module TinyCallCenter
       msg
     end
 
-    def callcenter
-      @callcenter ||= FSR::Cmd::CallCenter.new(nil, :agent)
+    def dispatch_call(left, right, originate)
+      msg = {
+        left_cid_number:   left[:caller_caller_id_number],
+        right_cid_number: right[:caller_caller_id_number],
+
+        left_destination:   left[:caller_destination_number],
+        right_destination: right[:caller_destination_number],
+
+        right_cid_name: right[:caller_caller_id_name],
+        left_cid_name:   left[:caller_caller_id_name],
+
+        left_channel:   left[:caller_channel_name],
+        right_channel: right[:caller_channel_name],
+
+        left_uuid:   left[:unique_id],
+        right_uuid: right[:unique_id],
+
+        call_created: originate[:event_date_gmt],
+        queue_name: originate[:cc_queue],
+      }
+
+      FSR::Log.debug "Dispatching call #{msg}"
+      message_agent msg.merge(tiny_action: 'call_start')
     end
 
-    def callcenter!
-      yield callcenter
-      FSR::Log.info callcenter.raw
-      api callcenter.raw
+    def try_call_dispatch(left, right = nil)
+      # If we're an originate, check for both answers
+      if right
+        return unless left_answer = @channel_answers[left]
+        return unless right_answer = @channel_answers[right]
+        originate = @channel_originates[left]
+        dispatch_call(left_answer, right_answer, originate) if left_answer and right_answer
+      elsif left_answer = @channel_answers[left]
+        return unless originate = @channel_originates[left]
+        if left == originate[:other_leg_unique_id]
+          return unless right_answer = @channel_answers[originate[:unique_id]]
+        else
+          return unless right_answer = @channel_answers[originate[:other_leg_unique_id]]
+        end
+        dispatch_call(left_answer, right_answer, originate) if left_answer and right_answer
+      end
     end
 
-    def relay(content)
-      FSR::Log.debug "Channel << %p" % [content]
-      WebSocketReporter::Channel << content
+    def possible_numbers(message)
+      message.values_at(
+        :left_destination, :right_destination,
+        :left_cid_number, :right_cid_number
+      ).compact
+    end
+
+    def message_agent(message)
+      relay message # for Channel
+
+      keys = [
+        message[:cc_agent].to_s.split('-').first,
+        *possible_numbers(message)
+      ].compact
+
+      agent = keys.find{|key| WebSocketReporter::SubscribedAgents[key] }
+      agent.got_fs_event(message)
     end
   end
 
   class WebSocketReporter < Struct.new(:reporter, :user, :socket, :command_socket_server, :channel_id, :agent, :listen)
     Channel = EM::Channel.new
+    SubscribedAgents = {}
 
     STATUS_MAPPING = {
       'available' => 'Available',
@@ -153,36 +217,32 @@ module TinyCallCenter
     end
 
     def on_open
-      self.channel_id = Channel.subscribe{|message|
-        send(message) if (listen and can_view?(message)) || my_message?(message)
-      }
+    end
+
+    def prepare_message(message)
     end
 
     private
-    def possible_numbers(message)
-      message.values_at(:caller_destination_number, :caller_caller_id_number, :other_leg_destination_number).compact
-    end
 
     def my_message?(message)
-      debugger = agent =~ /Sudeshna|Fellinger|Vanderpoel|Berry|Hogan/
-      FSR::Log.info("#{agent} in my_message? for #{message}") if debugger
+      FSR::Log.debug("#{agent} in my_message? for #{message}")
 
       return false unless agent
       return true if message[:cc_agent] == agent
       return false if message[:cc_agent]
 
-      FSR::Log.info("#{agent} still in my_message? for #{message}") if debugger
+      FSR::Log.debug("#{agent} still in my_message? for #{message}")
 
       extension = agent.split("-").first
       numbers = possible_numbers(message)
       return true if numbers.include?(extension)
 
-      FSR::Log.info("#{agent} FAILED in my_message? for #{message}") if debugger
+      FSR::Log.debug("#{agent} FAILED in my_message? for #{message}")
       return false
     end
 
     def can_view?(message)
-      FSR::Log.info("#{agent} Asking for access to #{message}") if agent =~ /Sudeshna|Fellinger|Vanderpoel|Berry|Hogan/
+      FSR::Log.debug("#{agent} Asking for access to #{message}")
 
       return false unless agent
 
@@ -191,21 +251,21 @@ module TinyCallCenter
 
       if cc = message[:cc_agent]
         extension = cc.split("-")[0].tr("_", "")
-        FSR::Log.info("#{user} has user extension #{user.extension} and extension #{extension} cc is #{cc}")
+        FSR::Log.debug("#{user} has user extension #{user.extension} and extension #{extension} cc is #{cc}")
         return true if cc == agent
         return user.extension == extension || user.can_view?(extension)
       end
 
       numbers = possible_numbers(message)
       unless numbers.size > 1
-        FSR::Log.info("#{agent} Asking for access to crazysauce: #{message}")
+        FSR::Log.warn("#{agent} Asking for access to crazysauce: #{message}")
         return true
       end
 
-      FSR::Log.info("#{agent} Asking for access to #{numbers}")
+      FSR::Log.debug("#{agent} Asking for access to #{numbers}")
       return true if numbers.detect{|number| number.size == 4 && user.can_view?(number) }
 
-      FSR::Log.info("#{agent} DENIED access to: #{numbers}")
+      FSR::Log.debug("#{agent} DENIED access to: #{numbers}")
       false
     end
 
@@ -232,13 +292,19 @@ module TinyCallCenter
       FSR::Log.info "Subscribed agent: #{self.agent}"
       reporter.callcenter!{|cc| cc.set(self.agent, :status, 'Available') }
 
-      ext = self.agent.split('-', 2).first
+      @extension = self.agent.split('-', 2).first
 
-      fsock = FSR::CommandSocket.new server: Account.registration_server(ext)
+      SubscribedAgents[@extension] = self
+
+      fsock = FSR::CommandSocket.new server: Account.registration_server(@extension)
       calls = fsock.channels(true).run
 
-      stat = agent_status(ext, calls).merge(ws_action: :initial_status)
+      stat = agent_status(@extension, calls).merge(tiny_action: :initial_status)
       send stat
+    end
+
+    def got_fs_event(msg)
+      send msg
     end
 
     def got_listen(msg)
@@ -377,6 +443,8 @@ module TinyCallCenter
 
     def on_close
       Channel.unsubscribe(channel_id)
+      SubscribedAgents.delete(@extension)
+
       if listen
         FSR::Log.debug "Unsubscribed listener: #{agent}"
       else
@@ -400,7 +468,7 @@ EM.run do
     EventMachine.connect(monitor_server, port, TinyCallCenter::Monitor, host: monitor_server, port: port, auth: auth, output_format: 'plain')
   end
 
-  EventMachine.connect(command_socket_server, port, TinyCallCenter::Monitor, host: command_socket_server, port: port, auth: auth, output_format: 'plain') do |reporter|
+  EventMachine.connect(command_socket_server, port, TinyCallCenter::QueueReporter, host: command_socket_server, port: port, auth: auth, output_format: 'plain') do |reporter|
     EventMachine.start_server('0.0.0.0', 8080, EventMachine::WebSocket::Connection, {}) do |websocket|
       TinyCallCenter::WebSocketReporter.new(reporter, websocket, command_socket_server)
     end

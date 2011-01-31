@@ -2,6 +2,22 @@ store = {
   calls: {}
 }
 
+# Expand as you need it.
+keyCodes = {
+  F1:  112,
+  F2:  113,
+  F3:  114,
+  F4:  115,
+  F5:  116,
+  F6:  117,
+  F7:  118,
+  F8:  119,
+  F9:  120,
+  F10: 121,
+  F11: 122,
+  F12: 123,
+}
+
 p = (msg) ->
   window.console?.debug?(msg)
 
@@ -10,42 +26,50 @@ showError = (msg) ->
 
 class Call
   constructor: (@uuid, msg) ->
-    @waitingStart()
-    action = (msg.cc_action || msg.event_name || msg.ws_action).toLowerCase()
+    @prepareDOM()
+    action = (msg.cc_action || msg.event_name || msg.tiny_action).toLowerCase()
     this[action]?(msg)
+
+  prepareDOM: ->
+    @sel = store.call_template.clone()
+    $('#calls').append(@sel)
+    @dom = {
+      state:     $('.state', @sel),
+      cidNumber: $('.cid-number', @sel),
+      cidName:   $('.cid-name', @sel),
+      answered:  $('.answered', @sel),
+      called:    $('.called', @sel),
+    }
+
+  call_start: (msg) ->
+    p "call_start"
 
   initial_status: (msg) ->
     switch store.agent_ext
       when msg.caller_cid_num
-        $('#cid-number').text(msg.callee_cid_num)
+        @dom.cidNumber.text(msg.callee_cid_num)
         @talkingStart(new Date(Date.parse(msg.call_created)))
       when msg.callee_cid_num
-        $('#cid-number').text(msg.caller_cid_num)
-        $('#cid-name').text(msg.caller_cid_name)
+        @dom.cidNumber.text(msg.caller_cid_num)
+        @dom.cidName.text(msg.caller_cid_name)
         @talkingStart(new Date(Date.parse(msg.call_created)))
 
   'bridge-agent-start': (msg) ->
-    $('#cid-name').text(msg.cc_caller_cid_name)
-    $('#cid-number').text(msg.cc_caller_cid_number)
+    @dom.cidName.text(msg.cc_caller_cid_name)
+    @dom.cidNumber.text(msg.cc_caller_cid_number)
     @talkingStart(new Date(Date.now()))
 
   'bridge-agent-end': (msg) ->
-    $('#cid-name').text('')
-    $('#cid-number').text('')
+    @dom.cidName.text('')
+    @dom.cidNumber.text('')
     @talkingEnd()
 
   channel_hangup: (msg) ->
     if msg.caller_unique_id == @uuid
       if msg.caller_destination_number == store.agent_ext
-        @hungupCall('Inbound Call', msg)
+        @talkingEnd()
       else if msg.caller_caller_id_number == store.agent_ext
-        @hungupCall('Outbound Call', msg)
-
-  hungupCall: (direction, msg) ->
-    $('#cid-number').text('')
-    $('#cid-name').text('')
-    $('#state').text('Waiting')
-    @talkingEnd()
+        @talkingEnd()
 
   channel_answer: (msg) ->
     if msg.caller_destination_number == store.agent_ext
@@ -64,9 +88,9 @@ class Call
       )
 
   answeredCall: (direction, cidName, cidNumber, uuid) ->
-    $('#cid-number').text(cidNumber)
-    $('#cid-name').text(cidName) if cidName?
-    $('#state').text('On A Call')
+    @dom.cidNumber.text(cidNumber)
+    @dom.cidName.text(cidName) if cidName?
+    @dom.state.text('On A Call')
     @talkingStart(new Date(Date.now()))
 
   talkingStart: (answeredTime) ->
@@ -74,32 +98,18 @@ class Call
     @answered = answeredTime || new Date(Date.now())
     @answeredInterval = setInterval =>
       talkTime = parseInt((Date.now() - @answered) / 1000, 10)
-      $('#answered').text(
+      @dom.answered.text(
         "#{@answered.toLocaleTimeString()} (#{talkTime}s)"
       )
     , 1000
-    @waitingEnd()
 
   talkingEnd: ->
     @answered = null
     clearInterval(@answeredInterval)
-    $('#answered').text('')
-    @waitingStart()
-
-  waitingStart: ->
-    return if @called?
-    @called = new Date(Date.now())
-    @calledInterval = setInterval =>
-      waitTime = parseInt((Date.now() - @called) / 1000, 10)
-      $('#called').text(
-        "#{@called.toLocaleTimeString()} (#{waitTime}s)"
-      )
+    setTimeout =>
+      @dom.remove()
+      delete store.calls[@uuid]
     , 1000
-
-  waitingEnd: ->
-    @called = null
-    clearInterval(@calledInterval)
-    $('#called').text('')
 
 currentStatus = (tag) ->
   $('#status a').attr('class', 'inactive')
@@ -129,16 +139,13 @@ onMessage = (event) ->
       agentStateChange(msg)
     else
       uuid = msg.uuid || msg.call_uuid || msg.channel_call_uuid || msg.unique_id
-      p uuid
 
       if call = store.calls[uuid]
-        action = (msg.cc_action || msg.event_name || msg.ws_action).toLowerCase()
-        p action
+        action = (msg.cc_action || msg.event_name || msg.tiny_action).toLowerCase()
         call[action](msg)
       else
         call = new Call(uuid, msg)
         store.calls[uuid] = call
-  p store
 
 onOpen = ->
   @send(JSON.stringify(method: 'subscribe', agent: store.agent_name))
@@ -165,24 +172,32 @@ $ ->
   store.server = $('#server').text()
   store.agent_name = $('#agent_name').text()
   store.agent_ext = store.agent_name.split('-', 2)[0]
+  store.call_template = $('#call-template').detach()
 
-  $('#disposition a').click (event) ->
-    $('#disposition').hide()
+  $('#disposition button').click (event) ->
+    alert $(event.target).text()
+    # $('#disposition').hide()
+    $('#disposition').focus()
+    return false
 
-  $('#disposition').hide()
+  # $('#disposition').hide()
 
   $(document).keydown (event) ->
     keyCode = event.keyCode
+    p event.keyCode
     bubble = true
-    $('#disposition a').each (x, a) ->
-      ja = $(a)
-      code = parseInt(ja.attr('class').split('-')[1], 10)
-      if code == keyCode
+    $('#disposition button').each (i, button) ->
+      jbutton = $(button)
+      keyName = jbutton.attr('accesskey')
+      buttonKeyCode = keyCodes[keyName]
+      if keyCode == buttonKeyCode
         event.stopPropagation?()
         event.preventDefault?()
         bubble = false
-        ja.click()
+        jbutton.click()
     return bubble
+
+  $('#disposition').focus()
 
   $('#status a').live 'click', (a) ->
     try

@@ -13,3 +13,4 @@ DB = TinyCallCenter.db unless Object.const_defined?("DB")
 require_relative "./manager"
 require_relative "./account"
 require_relative "./disposition"
+require_relative "./call_record"
