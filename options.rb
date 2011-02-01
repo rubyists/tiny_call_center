@@ -5,12 +5,17 @@ module TinyCallCenter
 
   options.dsl do
     sub :listener do
-      o "WebSocket server URI", :server,
-        (ENV["TinyCallCenter_WebSocketURI"] ? URI(ENV["TinyCallCenter_WebSocketURI"]) : URI('ws://127.0.0.1:8080/websocket'))
+      o "WebSocket server URI for listeners", :server,
+        URI(ENV["TinyCallCenter_WebSocketListenerURI"] || 'ws://127.0.0.1:8081/websocket')
+    end
+
+    sub :ribbon do
+      o "WebSocket server URI for agents", :server,
+        URI(ENV["TinyCallCenter_WebSocketAgentURI"] || 'ws://127.0.0.1:8080/websocket')
     end
 
     o "FreeSWITCH Command Server", :command_server,
-      ENV["TinyCallCenter_SERVER"] || '127.0.0.1'
+      ENV["TinyCallCenter_Server"] || '127.0.0.1'
 
     o "FreeSWITCH Command Server", :fs_port,
       ENV["TinyCallCenter_FsPort"] || 8021
@@ -25,6 +30,6 @@ module TinyCallCenter
       ENV["TinyCallCenter_OffHook"] || false
 
     o "Sqlite Database File", :db,
-      ENV["TinyCallCenter_DB"] || File.expand_path(File.dirname(__FILE__) + "/db/call_center.db")
+      ENV["TinyCallCenter_DB"] || File.expand_path("../db/call_center.db", __FILE__)
   end
 end

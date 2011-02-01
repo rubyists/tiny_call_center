@@ -1,8 +1,11 @@
 (function() {
-  var Call, agentStateChange, agentStatusChange, currentStatus, keyCodes, onClose, onError, onMessage, onOpen, p, setupWs, showError, store;
+  var Call, agentStateChange, agentStatusChange, agentWantsStateChange, agentWantsStatusChange, currentState, currentStatus, keyCodes, onClose, onError, onMessage, onOpen, p, setupWs, showError, store;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   store = {
-    calls: {}
+    calls: {},
+    send: function(obj) {
+      return this.ws.send(JSON.stringify(obj));
+    }
   };
   keyCodes = {
     F1: 112,
@@ -26,25 +29,36 @@
     return $('#error').text(msg);
   };
   Call = (function() {
-    function Call(uuid, msg) {
-      var action;
-      this.uuid = uuid;
+    function Call(local_leg, remote_leg, msg) {
+      this.uuid = local_leg.uuid;
+      this.local_leg = local_leg;
+      this.remote_leg = remote_leg;
+      store.calls[this.uuid] = this;
       this.prepareDOM();
-      action = (msg.cc_action || msg.event_name || msg.tiny_action).toLowerCase();
-      if (typeof this[action] === "function") {
-        this[action](msg);
-      }
+      this.talkingStart(new Date(Date.parse(msg.call_created)));
     }
     Call.prototype.prepareDOM = function() {
       this.sel = store.call_template.clone();
+      this.sel.attr('id', '');
       $('#calls').append(this.sel);
-      return this.dom = {
+      this.dom = {
         state: $('.state', this.sel),
         cidNumber: $('.cid-number', this.sel),
         cidName: $('.cid-name', this.sel),
         answered: $('.answered', this.sel),
-        called: $('.called', this.sel)
+        called: $('.called', this.sel),
+        destinationNumber: $('.destination-number', this.sel),
+        queueName: $('.queue-name', this.sel),
+        uuid: $('.uuid', this.sel),
+        channel: $('.channel', this.sel)
       };
+      this.dom.state.text('On A Call');
+      this.dom.cidNumber.text(this.remote_leg.cid_number);
+      this.dom.cidName.text(this.remote_leg.cid_name);
+      this.dom.destinationNumber.text(this.remote_leg.destination_number);
+      this.dom.queueName.text(this.local_leg.queue);
+      this.dom.uuid.text(this.local_leg.uuid);
+      return this.dom.channel.text(this.local_leg.channel);
     };
     Call.prototype.call_start = function(msg) {
       return p("call_start");
@@ -71,13 +85,7 @@
       return this.talkingEnd();
     };
     Call.prototype.channel_hangup = function(msg) {
-      if (msg.caller_unique_id === this.uuid) {
-        if (msg.caller_destination_number === store.agent_ext) {
-          return this.talkingEnd();
-        } else if (msg.caller_caller_id_number === store.agent_ext) {
-          return this.talkingEnd();
-        }
-      }
+      return this.talkingEnd();
     };
     Call.prototype.channel_answer = function(msg) {
       if (msg.caller_destination_number === store.agent_ext) {
@@ -86,7 +94,7 @@
         return this.answeredCall('Outbound Call', msg.caller_destination_number, msg.caller_callee_id_number, msg.channel_call_uuid || msg.unique_id);
       }
     };
-    Call.prototype.answeredCall = function(direction, cidName, cidNumber, uuid) {
+    Call.prototype.answeredCall = function(cidName, cidNumber, uuid) {
       this.dom.cidNumber.text(cidNumber);
       if (cidName != null) {
         this.dom.cidName.text(cidName);
@@ -106,12 +114,27 @@
       }, this), 1000);
     };
     Call.prototype.talkingEnd = function() {
-      this.answered = null;
       clearInterval(this.answeredInterval);
-      return setTimeout(__bind(function() {
-        this.dom.remove();
-        return delete store.calls[this.uuid];
-      }, this), 1000);
+      delete store.calls[this.uuid];
+      return this.askDisposition();
+    };
+    Call.prototype.askDisposition = function() {
+      $('#disposition button').one('click', __bind(function(event) {
+        var jbutton;
+        p(event);
+        jbutton = $(event.target);
+        store.send({
+          method: 'disposition',
+          code: jbutton.attr('id').split('-')[1],
+          desc: jbutton.attr('label'),
+          left: this.local_leg,
+          right: this.remote_leg
+        });
+        this.sel.remove();
+        $('#disposition').hide();
+        return false;
+      }, this));
+      return $('#disposition').show();
     };
     return Call;
   })();
@@ -131,34 +154,68 @@
         return currentStatus($('#logged_out'));
     }
   };
+  currentState = function(tag) {
+    $('#state a').attr('class', 'inactive');
+    return tag.attr('class', 'active');
+  };
   agentStateChange = function(msg) {
-    return $('#state').text(msg.cc_agent_state);
+    switch (msg.cc_agent_state.toLowerCase()) {
+      case 'waiting':
+        return currentState($('#ready'));
+      case 'idle':
+        return currentState($('#wrap_up'));
+    }
   };
   onMessage = function(event) {
-    var action, call, msg, uuid;
+    var call, extMatch, key, makeCall, msg, value, _name, _ref, _ref2, _ref3, _ref4, _ref5, _ref6, _results;
     msg = JSON.parse(event.data);
     p(msg);
-    switch (msg.cc_action) {
-      case 'agent-status-change':
+    switch (msg.tiny_action) {
+      case 'status_change':
         return agentStatusChange(msg);
-      case 'agent-state-change':
+      case 'state_change':
         return agentStateChange(msg);
-      default:
-        uuid = msg.uuid || msg.call_uuid || msg.channel_call_uuid || msg.unique_id;
-        if (call = store.calls[uuid]) {
-          action = (msg.cc_action || msg.event_name || msg.tiny_action).toLowerCase();
-          return call[action](msg);
-        } else {
-          call = new Call(uuid, msg);
-          return store.calls[uuid] = call;
+      case 'call_start':
+        extMatch = /(?:^|\/)(\d+)@/;
+        makeCall = function(left, right, msg) {
+          if (!store.calls[left.uuid]) {
+            return new Call(left, right, msg);
+          }
+        };
+        if (store.agent_ext === ((_ref = msg.left.channel) != null ? typeof _ref.match === "function" ? _ref.match(extMatch)[1] : void 0 : void 0)) {
+          return makeCall(msg.left, msg.right, msg);
+        } else if (store.agent_ext === ((_ref2 = msg.right.channel) != null ? typeof _ref2.match === "function" ? _ref2.match(extMatch)[1] : void 0 : void 0)) {
+          return makeCall(msg.right, msg.left, msg);
+        } else if (msg.right.destination === ((_ref3 = msg.right.channel) != null ? typeof _ref3.match === "function" ? _ref3.match(extMatch)[1] : void 0 : void 0)) {
+          return makeCall(msg.right, msg.left, msg);
+        } else if (msg.left.destination === ((_ref4 = msg.left.channel) != null ? typeof _ref4.match === "function" ? _ref4.match(extMatch)[1] : void 0 : void 0)) {
+          return makeCall(msg.left, msg.right, msg);
+        } else if (msg.left.cid_number === ((_ref5 = msg.left.channel) != null ? typeof _ref5.match === "function" ? _ref5.match(extMatch)[1] : void 0 : void 0)) {
+          return makeCall(msg.left, msg.right, msg);
+        } else if (msg.right.cid_number === ((_ref6 = msg.right.channel) != null ? typeof _ref6.match === "function" ? _ref6.match(extMatch)[1] : void 0 : void 0)) {
+          return makeCall(msg.right, msg.left, msg);
         }
+      default:
+        _results = [];
+        for (key in msg) {
+          value = msg[key];
+          if (/unique|uuid/.test(key)) {
+            if (call = store.calls[value]) {
+              if (typeof call[_name = msg.tiny_action] === "function") {
+                call[_name](msg);
+              }
+              return void 0;
+            }
+          }
+        }
+        return _results;
     }
   };
   onOpen = function() {
-    return this.send(JSON.stringify({
+    return store.send({
       method: 'subscribe',
       agent: store.agent_name
-    }));
+    });
   };
   onClose = function() {
     $('#debug').text('Reconnecting...');
@@ -169,6 +226,26 @@
   };
   onError = function(event) {
     return showError(event.data);
+  };
+  agentWantsStatusChange = function(a) {
+    var curStatus;
+    curStatus = $('#status a[class=active]').text();
+    store.send({
+      method: 'status',
+      status: a.target.id,
+      curStatus: curStatus
+    });
+    return false;
+  };
+  agentWantsStateChange = function(a) {
+    var curState;
+    curState = $('#state a[class=active').text();
+    store.send({
+      method: 'state',
+      state: a.target.id,
+      curState: curState
+    });
+    return false;
   };
   setupWs = function() {
     store.ws = new WebSocket(store.server);
@@ -183,11 +260,7 @@
     store.agent_name = $('#agent_name').text();
     store.agent_ext = store.agent_name.split('-', 2)[0];
     store.call_template = $('#call-template').detach();
-    $('#disposition button').click(function(event) {
-      alert($(event.target).text());
-      $('#disposition').focus();
-      return false;
-    });
+    $('#disposition').hide();
     $(document).keydown(function(event) {
       var bubble, keyCode;
       keyCode = event.keyCode;
@@ -212,20 +285,8 @@
       return bubble;
     });
     $('#disposition').focus();
-    $('#status a').live('click', function(a) {
-      var curStatus;
-      try {
-        curStatus = $('a[class=active]').text();
-        store.ws.send(JSON.stringify({
-          method: 'status',
-          status: a.target.id,
-          curStatus: curStatus
-        }));
-      } catch (error) {
-        showError(error);
-      }
-      return false;
-    });
+    $('#status a').live('click', agentWantsStatusChange);
+    $('#state a').live('click', agentWantsStateChange);
     setTimeout(function() {
       return $(window).resize(function(event) {
         localStorage.setItem('agent.bar.width', top.outerWidth);

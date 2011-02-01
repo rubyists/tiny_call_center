@@ -24,3 +24,4 @@ module TinyCallCenter
     require "fsr"
   end
 end
+TCC=TinyCallCenter

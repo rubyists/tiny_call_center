@@ -1,5 +1,6 @@
 store = {
   calls: {}
+  send: (obj) -> @ws.send(JSON.stringify(obj))
 }
 
 # Expand as you need it.
@@ -25,21 +26,38 @@ showError = (msg) ->
   $('#error').text(msg)
 
 class Call
-  constructor: (@uuid, msg) ->
+  constructor: (local_leg, remote_leg, msg) ->
+    @uuid = local_leg.uuid
+    @local_leg = local_leg
+    @remote_leg = remote_leg
+    store.calls[@uuid] = this
     @prepareDOM()
-    action = (msg.cc_action || msg.event_name || msg.tiny_action).toLowerCase()
-    this[action]?(msg)
+    @talkingStart(new Date(Date.parse(msg.call_created)))
 
   prepareDOM: ->
     @sel = store.call_template.clone()
+    @sel.attr('id', '')
     $('#calls').append(@sel)
+
     @dom = {
-      state:     $('.state', @sel),
-      cidNumber: $('.cid-number', @sel),
-      cidName:   $('.cid-name', @sel),
-      answered:  $('.answered', @sel),
-      called:    $('.called', @sel),
+      state:             $('.state', @sel),
+      cidNumber:         $('.cid-number', @sel),
+      cidName:           $('.cid-name', @sel),
+      answered:          $('.answered', @sel),
+      called:            $('.called', @sel),
+      destinationNumber: $('.destination-number', @sel),
+      queueName:         $('.queue-name', @sel),
+      uuid:              $('.uuid', @sel),
+      channel:           $('.channel', @sel),
     }
+
+    @dom.state.text('On A Call')
+    @dom.cidNumber.text(@remote_leg.cid_number)
+    @dom.cidName.text(@remote_leg.cid_name)
+    @dom.destinationNumber.text(@remote_leg.destination_number)
+    @dom.queueName.text(@local_leg.queue)
+    @dom.uuid.text(@local_leg.uuid)
+    @dom.channel.text(@local_leg.channel)
 
   call_start: (msg) ->
     p "call_start"
@@ -65,11 +83,7 @@ class Call
     @talkingEnd()
 
   channel_hangup: (msg) ->
-    if msg.caller_unique_id == @uuid
-      if msg.caller_destination_number == store.agent_ext
-        @talkingEnd()
-      else if msg.caller_caller_id_number == store.agent_ext
-        @talkingEnd()
+    @talkingEnd()
 
   channel_answer: (msg) ->
     if msg.caller_destination_number == store.agent_ext
@@ -87,7 +101,7 @@ class Call
         msg.channel_call_uuid || msg.unique_id
       )
 
-  answeredCall: (direction, cidName, cidNumber, uuid) ->
+  answeredCall: (cidName, cidNumber, uuid) ->
     @dom.cidNumber.text(cidNumber)
     @dom.cidName.text(cidName) if cidName?
     @dom.state.text('On A Call')
@@ -104,12 +118,25 @@ class Call
     , 1000
 
   talkingEnd: ->
-    @answered = null
     clearInterval(@answeredInterval)
-    setTimeout =>
-      @dom.remove()
-      delete store.calls[@uuid]
-    , 1000
+    delete store.calls[@uuid]
+    @askDisposition()
+
+  askDisposition: ->
+    $('#disposition button').one 'click', (event) =>
+      p event
+      jbutton = $(event.target)
+      store.send(
+        method: 'disposition',
+        code:  jbutton.attr('id').split('-')[1],
+        desc:  jbutton.attr('label'),
+        left: @local_leg,
+        right: @remote_leg,
+      )
+      @sel.remove()
+      $('#disposition').hide()
+      return false
+    $('#disposition').show()
 
 currentStatus = (tag) ->
   $('#status a').attr('class', 'inactive')
@@ -126,29 +153,52 @@ agentStatusChange = (msg) ->
     when 'logged out'
       currentStatus($('#logged_out'))
 
+currentState = (tag) ->
+  $('#state a').attr('class', 'inactive')
+  tag.attr('class', 'active')
+
 agentStateChange = (msg) ->
-  $('#state').text(msg.cc_agent_state)
+  switch msg.cc_agent_state.toLowerCase()
+    when 'waiting'
+      currentState($('#ready'))
+    when 'idle'
+      currentState($('#wrap_up'))
 
 onMessage = (event) ->
   msg = JSON.parse(event.data)
   p msg
-  switch msg.cc_action
-    when 'agent-status-change'
+  switch msg.tiny_action
+    when 'status_change'
       agentStatusChange(msg)
-    when 'agent-state-change'
+    when 'state_change'
       agentStateChange(msg)
-    else
-      uuid = msg.uuid || msg.call_uuid || msg.channel_call_uuid || msg.unique_id
+    when 'call_start'
+      extMatch = /(?:^|\/)(\d+)@/
+      makeCall = (left, right, msg) ->
+        new Call(left, right, msg) unless store.calls[left.uuid]
 
-      if call = store.calls[uuid]
-        action = (msg.cc_action || msg.event_name || msg.tiny_action).toLowerCase()
-        call[action](msg)
-      else
-        call = new Call(uuid, msg)
-        store.calls[uuid] = call
+      if store.agent_ext == msg.left.channel?.match?(extMatch)[1]
+        makeCall(msg.left, msg.right, msg)
+      else if store.agent_ext == msg.right.channel?.match?(extMatch)[1]
+        makeCall(msg.right, msg.left, msg)
+      else if msg.right.destination == msg.right.channel?.match?(extMatch)[1]
+        makeCall(msg.right, msg.left, msg)
+      else if msg.left.destination == msg.left.channel?.match?(extMatch)[1]
+        makeCall(msg.left, msg.right, msg)
+      else if msg.left.cid_number == msg.left.channel?.match?(extMatch)[1]
+        makeCall(msg.left, msg.right, msg)
+      else if msg.right.cid_number == msg.right.channel?.match?(extMatch)[1]
+        makeCall(msg.right, msg.left, msg)
+    else
+      for key, value of msg
+        if /unique|uuid/.test(key)
+          #p [key, value]
+          if call = store.calls[value]
+            call[msg.tiny_action]?(msg)
+            return undefined
 
 onOpen = ->
-  @send(JSON.stringify(method: 'subscribe', agent: store.agent_name))
+  store.send(method: 'subscribe', agent: store.agent_name)
 
 onClose = ->
   $('#debug').text('Reconnecting...')
@@ -159,6 +209,25 @@ onClose = ->
 
 onError = (event) ->
   showError(event.data)
+
+
+agentWantsStatusChange = (a) ->
+  curStatus = $('#status a[class=active]').text()
+  store.send(
+    method: 'status',
+    status: a.target.id,
+    curStatus: curStatus
+  )
+  false
+
+agentWantsStateChange = (a) ->
+  curState = $('#state a[class=active').text()
+  store.send(
+    method: 'state',
+    state: a.target.id,
+    curState: curState,
+  )
+  false
 
 setupWs = ->
   store.ws = new WebSocket(store.server)
@@ -174,13 +243,7 @@ $ ->
   store.agent_ext = store.agent_name.split('-', 2)[0]
   store.call_template = $('#call-template').detach()
 
-  $('#disposition button').click (event) ->
-    alert $(event.target).text()
-    # $('#disposition').hide()
-    $('#disposition').focus()
-    return false
-
-  # $('#disposition').hide()
+  $('#disposition').hide()
 
   $(document).keydown (event) ->
     keyCode = event.keyCode
@@ -199,13 +262,8 @@ $ ->
 
   $('#disposition').focus()
 
-  $('#status a').live 'click', (a) ->
-    try
-      curStatus = $('a[class=active]').text()
-      store.ws.send(JSON.stringify(method: 'status', status: a.target.id, curStatus: curStatus))
-    catch error
-      showError error
-    false
+  $('#status a').live 'click', agentWantsStatusChange
+  $('#state a').live 'click', agentWantsStateChange
 
   setTimeout ->
     $(window).resize (event) ->

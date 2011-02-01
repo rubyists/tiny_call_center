@@ -385,7 +385,7 @@ onMessage = (event) ->
 
 onOpen = (event) ->
   agent = $('#agent_name').text()
-  @send(JSON.stringify(method: 'listen', agent: agent))
+  @send(JSON.stringify(method: 'subscribe', agent: agent))
   @intervalId = setInterval(updateDeltas, 1000)
   refreshAspects()
 

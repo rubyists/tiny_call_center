@@ -486,7 +486,7 @@
     var agent;
     agent = $('#agent_name').text();
     this.send(JSON.stringify({
-      method: 'listen',
+      method: 'subscribe',
       agent: agent
     }));
     this.intervalId = setInterval(updateDeltas, 1000);

@@ -1,14 +1,22 @@
 <div id="ws">
   <ul id="status">
-    <li><a href="/update_status/available" id="available">Available</a></li>
-    <li><a href="/update_status/on_break" id="on_break">On Break</a></li>
+    <li><a href="#" id="available">Available</a></li>
+    <li><a href="#" id="on_break">On Break</a></li>
   </ul>
 
-  <div id="call-template">
-    <div class="state">State</div>
-    <div class="cid-name">CID Name</div>
-    <div class="cid-number">CID Number</div>
-    <div class="answered">Answered (Talking)</div>
+  <ul id="state">
+    <li><a href="#" id="ready">Ready</a></li>
+    <li><a href="#" id="wrap_up">Wrap Up</a></li>
+  </ul>
+
+  <div id="call-template" class="call">
+    <div class="cid-name"></div>
+    <div class="cid-number"></div>
+    <div class="answered"></div>
+    <div class="queue-name"></div>
+    <div class="destination-number"></div>
+    <div class="channel"></div>
+    <div class="uuid"></div>
   </div>
 
   <div id="calls">
