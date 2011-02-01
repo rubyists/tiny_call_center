@@ -3,11 +3,11 @@
   <form action="/agents/update/#{@agent.name}" method="post" class="table">
     <div class="row">
       <label for="input-extension">Extension</label>
-      <input type="text" name="extension" id="input-extension" value="#{@agent.name.split('-')[0]}" />
+      <input type="text" name="extension" id="input-extension" value="#{@extension}" />
     </div>
     <div class="row">
       <label for="input-name">Name (First Last)</label>
-      <input type="text" name="name" id="input-name" value="#{@agent.name.split('-')[1].gsub('_',' ')}" />
+      <input type="text" name="name" id="input-name" value="#{@agent_name}" />
     </div>
     <div class="row">
       <label for="select-type">Type</label>

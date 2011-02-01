@@ -40,7 +40,7 @@ module TinyCallCenter
       reporter.callcenter!{|cc| cc.set(self.agent, :status, 'Available') }
       reporter.callcenter!{|cc| cc.set(self.agent, :state, 'Idle') }
 
-      @extension = self.agent.split('-', 2).first
+      @extension = Account.extension self.agent
 
       subscribed = SubscribedAgents[@extension] ||= []
       subscribed << self

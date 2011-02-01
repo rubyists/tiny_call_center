@@ -15,6 +15,7 @@ module TinyCallCenter
     def index
       redirect Accounts.r(:login) unless logged_in?
       @agent = user.agent
+      @extension = user.extension
       @server = TinyCallCenter.options.ribbon.server
       @title = @agent
 

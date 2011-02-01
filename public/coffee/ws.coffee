@@ -240,7 +240,7 @@ setupWs = ->
 $ ->
   store.server = $('#server').text()
   store.agent_name = $('#agent_name').text()
-  store.agent_ext = store.agent_name.split('-', 2)[0]
+  store.agent_ext = $('#agent_ext').text()
   store.call_template = $('#call-template').detach()
 
   $('#disposition').hide()

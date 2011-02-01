@@ -9,7 +9,7 @@ module TinyCallCenter
       relay message # for Channel
 
       if agent = message[:cc_agent]
-        keys = [message[:cc_agent].to_s.split('-').first]
+        keys = [TCC::Account.extension(message[:cc_agent])]
       else
         keys = possible_numbers(message)
       end

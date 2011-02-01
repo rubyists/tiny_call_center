@@ -54,6 +54,8 @@ module TinyCallCenter
 
     def edit(agent)
       @agent = fsr.call_center(:agent).list.run.select {|x| x.name == agent}.first
+      @extension = Account.extension(@agent.name)
+      @agent_name = Account.name(@agent.name)
       render_view(:edit)
     end
 

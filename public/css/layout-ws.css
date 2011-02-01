@@ -111,6 +111,6 @@ table td {
   width: 16%;
 }
 
-#server, #agent_name {
+#server, #agent_name, #agent_ext {
   display: none;
 }

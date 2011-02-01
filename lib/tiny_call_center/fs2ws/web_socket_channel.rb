@@ -49,7 +49,7 @@ module TinyCallCenter
       self.agent = msg['agent']
       FSR::Log.info "Subscribing listener: #{self.agent}"
 
-      self.user = TinyCallCenter::Account.from_call_center_name(agent) # everything regarding perms in Account
+      self.user = Account.from_call_center_name(agent) # everything regarding perms in Account
       FSR::Log.info "User #{user} subscribed"
 
       agents = agent_listing
@@ -73,7 +73,7 @@ module TinyCallCenter
 
       utimes = %w[last_bridge_start last_offered_call last_bridge_end last_status_change]
       agents.map!{|_agent|
-        agent_ext = _agent.name.split('-').first
+        agent_ext = Account.extension _agent.name
         agent_server = _agent.contact.to_s.split('@')[1]
         agent_calls = servers[agent_server]
         _agent = _agent.to_hash.merge(agent_status(agent_ext, agent_calls))
@@ -91,11 +91,11 @@ module TinyCallCenter
 
       return false unless agent
 
-      self.user ||= TinyCallCenter::Account.from_call_center_name(agent)
+      self.user ||= Account.from_call_center_name(agent)
       return false unless user && user.extension
 
       if cc = message[:cc_agent]
-        extension = cc.split("-")[0].tr("_", "")
+        extension = Account.extension cc
         FSR::Log.debug("#{user} has user extension #{user.extension} and extension #{extension} cc is #{cc}")
         return true if cc == agent
         return user.extension == extension || user.can_view?(extension)
@@ -116,9 +116,9 @@ module TinyCallCenter
 
     def got_calltap_too(msg)
       extension, name, tapper, uuid, phoneNumber = msg.values_at('extension', 'name', 'tapper', 'uuid', 'phoneNumber')
-      if manager = TinyCallCenter::Account.from_call_center_name(tapper)
+      if manager = Account.from_call_center_name(tapper)
         return false unless manager.manager?
-        return false unless agent = TinyCallCenter::Account.from_full_name(name)
+        return false unless agent = Account.from_full_name(name)
         if manager.manager.authorized_to_listen?(extension, phoneNumber)
           eavesdrop(uuid, agent, manager)
         end
@@ -126,7 +126,7 @@ module TinyCallCenter
     end
 
     def got_calltap(msg)
-      agent, tapper = msg.values_at('agent', 'tapper').map { |a| TinyCallCenter::Account.new(a.split("-",2)[1].gsub("_","")) }
+      agent, tapper = msg.values_at('agent', 'tapper').map { |a| Account.new(Account.username a) }
       return false unless agent.exists? and tapper.exists?
       return false unless tapper.manager?
       if (sock = FSR::CommandSocket.new(:server => agent.registration_server) rescue nil)
