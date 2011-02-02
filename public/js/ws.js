@@ -167,7 +167,7 @@
     }
   };
   onMessage = function(event) {
-    var call, extMatch, key, makeCall, msg, value, _name, _ref, _ref2, _ref3, _ref4, _ref5, _ref6, _results;
+    var call, extMatch, key, makeCall, msg, value, _name, _ref, _ref10, _ref11, _ref12, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9, _results;
     msg = JSON.parse(event.data);
     p(msg);
     switch (msg.tiny_action) {
@@ -182,17 +182,17 @@
             return new Call(left, right, msg);
           }
         };
-        if (store.agent_ext === ((_ref = msg.left.channel) != null ? typeof _ref.match === "function" ? _ref.match(extMatch)[1] : void 0 : void 0)) {
+        if (store.agent_ext === ((_ref = msg.left.channel) != null ? typeof _ref.match === "function" ? (_ref2 = _ref.match(extMatch)) != null ? _ref2[1] : void 0 : void 0 : void 0)) {
           return makeCall(msg.left, msg.right, msg);
-        } else if (store.agent_ext === ((_ref2 = msg.right.channel) != null ? typeof _ref2.match === "function" ? _ref2.match(extMatch)[1] : void 0 : void 0)) {
+        } else if (store.agent_ext === ((_ref3 = msg.right.channel) != null ? typeof _ref3.match === "function" ? (_ref4 = _ref3.match(extMatch)) != null ? _ref4[1] : void 0 : void 0 : void 0)) {
           return makeCall(msg.right, msg.left, msg);
-        } else if (msg.right.destination === ((_ref3 = msg.right.channel) != null ? typeof _ref3.match === "function" ? _ref3.match(extMatch)[1] : void 0 : void 0)) {
+        } else if (msg.right.destination === ((_ref5 = msg.right.channel) != null ? typeof _ref5.match === "function" ? (_ref6 = _ref5.match(extMatch)) != null ? _ref6[1] : void 0 : void 0 : void 0)) {
           return makeCall(msg.right, msg.left, msg);
-        } else if (msg.left.destination === ((_ref4 = msg.left.channel) != null ? typeof _ref4.match === "function" ? _ref4.match(extMatch)[1] : void 0 : void 0)) {
+        } else if (msg.left.destination === ((_ref7 = msg.left.channel) != null ? typeof _ref7.match === "function" ? (_ref8 = _ref7.match(extMatch)) != null ? _ref8[1] : void 0 : void 0 : void 0)) {
           return makeCall(msg.left, msg.right, msg);
-        } else if (msg.left.cid_number === ((_ref5 = msg.left.channel) != null ? typeof _ref5.match === "function" ? _ref5.match(extMatch)[1] : void 0 : void 0)) {
+        } else if (msg.left.cid_number === ((_ref9 = msg.left.channel) != null ? typeof _ref9.match === "function" ? (_ref10 = _ref9.match(extMatch)) != null ? _ref10[1] : void 0 : void 0 : void 0)) {
           return makeCall(msg.left, msg.right, msg);
-        } else if (msg.right.cid_number === ((_ref6 = msg.right.channel) != null ? typeof _ref6.match === "function" ? _ref6.match(extMatch)[1] : void 0 : void 0)) {
+        } else if (msg.right.cid_number === ((_ref11 = msg.right.channel) != null ? typeof _ref11.match === "function" ? (_ref12 = _ref11.match(extMatch)) != null ? _ref12[1] : void 0 : void 0 : void 0)) {
           return makeCall(msg.right, msg.left, msg);
         }
       default:
