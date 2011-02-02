@@ -50,7 +50,7 @@ module TinyCallCenter
 
       channels.each do |channel|
         FSR::Log.debug channel: channel
-        next unless channel.callstate == 'ACTIVE' &&
+        next unless ['ACTIVE', 'RINGING'].include?(channel.callstate) &&
           (channel.dest == @extension ||
            channel.cid_num == @extension ||
            channel.name =~ /(^\/)#{@extension}@/)
