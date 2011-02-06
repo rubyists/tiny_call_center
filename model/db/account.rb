@@ -23,10 +23,6 @@ module TinyCallCenter
       self[:password] = ::TinyCallCenter::Account.digestify(other)
     end
 
-    def registration_server
-      self.class.registration_server(extension)
-    end
-
     def self.registration_server(extension)
       user = from_extension(extension)
       user.registration_server
