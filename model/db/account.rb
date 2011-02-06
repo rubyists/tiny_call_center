@@ -11,6 +11,7 @@ module TinyCallCenter
       Account.find(username: name, password: TinyCallCenter::Account.digestify(pass))
     rescue => error
       Innate::Log.error error
+      Innate::Log.error error.backtrace.join("\n\t")
       false
     end
 
@@ -32,6 +33,8 @@ module TinyCallCenter
     rescue => error
       Innate::Log.error "Could not find user, defaulting reg server to 127.0.0.1"
       Innate::Log.error error
+      Innate::Log.error error.backtrace.join("\n\t")
+      false
     end
 
     def self.username(agent)
