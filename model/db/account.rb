@@ -1,5 +1,4 @@
-require "nrs_ldap"
-require_relative './manager'
+require_relative '../manager'
 
 module TinyCallCenter
   class Account < Sequel::Model
@@ -72,7 +71,7 @@ module TinyCallCenter
 
     def manager
       @_manager ||= (
-        TinyCallCenter::Manager.find(username: username ||
+        TinyCallCenter::Manager.find(username: username) ||
         TinyCallCenter::Manager.find(username: "#{first_name.downcase.capitalize}#{last_name.downcase.capitalize}")
       )
     end

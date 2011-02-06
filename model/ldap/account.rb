@@ -1,5 +1,5 @@
 require "nrs_ldap"
-require_relative './manager'
+require_relative '../manager'
 
 module TinyCallCenter
   class Account
@@ -74,7 +74,7 @@ module TinyCallCenter
     end
 
     def inspect
-      "<#%s:%s @uid=\"%s\">" % [self.class.name, self.object_id, @uid]
+      "<#%s:%s @uid=\"%s\">" % [self.class, self.object_id, @uid]
     end
 
     def attributes

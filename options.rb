@@ -31,5 +31,7 @@ module TinyCallCenter
 
     o "Sqlite Database File", :db,
       ENV["TinyCallCenter_DB"] || "sqlite://%s" % File.expand_path("../db/call_center.db", __FILE__)
+
+    o "Accounts Backend", :backend, ENV["TinyCallCenter_Backend"]
   end
 end

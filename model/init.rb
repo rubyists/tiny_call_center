@@ -11,6 +11,10 @@ DB = TinyCallCenter.db unless Object.const_defined?("DB")
 
 
 require_relative "./manager"
-require_relative "./account"
+if backend = TinyCallCenter.options.backend
+  require_relative "./#{backend}/account"
+else
+  require_relative "./db/account"
+end
 require_relative "./disposition"
 require_relative "./call_record"
