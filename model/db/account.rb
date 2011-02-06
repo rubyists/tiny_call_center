@@ -1,4 +1,5 @@
 require_relative '../manager'
+require "digest/sha1"
 
 module TinyCallCenter
   class Account < Sequel::Model
@@ -7,10 +8,18 @@ module TinyCallCenter
 
     def self.authenticate(creds)
       name, pass = creds.values_at("name", "pass")
-      Account.find(username: name, password: pass)
+      Account.find(username: name, password: TinyCallCenter::Account.digestify(pass))
     rescue => error
       Innate::Log.error error
       false
+    end
+
+    def self.digestify(pass)
+      Digest::SHA1.hexdigest(pass.to_s)
+    end
+
+    def password=(other)
+      self[:password] = ::TinyCallCenter::Account.digestify(other)
     end
 
     def registration_server
