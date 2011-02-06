@@ -26,10 +26,10 @@ module TinyCallCenter
     end
 
     def self.username(agent)
-      name agent.gsub('_', '')
+      full_name agent.gsub('_', '')
     end
 
-    def self.name(agent)
+    def self.full_name(agent)
       agent.split('-',2).last
     end
 
@@ -42,7 +42,7 @@ module TinyCallCenter
     end
 
     def self.from_full_name(name)
-      find username: name.gsub("_", '').gsub(/\s/,'')
+      find username: full_name(name).gsub("_", '').gsub(/\s/,'')
     end
 
     def self.from_extension(ext)
