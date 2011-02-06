@@ -59,19 +59,6 @@ class Call
     @dom.uuid.text(@local_leg.uuid)
     @dom.channel.text(@local_leg.channel)
 
-  call_start: (msg) ->
-    p "call_start"
-
-  initial_status: (msg) ->
-    switch store.agent_ext
-      when msg.caller_cid_num
-        @dom.cidNumber.text(msg.callee_cid_num)
-        @talkingStart(new Date(Date.parse(msg.call_created)))
-      when msg.callee_cid_num
-        @dom.cidNumber.text(msg.caller_cid_num)
-        @dom.cidName.text(msg.caller_cid_name)
-        @talkingStart(new Date(Date.parse(msg.call_created)))
-
   'bridge-agent-start': (msg) ->
     @dom.cidName.text(msg.cc_caller_cid_name)
     @dom.cidNumber.text(msg.cc_caller_cid_number)

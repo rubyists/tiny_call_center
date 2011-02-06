@@ -340,7 +340,6 @@
             call.renderInDialog();
           }
           $('.calltap', this.dialog).click(__bind(function(event) {
-            p(this.calltap);
             this.calltap();
             return false;
           }, this));

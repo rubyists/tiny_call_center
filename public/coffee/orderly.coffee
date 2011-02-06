@@ -259,7 +259,6 @@ class Agent
         for uuid, call of @calls
           call.renderInDialog()
         $('.calltap', @dialog).click (event) =>
-          p @calltap
           @calltap()
           false
         $('.calls .uuid', @dialog).click (event) =>

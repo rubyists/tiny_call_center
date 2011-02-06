@@ -60,20 +60,6 @@
       this.dom.uuid.text(this.local_leg.uuid);
       return this.dom.channel.text(this.local_leg.channel);
     };
-    Call.prototype.call_start = function(msg) {
-      return p("call_start");
-    };
-    Call.prototype.initial_status = function(msg) {
-      switch (store.agent_ext) {
-        case msg.caller_cid_num:
-          this.dom.cidNumber.text(msg.callee_cid_num);
-          return this.talkingStart(new Date(Date.parse(msg.call_created)));
-        case msg.callee_cid_num:
-          this.dom.cidNumber.text(msg.caller_cid_num);
-          this.dom.cidName.text(msg.caller_cid_name);
-          return this.talkingStart(new Date(Date.parse(msg.call_created)));
-      }
-    };
     Call.prototype['bridge-agent-start'] = function(msg) {
       this.dom.cidName.text(msg.cc_caller_cid_name);
       this.dom.cidNumber.text(msg.cc_caller_cid_number);
