@@ -7,12 +7,6 @@ module TinyCallCenter
       'logged_out' => 'Logged Out',
     }
 
-    STATE_MAPPING = {
-      'ready' => 'Waiting',
-      'wrap_up' => 'Idle'
-    }
-
-
     def fsr_socket(server)
       FSR::CommandSocket.new(:server => server)
     end

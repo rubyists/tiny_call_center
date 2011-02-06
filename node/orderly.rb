@@ -1,7 +1,7 @@
 module TinyCallCenter
   class Orderly
     Innate.node "/orderly", self
-    helper :user
+    helper :user, :fsr
     trait :user_model => TinyCallCenter::Account
 
     def index

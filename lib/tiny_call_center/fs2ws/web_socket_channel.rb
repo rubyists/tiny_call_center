@@ -26,11 +26,10 @@ module TinyCallCenter
     def on_message(json)
       msg = JSON.parse(json)
 
-      case msg['method']
-      when 'subscribe' ; got_subscribe(msg)
-      when 'calltap'   ; got_calltap(msg)
-      when 'status_of' ; got_status_of(msg)
-      when 'calltaptoo'; got_calltap_too(msg)
+      method = "got_#{msg['method']}"
+
+      if respond_to?(method)
+        send(method, msg)
       else
         FSR::Log.warn "Unknown message: %p" % [msg]
       end
@@ -49,21 +48,42 @@ module TinyCallCenter
       self.agent = msg['agent']
       FSR::Log.info "Subscribing listener: #{self.agent}"
 
-      self.user = Account.from_call_center_name(agent) # everything regarding perms in Account
+      # everything regarding perms in Account
+      self.user = Account.from_call_center_name(agent)
       FSR::Log.info "User #{user} subscribed"
 
+      give_agent_listing
+      give_queues
+    end
+
+    def got_agents_of(msg)
+      queue_names = [msg["queue"], msg["queues"]].flatten.compact
+      sock = fsr_socket(self.command_socket_server)
+      queue_names.each do |queue_name|
+        tiers = sock.call_center(:tier).list(queue_name).run.select{|tier| can_view?(cc_agent: tier.agent) }
+        reply method: :agents_of, args: [queue_name, tiers.map(&:to_hash)]
+      end
+    end
+
+    def give_queues
+      sock = fsr_socket(self.command_socket_server)
+      queues = sock.call_center(:queue).list.run
+      reply method: :queues, args: [queues.map(&:to_hash)]
+    end
+
+    def give_agent_listing
       agents = agent_listing
       if user.manager?
-        agents.select! {|_agent| user.can_view?(_agent.extension) }
+        agents.select! {|agent| user.can_view?(agent.extension) }
         FSR::Log.info "#{user} can view #{agents.size} agents"
       else
         # if somehow an agent got here, just show them themselves
         FSR::Log.info "User #{user} not a manager, showing just self"
-        agents.select! {|_agent| self.agent == _agent.name }
+        agents.select! {|agent| self.agent == agent.name }
       end
 
       servers = {}
-      registrars = agents.map {|_agent| _agent.to_hash["contact"].split("@")[1] }.uniq
+      registrars = agents.map {|agent| agent.to_hash["contact"].split("@")[1] }.uniq
       registrars.each do |r|
         fsock = FSR::CommandSocket.new server: r
         servers[r] = fsock.channels(true).run
@@ -72,18 +92,20 @@ module TinyCallCenter
       end
 
       utimes = %w[last_bridge_start last_offered_call last_bridge_end last_status_change]
-      agents.map!{|_agent|
-        agent_ext = Account.extension _agent.name
-        agent_server = _agent.contact.to_s.split('@')[1]
+      agents.map!{|agent|
+        p agent
+        agent_ext = Account.extension(agent.name)
+        agent_username = Account.username(agent.name)
+        agent_server = agent.contact.to_s.split('@')[1]
         agent_calls = servers[agent_server]
-        _agent = _agent.to_hash.merge(agent_status(agent_ext, agent_calls))
-        utimes.each{|key|
-          _agent[key] = Time.at(_agent[key].to_i).rfc2822
-        }
-        _agent
+        agent_hash = agent.to_hash.
+          merge(agent_status(agent_ext, agent_calls)).
+          merge(extension: agent_ext, username: agent_username)
+        utimes.each{|key| agent_hash[key] = Time.at(agent_hash[key].to_i).rfc2822 }
+        agent_hash
       }
 
-      reply agents: agents
+      reply method: :agent_list, args: [agents]
     end
 
     def can_view?(message)

@@ -104,7 +104,6 @@ class Call
   answeredCall: (cidName, cidNumber, uuid) ->
     @dom.cidNumber.text(cidNumber)
     @dom.cidName.text(cidName) if cidName?
-    @dom.state.text('On A Call')
     @talkingStart(new Date(Date.now()))
 
   talkingStart: (answeredTime) ->
@@ -144,10 +143,8 @@ currentStatus = (tag) ->
 
 agentStatusChange = (msg) ->
   switch msg.cc_agent_status.toLowerCase()
-    when 'available'
+    when 'available', 'available (on demand)'
       currentStatus($('#available'))
-    when 'available (on demand)'
-      currentStatus($('#available_on_demand'))
     when 'on break'
       currentStatus($('#on_break'))
     when 'logged out'
@@ -158,11 +155,7 @@ currentState = (tag) ->
   tag.attr('class', 'active')
 
 agentStateChange = (msg) ->
-  switch msg.cc_agent_state.toLowerCase()
-    when 'waiting'
-      currentState($('#ready'))
-    when 'idle'
-      currentState($('#wrap_up'))
+  currentState($("##{msg.cc_agent_state}"))
 
 onMessage = (event) ->
   msg = JSON.parse(event.data)
@@ -173,7 +166,7 @@ onMessage = (event) ->
     when 'state_change'
       agentStateChange(msg)
     when 'call_start'
-      extMatch = /(?:^|\/)(\d+)@/
+      extMatch = /(?:^|\/)(\d+)[@-]/
       makeCall = (left, right, msg) ->
         new Call(left, right, msg) unless store.calls[left.uuid]
 

@@ -1,9 +1,11 @@
 module TinyCallCenter
-  class WebSocketReporter < Struct.new(:reporter, :socket, :command_socket_server, :agent)
+  class WebSocketReporter < Struct.new(:reporter, :socket, :command_socket_server, :agent, :extension, :registration_server)
     include WebSocketUtils
     SubscribedAgents = {}
 
     def initialize(reporter, socket, command_socket_server)
+      @_last_state = @_last_status = nil
+
       self.reporter, self.socket = reporter, socket
       self.command_socket_server = command_socket_server
 
@@ -36,24 +38,68 @@ module TinyCallCenter
 
     def got_subscribe(msg)
       self.agent = msg['agent']
-      FSR::Log.info "Subscribed agent: #{self.agent}"
-      reporter.callcenter!{|cc| cc.set(self.agent, :status, 'Available') }
-      reporter.callcenter!{|cc| cc.set(self.agent, :state, 'Idle') }
+      self.extension = Account.extension(agent)
+      self.registration_server = Account.registration_server(extension)
 
-      @extension = Account.extension self.agent
+      subscribe
+      update_status
+      update_state
+      call
+      give_initial_status
+    end
 
-      subscribed = SubscribedAgents[@extension] ||= []
+    def subscribe
+      FSR::Log.info "Subscribe agent: #{agent}@#{registration_server}"
+
+      subscribed = SubscribedAgents[extension] ||= []
       subscribed << self
+    end
 
-      fsock = FSR::CommandSocket.new server: Account.registration_server(@extension)
+    def update_status
+      FSR::Log.debug "Set status of #{agent} to Available"
+      reporter.callcenter!{|cc| cc.set(agent, :status, 'Available') }
+    end
+
+    def update_state
+      FSR::Log.debug "Set State of #{agent} to Idle"
+      reporter.callcenter!{|cc| cc.set(agent, :state, 'Idle') }
+    end
+
+    def call
+      FSR::Log.debug "Check whether we should call #{agent}, off_hook is #{TCC.options.off_hook}"
+      return unless TCC.options.off_hook
+      EM.add_timer 5 do
+        FSR::Log.info "Calling #{agent}@#{registration_server}"
+
+        command_server = TCC.options.command_server
+        sock = FSR::CommandSocket.new(:server => command_server)
+        FSR.load_all_commands
+
+        if registration_server == command_server
+          sock.originate(
+            target: "{tcc_agent=#{agent}}loopback/#{extension}/default/XML",
+            endpoint: "&transfer(19999)"
+          ).run
+        else
+          sock.originate(
+            target: "{tcc_agent=#{agent}}sofia/internal/#{extension}@#{registration_server}",
+            endpoint: "&transfer(19999)"
+          ).run
+        end
+      end
+    end
+
+    def give_initial_status
+      FSR::Log.debug "Give Initial Status"
+      fsock = FSR::CommandSocket.new(server: registration_server)
       channels = fsock.channels(true).run
 
       channels.each do |channel|
         FSR::Log.debug channel: channel
         next unless ['ACTIVE', 'RINGING'].include?(channel.callstate) &&
-          (channel.dest == @extension ||
-           channel.cid_num == @extension ||
-           channel.name =~ /(^\/)#{@extension}@/)
+          (channel.dest == extension ||
+           channel.cid_num == extension ||
+           channel.name =~ /(^\/)#{extension}[@-]/)
 
         msg = {
           tiny_action: 'call_start',
@@ -72,7 +118,6 @@ module TinyCallCenter
           }
         }
 
-        FSR::Log.debug "Sending message #{msg}"
         reply msg
       end
     end
@@ -111,13 +156,12 @@ module TinyCallCenter
     def got_state(msg)
       FSR::Log.debug "State Change: #{msg}"
       current, new = msg.values_at('curState', 'state')
-      mapped = STATE_MAPPING[new]
-      if current == mapped or mapped == @_last_state
+      if current == new or new == @_last_state
         FSR::Log.warn "Got a dupe state request #{self.agent}: #{msg}"
         return false
       end
-      @_last_state = mapped
-      reporter.callcenter!{|cc| cc.set(self.agent, :state, mapped) }
+      @_last_state = new
+      reporter.callcenter!{|cc| cc.set(self.agent, :state, new) }
     end
 
     def got_status(msg)
@@ -133,9 +177,9 @@ module TinyCallCenter
     end
 
     def on_close
-      subscribed = SubscribedAgents[@extension]
+      subscribed = SubscribedAgents[extension]
       subscribed.delete(self)
-      SubscribedAgents.delete(@extension) if subscribed.empty? # slight race here.
+      SubscribedAgents.delete(extension) if subscribed.empty? # slight race here.
       FSR::Log.debug "Unsubscribed agent: #{agent}"
     end
   end

@@ -99,7 +99,6 @@
       if (cidName != null) {
         this.dom.cidName.text(cidName);
       }
-      this.dom.state.text('On A Call');
       return this.talkingStart(new Date(Date.now()));
     };
     Call.prototype.talkingStart = function(answeredTime) {
@@ -145,9 +144,8 @@
   agentStatusChange = function(msg) {
     switch (msg.cc_agent_status.toLowerCase()) {
       case 'available':
-        return currentStatus($('#available'));
       case 'available (on demand)':
-        return currentStatus($('#available_on_demand'));
+        return currentStatus($('#available'));
       case 'on break':
         return currentStatus($('#on_break'));
       case 'logged out':
@@ -159,12 +157,7 @@
     return tag.attr('class', 'active');
   };
   agentStateChange = function(msg) {
-    switch (msg.cc_agent_state.toLowerCase()) {
-      case 'waiting':
-        return currentState($('#ready'));
-      case 'idle':
-        return currentState($('#wrap_up'));
-    }
+    return currentState($("#" + msg.cc_agent_state));
   };
   onMessage = function(event) {
     var call, extMatch, key, makeCall, msg, value, _name, _ref, _ref10, _ref11, _ref12, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9, _results;
@@ -176,7 +169,7 @@
       case 'state_change':
         return agentStateChange(msg);
       case 'call_start':
-        extMatch = /(?:^|\/)(\d+)@/;
+        extMatch = /(?:^|\/)(\d+)[@-]/;
         makeCall = function(left, right, msg) {
           if (!store.calls[left.uuid]) {
             return new Call(left, right, msg);

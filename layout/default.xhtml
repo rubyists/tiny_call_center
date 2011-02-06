@@ -1,7 +1,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
   <head>
     <link href="/stylesheets/default.css" rel="stylesheet" type="text/css">
-    <title>#h @title</title>
+    <title>#{h @title}</title>
     <script type="text/javascript" src="/js/jquery-1.4.3.min.js"></script>
     <script type="text/javascript" src="/js/sorter.js"></script>
     <script type="text/javascript" src="/js/tiers.js"></script>
@@ -25,7 +25,7 @@
           </li>
           <li>Real Time
             <ul>
-              <li>#{TinyCallCenter::Orderly.a('Real Time')}</li>
+              <li>#{TinyCallCenter::Orderly.a('Real Time', :/)}</li>
             </ul>
           </li>
         </ul>

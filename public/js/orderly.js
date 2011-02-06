@@ -1,558 +1,364 @@
 (function() {
-  var Agent, callTap, callTapToo, changeStatus, divmod, dropped, log, onClose, onMessage, onOpen, refreshAspects, secondsToTimestamp, setupWs, showAspect, statusOrStateToClass, syncSettingsFromAspects, timeFragmentPad, updateDeltas, withLabel;
+  var Agent, Call, Controller, Socket, p, statusOrStateToClass, store;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
-  log = function(msg) {
+  p = function() {
     var _ref;
-    return (_ref = window.console) != null ? typeof _ref.debug === "function" ? _ref.debug(msg) : void 0 : void 0;
+    return (_ref = window.console) != null ? typeof _ref.debug === "function" ? _ref.debug(arguments) : void 0 : void 0;
   };
-  statusOrStateToClass = function(str) {
-    return str.toLowerCase().replace(/\W+/g, "-").replace(/^-+|-+$/g, "");
-  };
-  divmod = function(num, mod) {
-    return [Math.floor(num / mod), Math.floor(num % mod)];
-  };
-  timeFragmentPad = function(fragment) {
-    if (fragment > 9) {
-      return fragment;
-    } else {
-      return "0" + fragment;
+  store = {
+    agents: {},
+    stateMapping: {
+      Idle: 'Wrap Up',
+      Waiting: 'Ready'
     }
   };
-  secondsToTimestamp = function(given) {
-    var fragment, hours, minutes, rest, seconds, _ref, _ref2;
-    _ref = divmod(given, 60), rest = _ref[0], seconds = _ref[1];
-    _ref2 = divmod(rest, 60), rest = _ref2[0], minutes = _ref2[1];
-    hours = Math.floor(rest / 60);
-    return ((function() {
-      var _i, _len, _ref, _results;
-      _ref = [hours, minutes, seconds];
+  statusOrStateToClass = function(prefix, str) {
+    return prefix + str.toLowerCase().replace(/\W+/g, "-").replace(/^-+|-+$/g, "");
+  };
+  Socket = (function() {
+    function Socket(controller) {
+      this.controller = controller;
+      this.connect();
+    }
+    Socket.prototype.connect = function() {
+      this.ws = new WebSocket(store.server);
+      this.ws.onopen = __bind(function() {
+        if (this.reconnectInterval) {
+          clearInterval(this.reconnectInterval);
+        }
+        return this.say({
+          method: 'subscribe',
+          agent: store.agent
+        });
+      }, this);
+      this.ws.onmessage = __bind(function(message) {
+        var data;
+        data = JSON.parse(message.data);
+        p("onMessage", data);
+        return this.controller.dispatch(data);
+      }, this);
+      this.ws.onclose = __bind(function() {
+        p("Closing WebSocket");
+        return this.reconnectInterval = setInterval(__bind(function() {
+          p("Reconnect");
+          return this.connect();
+        }, this), 1000);
+      }, this);
+      return this.ws.onerror = __bind(function(error) {
+        return p("WebSocket Error:", error);
+      }, this);
+    };
+    Socket.prototype.say = function(obj) {
+      p("Socket.send", obj);
+      return this.ws.send(JSON.stringify(obj));
+    };
+    return Socket;
+  })();
+  Controller = (function() {
+    function Controller() {}
+    Controller.prototype.dispatch = function(msg) {
+      var action, method;
+      if (method = msg.method) {
+        return this["got_" + method].apply(this, msg.args);
+      } else if (action = msg.tiny_action) {
+        return store.agents[msg.cc_agent]["got_" + action](msg);
+      }
+    };
+    Controller.prototype.got_queues = function(queues) {
+      var a, li, queue, _i, _len, _results;
+      $('#nav-queues').html('');
       _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        fragment = _ref[_i];
-        _results.push(timeFragmentPad(fragment));
+      for (_i = 0, _len = queues.length; _i < _len; _i++) {
+        queue = queues[_i];
+        li = $('<li>');
+        a = $('<a>', {
+          href: '#'
+        }).text(queue.name);
+        li.append(a);
+        _results.push($('#nav-queues').append(li));
       }
       return _results;
-    })()).join(':');
-  };
+    };
+    Controller.prototype.got_agent_list = function(agents) {
+      var agent, rawAgent, _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = agents.length; _i < _len; _i++) {
+        rawAgent = agents[_i];
+        agent = store.agents[rawAgent.name] || new Agent(rawAgent.name);
+        _results.push(agent.fillFromAgent(rawAgent));
+      }
+      return _results;
+    };
+    Controller.prototype.got_agents_of = function(queue, tiers) {
+      var agent, name, tier, _i, _len, _ref, _results;
+      _ref = store.agents;
+      for (name in _ref) {
+        agent = _ref[name];
+        agent.hide();
+      }
+      _results = [];
+      for (_i = 0, _len = tiers.length; _i < _len; _i++) {
+        tier = tiers[_i];
+        agent = store.agents[tier.agent] || new Agent(tier.agent);
+        agent.fillFromTier(tier);
+        _results.push(agent.show());
+      }
+      return _results;
+    };
+    Controller.prototype.got_call_start = function(msg) {
+      return store.agents[msg.cc_agent].got_call_start(msg);
+    };
+    Controller.prototype.got_channel_hangup = function(msg) {
+      return store.agents[msg.cc_agent].got_channel_hangup(msg);
+    };
+    return Controller;
+  })();
+  Call = (function() {
+    function Call(agent, localLeg, remoteLeg, msg) {
+      this.agent = agent;
+      this.localLeg = localLeg;
+      this.remoteLeg = remoteLeg;
+      this.uuid = localLeg.uuid;
+      this.createDOM();
+      this.agent.calls[this.uuid] = this;
+    }
+    Call.prototype.createDOM = function() {
+      this.dom = store.protoCall.clone();
+      this.dom.attr('id', "call-" + this.uuid);
+      $('.calls', this.agent.dom).append(this.dom);
+      $('.state', this.dom).text('On A Call');
+      $('.cid-number', this.dom).text(this.remoteLeg.cid_number);
+      $('.cid-name', this.dom).text(this.remoteLeg.cid_name);
+      $('.destination-number', this.dom).text(this.remoteLeg.destination_number);
+      $('.queue-name', this.dom).text(this.localLeg.queue);
+      $('.uuid', this.dom).text(this.localLeg.uuid);
+      $('.channel', this.dom).text(this.localLeg.channel);
+      $('.calls', this.agent.dom).append(this.dom);
+      return this.dom.show();
+    };
+    Call.prototype.hangup = function(msg) {
+      delete this.agent.calls[this.uuid];
+      this.dom.remove();
+      return this.dom.slideUp("normal", function() {
+        return $(this).remove();
+      });
+    };
+    return Call;
+  })();
   Agent = (function() {
     function Agent(name) {
       this.name = name;
-      this.id = "#" + name;
-      this.initTr();
-      this.setCalledTime(new Date(Date.now()));
+      this.meta = {};
+      this.calls = {};
+      store.agents[this.name] = this;
+      this.createDOM();
     }
-    Agent.prototype.initTr = function() {
-      $('#agents').append("<div class='agent' id='" + this.name + "'>\n  <div class=\"extension-name\">\n    <span class='extension'></span>\n    <span class='name'></span>\n  </div>\n  <span class='status'></span>\n  <span class='state'></span>\n  <div class=\"cid\">\n    <span class='cid-name'></span>\n    <span class='cid-number'></span>\n  </div>\n  <span class='answered'></span>\n  <span class='called'></span>\n  <span class='queue'></span>\n</div>");
-      return $("" + this.id + " .status").click(__bind(function(event) {
-        var active, dialog;
-        dialog = $("#status-dialog").clone(true);
-        dialog.attr('id', '');
-        dialog.addClass(this.id.slice(1));
-        dialog.find('.agent-name').text(this.id.slice(1));
-        active = dialog.find('.status a').filter(__bind(function(i, elt) {
-          return $(elt).text() === this.status;
-        }, this));
-        active.addClass('active');
-        return dialog.dialog({
-          autoOpen: true,
-          title: "" + this.extension + " " + this.name + " Details",
-          modal: false,
-          open: __bind(function(event, ui) {
-            return dialog.find('.status .active').focus();
-          }, this),
-          close: function(event, ui) {
-            return dialog.remove();
+    Agent.prototype.createDOM = function() {
+      this.dom = store.protoAgent.clone();
+      this.dom.attr('id', "agent-" + this.name);
+      $('.name', this.dom).text(this.name);
+      $('#agents').append(this.dom);
+      return this.dom.show();
+    };
+    Agent.prototype.fillFromAgent = function(d) {
+      this.setName(d.name);
+      this.setState(d.state);
+      this.setStatus(d.status);
+      this.setUsername(d.username);
+      this.setExtension(d.extension);
+      this.busy_delay_time = d.busy_delay_time;
+      this.class_answered = d.class_answered;
+      this.contact = d.contact;
+      this.last_bridge_end = new Date(Date.parse(d.last_bridge_end));
+      this.last_bridge_start = new Date(Date.parse(d.last_bridge_start));
+      this.last_offered_call = new Date(Date.parse(d.last_offered_call));
+      this.last_status_change = new Date(Date.parse(d.last_status_change));
+      this.max_no_answer = d.max_no_answer;
+      this.no_answer_count = d.no_answer_count;
+      this.ready_time = d.ready_time;
+      this.reject_delay_time = d.reject_delay_time;
+      this.system = d.system;
+      this.talk_time = d.talk_time;
+      this.type = d.type;
+      this.uuid = d.uuid;
+      return this.wrap_up_time = d.wrap_up_time;
+    };
+    Agent.prototype.fillFromTier = function(d) {
+      this.setName(d.agent);
+      this.setState(d.state);
+      this.level = d.level;
+      this.position = d.position;
+      return this.queue = d.queue;
+    };
+    Agent.prototype.got_call_start = function(msg) {
+      var extMatch, leftMatch, rightMatch, _ref, _ref2, _ref3, _ref4;
+      extMatch = /(?:^|\/)(\d+)[@-]/;
+      leftMatch = (_ref = msg.left.channel) != null ? typeof _ref.match === "function" ? (_ref2 = _ref.match(extMatch)) != null ? _ref2[1] : void 0 : void 0 : void 0;
+      rightMatch = (_ref3 = msg.right.channel) != null ? typeof _ref3.match === "function" ? (_ref4 = _ref3.match(extMatch)) != null ? _ref4[1] : void 0 : void 0 : void 0;
+      if (this.extension === leftMatch) {
+        return this.makeCall(msg.left, msg.right, msg);
+      } else if (this.extension === rightMatch) {
+        return this.makeCall(msg.right, msg.left, msg);
+      } else if (msg.right.destination === rightMatch) {
+        return this.makeCall(msg.right, msg.left, msg);
+      } else if (msg.left.destination === leftMatch) {
+        return this.makeCall(msg.left, msg.right, msg);
+      } else if (msg.left.cid_number === leftMatch) {
+        return this.makeCall(msg.left, msg.right, msg);
+      } else if (msg.right.cid_number === rightMatch) {
+        return this.makeCall(msg.right, msg.left, msg);
+      }
+    };
+    Agent.prototype.makeCall = function(left, right, msg) {
+      p(["makeCall", this, left, right, msg]);
+      if (!this.calls[left.uuid]) {
+        return new Call(this, left, right, msg);
+      }
+    };
+    Agent.prototype.got_channel_hangup = function(msg) {
+      var call, key, value, _results;
+      _results = [];
+      for (key in msg) {
+        value = msg[key];
+        if (/unique|uuid/.test(key)) {
+          if (call = this.calls[value]) {
+            call.hangup(msg);
+            return void 0;
           }
-        });
-      }, this));
-    };
-    Agent.prototype.initializeFromMsg = function(name, msg) {
-      var date;
-      this.setNameExtension(name);
-      this.setQueue(msg.cc_queue);
-      this.setState(msg.state || 'Waiting');
-      this.setStatus(msg.status || 'Available');
-      if (msg.call_created != null) {
-        log([msg.caller_cid_num, msg.caller_cid_name, msg.callee_cid_num, msg.caller_dest_num]);
-        log(this.extension);
-        date = new Date(Date.parse(msg.call_created));
-        if (msg.caller_dest_num === this.extension) {
-          log([1, msg.caller_cid_num, msg.caller_cid_name]);
-          return this.answeredCall('Inbound Call', msg.caller_cid_name, msg.caller_cid_num, date, msg.call_uuid);
-        } else {
-          log([0, msg.caller_dest_num]);
-          return this.answeredCall('Outbound Call', null, msg.caller_dest_num, date, msg.call_uuid);
-        }
-      } else if (msg.last_bridge_end != null) {
-        date = new Date(Date.parse(msg.last_bridge_end));
-        if (date.getFullYear() > 2009) {
-          return this.setCalledTime(date);
         }
       }
+      return _results;
     };
-    Agent.prototype.answeredCall = function(direction, cidName, cidNumber, answeredTime, uuid) {
-      log("Answered Call " + direction + ", " + cidName + ", " + cidNumber + ", " + uuid);
-      answeredTime = answeredTime != null ? answeredTime : new Date(Date.now());
-      this.setState(direction);
-      this.setCid(cidName, cidNumber, uuid);
-      return this.setAnsweredTime(answeredTime);
+    Agent.prototype.got_status_change = function(msg) {
+      return this.setStatus(msg.cc_agent_status);
     };
-    Agent.prototype.hungupCall = function(direction, msg) {
-      this.setState('Waiting');
-      this.setCidName('');
-      this.setCidNumber('');
-      this.setAnsweredTime();
-      return this.setCalledTime(new Date(Date.now()));
-    };
-    Agent.prototype.adjustVisibility = function(effect, speed) {
-      if (this.isVisible) {
-        return $("" + this.id + ":hidden").show(effect, speed);
-      } else {
-        return $("" + this.id + ":visible").hide(effect, speed);
-      }
-    };
-    Agent.prototype.tick = function() {
-      if (this.answeredTime != null) {
-        return this.setTalkTime(parseInt((Date.now() - this.answeredTime) / 1000, 10));
-      } else if (this.calledTime != null) {
-        return this.setWaitTime(parseInt((Date.now() - this.calledTime) / 1000, 10));
-      }
-    };
-    Agent.prototype.setAnsweredTime = function(answeredTime) {
-      this.answeredTime = answeredTime;
-      if (answeredTime != null) {
-        return this.tick();
-      } else {
-        return $("" + this.id + " .answered").text('');
-      }
-    };
-    Agent.prototype.setCalledTime = function(calledTime) {
-      this.calledTime = calledTime;
-      if (calledTime != null) {
-        return this.tick();
-      } else {
-        return $(this.id).children('.called').text('');
-      }
-    };
-    Agent.prototype.setTalkTime = function(talkTime) {
-      var tag;
-      this.talkTime = talkTime;
-      tag = $("" + this.id + " .answered");
-      if (talkTime != null) {
-        return tag.text(secondsToTimestamp(talkTime));
-      } else {
-        return tag.text(secondsToTimeStamp(this.answeredTime.getTime()));
-      }
-    };
-    Agent.prototype.setWaitTime = function(waitTime) {
-      var tag;
-      this.waitTime = waitTime;
-      tag = $("" + this.id + " .called");
-      if (waitTime != null) {
-        return tag.text(secondsToTimestamp(waitTime));
-      } else {
-        return tag.text('');
-      }
-    };
-    Agent.prototype.setStatus = function(status) {
-      var baseclass;
-      this.status = status;
-      baseclass = statusOrStateToClass(status);
-      $("" + this.id + " .status").removeClass().addClass("status ui-state-hover " + baseclass);
-      $(".status-dialog." + this.id.slice(1) + " .status a").removeClass('active');
-      return $(".status-dialog." + this.id.slice(1) + " .status a." + baseclass).addClass('active');
-    };
-    Agent.prototype.setState = function(state) {
-      var tag;
-      this.state = state;
-      tag = $("" + this.id + " .state");
-      switch (state.toLowerCase()) {
-        case 'in a queue call':
-          tag.removeClass().addClass('state');
-          return tag.text('Q');
-        case 'inbound call':
-          tag.removeClass().addClass('state ui-icon ui-icon-circle-arrow-w');
-          if (tag.text !== 'Q') {
-            return tag.text(state);
-          }
-        case 'waiting':
-        case 'idle':
-          tag.removeClass().addClass('state ui-icon ui-icon-clock');
-          return tag.text('');
-        case 'outbound call':
-          tag.removeClass().addClass('state ui-icon ui-icon-circle-arrow-e');
-          return tag.text(state);
-        default:
-          return tag.text(state);
-      }
-    };
-    Agent.prototype.setQueue = function(queue) {
-      this.queue = queue;
-      return $("" + this.id + " .queue").text(queue);
-    };
-    Agent.prototype.setCid = function(name, number, uuid) {
-      if ((name != null) && (number != null) && (uuid != null)) {
-        if (name === number) {
-          this.setCidName('');
-          return this.setCidNumber(number, uuid);
-        } else {
-          this.setCidName(name);
-          return this.setCidNumber(number, uuid);
-        }
-      } else {
-        this.setCidName('');
-        return this.setCidNumber(number, uuid);
-      }
-    };
-    Agent.prototype.setCidName = function(cidName) {
-      this.cidName = cidName;
-      return $("" + this.id + " .cid-name").text(cidName);
-    };
-    Agent.prototype.setCidNumber = function(cidNumber, uuid) {
-      this.cidNumber = cidNumber;
-      return $("" + this.id + " .cid-number").html("<a class=\"calltaptoo\" name=\"" + this.name + "\" href=\"#\" rel=\"" + this.extension + "\" title=\"" + uuid + "\">" + cidNumber + "</a>");
+    Agent.prototype.got_state_change = function(msg) {
+      return this.setState(msg.cc_agent_state);
     };
     Agent.prototype.setName = function(name) {
       this.name = name;
-      return $("" + this.id + " .name").text(name);
+      this.dom.attr('id', "agent-" + name);
+      return $('.name', this.dom).text(name);
+    };
+    Agent.prototype.setState = function(state) {
+      var alias, klass, targetKlass, _i, _len, _ref;
+      this.state = state;
+      p(["setState", state]);
+      if (!(alias = store.stateMapping[state])) {
+        return;
+      }
+      state = alias;
+      targetKlass = statusOrStateToClass("state-", state);
+      _ref = this.dom.attr('class').split(' ');
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        klass = _ref[_i];
+        if (/^state-/.test(klass)) {
+          this.dom.removeClass(klass);
+        }
+      }
+      this.dom.addClass(targetKlass);
+      return $('.state', this.dom).text(state);
+    };
+    Agent.prototype.setStatus = function(status) {
+      var klass, targetKlass, _i, _len, _ref;
+      this.status = status;
+      p(["setStatus", status]);
+      targetKlass = statusOrStateToClass("status-", status);
+      _ref = this.dom.attr('class').split(' ');
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        klass = _ref[_i];
+        if (/^status-/.test(klass)) {
+          this.dom.removeClass(klass);
+        }
+      }
+      this.dom.addClass(targetKlass);
+      $('.status', this.dom).text(status);
+      return this.syncDialogStatus();
+    };
+    Agent.prototype.setUsername = function(username) {
+      this.username = username;
     };
     Agent.prototype.setExtension = function(extension) {
       this.extension = extension;
-      return $("" + this.id + " .extension").text(extension);
     };
-    Agent.prototype.setNameExtension = function(nameExtension) {
-      var ext, name, _ref;
-      _ref = nameExtension.split('-', 2), ext = _ref[0], name = _ref[1];
-      this.setExtension(ext);
-      return this.setName(name.replace(/_/g, ' '));
+    Agent.prototype.tick = function() {};
+    Agent.prototype.show = function() {
+      return this.dom.show();
     };
-    Agent.prototype["bridge-agent-start"] = function(msg) {
-      this.setQueue(msg.cc_queue);
-      this.setCidName(msg.cc_caller_cid_name);
-      this.setCidNumber(msg.cc_caller_cid_number);
-      return this.setAnsweredTime(new Date(Date.now()));
+    Agent.prototype.hide = function() {
+      return this.dom.hide();
     };
-    Agent.prototype["bridge-agent-end"] = function(msg) {
-      this.setAnsweredTime();
-      this.setCalledTime(new Date(Date.now()));
-      this.setCidName('');
-      this.setCidNumber('');
-      return this.setQueue('');
+    Agent.prototype.doubleClicked = function() {
+      var dialog;
+      dialog = store.protoAgentDialog.clone(true);
+      dialog.attr('id', "dialog-" + this.name);
+      return dialog.dialog({
+        autoOpen: true,
+        title: "" + this.extension + " " + this.username,
+        modal: false,
+        open: __bind(function(event, ui) {
+          this.syncDialogStatus();
+          return $('.status a', dialog).click(__bind(function(event) {
+            return store.ws.say({
+              method: 'status_of',
+              agent: this.name,
+              status: statusOrStateToClass('', $(event.target).text()).replace(/-/g, '_')
+            });
+          }, this));
+        }, this),
+        close: __bind(function(event, ui) {
+          return dialog.remove();
+        }, this)
+      });
     };
-    Agent.prototype["agent-state-change"] = function(msg) {
-      this.setState(msg.cc_agent_state);
-      switch (this.state) {
-        case "Receiving":
-          return this.setCalledTime(this.calledTime || new Date(Date.now()));
-        case "In a queue call":
-          return this.setAnsweredTime(new Date(Date.now()));
-      }
-    };
-    Agent.prototype["agent-status-change"] = function(msg) {
-      return this.setStatus(msg.cc_agent_status);
+    Agent.prototype.syncDialogStatus = function() {
+      var targetKlass;
+      targetKlass = statusOrStateToClass("", this.status);
+      p(targetKlass);
+      p($("#dialog-" + this.name + " .status a"));
+      $("#dialog-" + this.name + " .status a").removeClass('active');
+      return $("#dialog-" + this.name + " .status a." + targetKlass).addClass('active');
     };
     return Agent;
   })();
-  Agent.all = {};
-  Agent.withExtension = function(extension) {
-    var agent, key, _ref;
-    if (!(extension != null) || extension.length > 4) {
-      return;
-    }
-    _ref = Agent.all;
-    for (key in _ref) {
-      agent = _ref[key];
-      if (agent.extension === extension) {
-        return agent;
-      }
-    }
-    return;
-  };
-  Agent.findOrCreate = function(msg) {
-    var agent, name;
-    name = msg.cc_agent != null ? msg.cc_agent : msg.name;
-    agent = Agent.all[name];
-    if (!(agent != null) && name) {
-      agent = new Agent(name);
-      agent.initializeFromMsg(name, msg);
-      Agent.all[name] = agent;
-    }
-    return agent;
-  };
-  updateDeltas = function() {
-    var agent, key, _ref;
-    _ref = Agent.all;
-    for (key in _ref) {
-      agent = _ref[key];
-      agent.tick();
-    }
-    return;
-  };
-  changeStatus = function(event) {
-    var a, agentId, status, ws;
-    ws = event.data;
-    a = $(event.target);
-    agentId = a.closest('.status-dialog').find('.agent-name').text();
-    status = statusOrStateToClass(a.text()).replace(/-/g, '_');
-    ws.send(JSON.stringify({
-      method: "status_of",
-      agent: agentId,
-      status: status
-    }));
-    return false;
-  };
-  callTap = function(event) {
-    var a, agentId, self, ws;
-    ws = event.data;
-    a = $(event.target);
-    agentId = a.closest('.status-dialog').find('.agent-name').text();
-    self = $('#agent_name').text();
-    return ws.send(JSON.stringify({
-      method: 'calltap',
-      agent: agentId,
-      tapper: self
-    }));
-  };
-  callTapToo = function(event) {
-    var extension, name, phoneNumber, tapper, uuid, ws;
-    try {
-      ws = event.data;
-      extension = this.rel;
-      uuid = this.title;
-      phoneNumber = this.text;
-      name = this.name;
-      tapper = $('#agent_name').text();
-      log("tapping " + name + ": " + extension + " <=> " + phoneNumber + " (" + uuid + ") by " + tapper);
-      ws.send(JSON.stringify({
-        method: 'calltaptoo',
-        name: name,
-        extension: extension,
-        tapper: tapper,
-        uuid: uuid,
-        phoneNumber: phoneNumber
-      }));
-    } catch (error) {
-      log(error);
-    }
-    return false;
-  };
-  withLabel = function(name, fun) {
-    var actual, json, label, labels, result;
-    json = localStorage.getItem('labels');
-    if (json != null) {
-      labels = JSON.parse(json);
-      label = labels[name] || {};
-      labels[name] = label;
-    } else {
-      labels = {};
-      label = {};
-      labels[name] = label;
-    }
-    result = fun(label);
-    actual = {};
-    for (name in labels) {
-      label = labels[name];
-      if (/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(name)) {
-        actual[name] = label;
-      }
-    }
-    localStorage.setItem('labels', JSON.stringify(actual));
-    refreshAspects();
-    return result;
-  };
-  dropped = function(agentId, labelName) {
-    var activeLabelName;
-    if (labelName === 'Trash') {
-      activeLabelName = window.location.hash.slice(1);
-      withLabel(activeLabelName, function(label) {
-        delete label[agentId];
-        return true;
-      });
-      return showAspect(activeLabelName);
-    } else {
-      return withLabel(labelName, function(label) {
-        return label[agentId] = true;
-      });
-    }
-  };
-  refreshAspects = function() {
-    var label, labels, name, tag;
-    labels = JSON.parse(localStorage.getItem('labels'));
-    $('.aspects .droppable').detach();
-    for (name in labels) {
-      label = labels[name];
-      tag = $("<li class='droppable'><a href='#" + name + "'>" + name + "</a></li>");
-      tag.insertBefore($('.aspects .trash'));
-    }
-    return $('.aspects .droppable, .aspects .trash').droppable({
-      activeClass: "ui-state-active",
-      hoverClass: "ui-state-hover",
-      drop: function(event, ui) {
-        var agentId, labelName;
-        agentId = ui.draggable[0].id;
-        labelName = $(this).text();
-        return dropped(agentId, labelName);
-      }
-    });
-  };
-  showAspect = function(labelName) {
-    var effect, speed, _ref;
-    $('.aspects li').removeClass('active');
-    $('.aspects li').each(function(i, li) {
-      if ($(li).text() === labelName) {
-        return $(li).addClass('active');
-      }
-    });
-    _ref = ['fade', 'slow'], effect = _ref[0], speed = _ref[1];
-    if (labelName === '') {
-      $('.agent:hidden').show(effect, speed);
-      $('.aspects .trash:visible').hide(effect, speed);
-    } else {
-      $('.aspects .trash:hidden').show(effect, speed);
-      withLabel(labelName, function(label) {
-        var agent, agentId, agents, key, value;
-        agents = Agent.all;
-        for (key in agents) {
-          agent = agents[key];
-          agent.isVisible = false;
-        }
-        for (agentId in label) {
-          value = label[agentId];
-          if (agent = agents[agentId]) {
-            agent.isVisible = true;
-          }
-        }
-        for (key in agents) {
-          agent = agents[key];
-          agent.adjustVisibility(effect, speed);
-        }
-        return true;
-      });
-    }
-    return true;
-  };
-  syncSettingsFromAspects = function() {
-    var label, name, _ref, _results;
-    $('#settings-dialog .aspects li').detach();
-    _ref = JSON.parse(localStorage.getItem('labels'));
-    _results = [];
-    for (name in _ref) {
-      label = _ref[name];
-      _results.push($('#settings-dialog .aspects').append($("<li>" + name + "<span class=\"ui-icon ui-icon-trash\"></span></li>")));
-    }
-    return _results;
-  };
-  onMessage = function(event) {
-    var agent, debuggers, msg, _base, _i, _len, _ref;
-    msg = JSON.parse(event.data);
-    debuggers = /2616|2602|2613/;
-    if (msg.agents) {
-      log(msg.agents);
-      _ref = msg.agents;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        agent = _ref[_i];
-        Agent.findOrCreate(agent);
-      }
-    } else if (agent = Agent.findOrCreate(msg)) {
-      if (typeof (_base = agent[msg.cc_action]).apply === "function") {
-        _base.apply(agent, [msg]);
-      }
-    } else if (msg.event_name === 'CHANNEL_HANGUP') {
-      if (debuggers.test(msg.caller_destination_number) || debuggers.test(msg.caller_caller_id_number)) {
-        log("HANGUP");
-        log(event.data);
-      }
-      if (agent = Agent.withExtension(msg.caller_destination_number)) {
-        agent.hungupCall('Inbound Call', msg);
-      }
-      if (agent = Agent.withExtension(msg.caller_caller_id_number)) {
-        agent.hungupCall('Outbound Call', msg);
-      }
-    } else if (msg.event_name === 'CHANNEL_ANSWER') {
-      if (debuggers.test(msg.caller_destination_number) || debuggers.test(msg.caller_caller_id_number)) {
-        log("ANSWER");
-        log(event.data);
-      }
-      if (agent = Agent.withExtension(msg.caller_destination_number)) {
-        agent.answeredCall('Inbound Call', msg.caller_caller_id_name, msg.caller_caller_id_number, null, msg.channel_call_uuid);
-      }
-      if (agent = Agent.withExtension(msg.caller_caller_id_number)) {
-        agent.answeredCall('Outbound Call', msg.caller_callee_id_name, msg.caller_callee_id_number, null, msg.channel_call_uuid);
-      }
-    }
-    return;
-  };
-  onOpen = function(event) {
-    var agent;
-    agent = $('#agent_name').text();
-    this.send(JSON.stringify({
-      method: 'subscribe',
-      agent: agent
-    }));
-    this.intervalId = setInterval(updateDeltas, 1000);
-    return refreshAspects();
-  };
-  onClose = function(event) {
-    setTimeout(setupWs, 3000);
-    return clearInterval(this.intervalId);
-  };
-  setupWs = function() {
-    var server, ws;
-    server = $('#server').text();
-    ws = new WebSocket(server);
-    ws.onmessage = onMessage;
-    ws.onopen = onOpen;
-    ws.onclose = onClose;
-    $('#total-reset').click(function(event) {
-      localStorage.clear();
-      refreshAspects();
-      syncSettingsFromAspects();
-      return false;
-    });
-    $('.status-dialog .status a').die('click').live('click', ws, changeStatus);
-    $('.status-dialog .calltap').die('click').live('click', ws, callTap);
-    return $('a.calltaptoo').die('click').live('click', ws, callTapToo);
-  };
   $(function() {
-    setupWs();
-    $('#agents').sortable();
-    $('#agents').disableSelection();
-    $('#settings-dialog .tabs').tabs();
-    $(window).bind('hashchange', function(event) {
-      var hash;
-      hash = event.target.location.hash;
-      return showAspect(hash.slice(1));
-    });
-    $('#settings-dialog .aspects .ui-icon-trash').live('click', function(event) {
-      var json, labelName, labels;
-      labelName = $(event.target).parent().text();
-      json = localStorage.getItem('labels');
-      labels = JSON.parse(json);
-      delete labels[labelName];
-      localStorage.setItem('labels', JSON.stringify(labels));
-      refreshAspects();
-      syncSettingsFromAspects();
-      return false;
-    });
-    $('#settings-dialog').dialog({
-      autoOpen: false,
-      title: 'Settings',
-      modal: true,
-      open: syncSettingsFromAspects
-    });
-    $('nav .settings').click(function(event) {
-      return $('#settings-dialog').dialog('open');
-    });
-    return $('#settings-dialog .add-aspect button').click(function(event) {
-      var input, labelName;
-      input = $('#input-text-add-aspect');
-      labelName = input.val();
-      withLabel(labelName, function(label) {
-        return true;
+    store.server = $('#server').text();
+    store.agent = $('#agent_name').text();
+    store.ws = new Socket(new Controller());
+    store.protoCall = $('#proto-call').detach();
+    store.protoAgent = $('#proto-agent').detach();
+    store.protoAgentDialog = $('#proto-agent-dialog').detach();
+    $('#nav-queues a').live('click', __bind(function(event) {
+      return store.ws.say({
+        method: 'agents_of',
+        queue: $(event.target).text()
       });
-      input.val('');
-      syncSettingsFromAspects();
-      return false;
-    });
+    }, this));
+    $('#show-all-agents').live('click', __bind(function(event) {
+      var agent, name, _ref, _results;
+      _ref = store.agents;
+      _results = [];
+      for (name in _ref) {
+        agent = _ref[name];
+        _results.push(agent.show());
+      }
+      return _results;
+    }, this));
+    $('.agent').live('dblclick', __bind(function(event) {
+      var agent, agent_id;
+      agent_id = $(event.target).attr('id').replace(/^agent-/, "");
+      agent = store.agents[agent_id];
+      return agent.doubleClicked();
+    }, this));
+    return setInterval(__bind(function() {
+      var agent, name, _ref, _results;
+      _ref = store.agents;
+      _results = [];
+      for (name in _ref) {
+        agent = _ref[name];
+        _results.push(agent.tick());
+      }
+      return _results;
+    }, this), 1000);
   });
 }).call(this);

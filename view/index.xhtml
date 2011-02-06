@@ -2,24 +2,30 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-
-    <meta name="viewport" content="width=device-width" />
-
-    <!-- The 1140px Grid -->
     <title>Tiny Call Center</title>
 
-    <link rel="stylesheet" href="/css/layout-ws.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="/css/main-layout.css" type="text/css" media="screen" />
 
     <script type="text/javascript" src="/js/jquery-1.4.3.min.js"></script>
     <script type="text/javascript">
-      $(function() { window.open('/ws/index','CallCenter', 'location=no,menubar=no,status=no,personalbar=no,resizable=yes,height=250'); });
+      TinyCallCenterOpenRibbon = function(){
+        window.open(
+            '/ws/index',
+            'CallCenter',
+            'locationbar=no,navigator=no,status=no,menubar=no,location=no,toolbar=no,personalbar=no,resizable=yes,height=250'
+        );
+      };
+      <?r unless @user.manager? ?>
+        $(TinyCallCenterOpenRibbon);
+      <?r end ?>
     </script>
   </head>
   <body>
-    <div class="container">
+    <h1>Tiny Call Center</h1>
+    <nav>
       <ul>
         <li>
-          <a href="#" onClick="javascript:window.open('/ws/index','CallCenter', 'locationbar=no,navigator=no,status=no,menubar=no,location=no,toolbar=no,personalbar=no,resizable=yes,height=250');">Queue</a>
+          <a href="#" onClick="javascript:TinyCallCenterOpenRibbon();">Ribbon</a>
         </li>
         <?r if @user.manager? ?>
           <li>
@@ -28,8 +34,11 @@
           <li>
             #{TinyCallCenter::Orderly.a('Real Time View', :/)}
           </li>
+          <li>
+            #{TinyCallCenter::Accounts.a('Logout', :logout)}
+          </li>
         <?r end ?>
       </ul>
-    </div>
+    </nav>
   </body>
 </html>

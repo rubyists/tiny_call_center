@@ -27,6 +27,8 @@ body {
 #wrap_up.active { background: #afa; }
 #on_break { background: #ff0; }
 #on_break.active { background: #afa; }
+#logged_out { background: #f00; }
+#logged_out.active { background: #afa; }
 
 #disposition {
   background: rgba(0, 0, 0, 0.5);

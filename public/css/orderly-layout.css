@@ -1,164 +1,134 @@
 body {
-  background: #aaa;
+  padding: 0;
+  margin: 0;
+  background: #333;
+  font-family: sans-serif;
 }
 
-a {
-  border: 0;
+nav {
+  top: 0;
+  position: fixed;
+  overflow: hidden;
+  height: 2em;
+  line-height: 2em;
+  width: 100%;
+}
+
+nav a {
+  color: #fff;
+}
+
+nav ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+nav li {
+  display: inline;
+  padding: 0;
+  margin: 0em 0.5em;
+}
+
+#nav-queues {
+  float: left;
+}
+
+#nav-meta {
+  float: right;
 }
 
 #content {
   margin-top: 2em;
 }
 
-nav.aspects {
-  top: 0px;
-  left: 0px;
-  position: fixed;
-  z-index: 1;
-  background: #eee;
-  border-bottom: 1px dashed grey;
-  width: 100%;
-}
-
-nav.aspects ul {
-  list-style: none;
-}
-
-nav.aspects li {
+#agents .agent {
   float: left;
-  margin: auto 1em;
-}
-
-nav.aspects .ui-state-active {
-  background: #f66;
-  -webkit-transition: 500ms;
-  -moz-transition: 500ms;
-  transition: 500ms;
-  line-height: 6em;
-  width: 13em;
-  text-align: center;
-}
-
-nav.aspects .ui-state-hover {
-  background: #6f6;
-}
-
-nav .settings {
-  position: absolute;
-  top: 0;
-  right: 0;
-}
-
-#settings-dialog .aspects .ui-icon-trash {
-  float: right;
-}
-
-.agent {
-  background: #eee;
-  margin: 0.5em;
-  padding: 0.5em;
-  -webkit-box-shadow: 0px 0px 0.5em black;
-  -moz-box-shadow: 0px 0px 0.5em black;
-  box-shadow: 0px 0px 0.5em black;
-  -webkit-border-radius: 0.5em;
-  -moz-border-radius: 0.5em;
-  border-radius: 0.5em;
-  width: 13em;
-  height: 7em;
-  float: left;
-  position: relative;
+  width: 15em;
+  height: 10em;
   overflow: auto;
+  -moz-border-radius: 0.5em;
+  padding: 0.5em;
+  margin: 0.1em;
+  font-size: 0.7em;
 }
 
-.agent.ui-sortable-helper {
-  background: rgba(255,255,255,0.5);
-}
-
-.agent .status {
-  display: block;
-  border: 1px solid grey;
-  -webkit-border-radius: 100%;
-  -moz-border-radius: 100%;
-  border-radius: 100%;
-  width: 0.5em;
-  height: 0.5em;
-  position: absolute;
-  right: 2px;
-  bottom: 2px;
-}
-
-.agent .status.available {
-  background: #0f0;
-}
-
-.agent .status.logged-out {
-  background: #f00;
-}
-
-.agent .status.on-break {
-  background: #ff0;
-}
-
-.agent .status.available-on-demand {
-  background: #0ff;
-}
-
-.agent .state {
-  position: absolute;
-  right: 0px;
-  bottom: 1em;
+.agent > div {
+  display: none;
 }
 
 .agent .name {
+  display: block;
   font-weight: bold;
 }
 
-.agent .answered {
-  position: absolute;
-  bottom: 0em;
-  left: 8em;
+.agent .state {
+  display: inline;
 }
 
-.agent .called {
-  position: absolute;
-  bottom: 0em;
-  left: 0.5em;
-}
-
-#status-dialog {
-  display: none;
-}
-
-.status-dialog .agent-name {
-  display: none;
-}
-
-.status-dialog .status a {
+.agent .calls {
   display: block;
 }
 
-.status-dialog .status a:hover {
-  background: #ddd;
+.call .channel, .call .uuid {
+  display: none;
 }
 
-.status-dialog .status .available { background: #afa; }
-.status-dialog .status .logged-out { background: #faa; }
-.status-dialog .status .on-break { background: #ffa; }
-.status-dialog .status .available-on-demand { background: #aff; }
-
-.status-dialog .status .active {
-  border: 1px dashed black;
+.agent-dialog .status .available.active {
+  border: 1px solid #f00;
 }
 
-footer {
-  clear: both;
-  text-align: center;
+.agent-dialog .status .available-on-demand.active {
+  border: 1px solid #f00;
+}
+
+.agent-dialog .status .on-break.active {
+  border: 1px solid #f00;
+}
+
+.agent-dialog .status .logged-out.active {
+  border: 1px solid #f00;
+}
+
+#agents .agent.status-available {
+  -webkit-transition: 500ms;
+  -moz-transition: 500ms;
+  transition: 500ms;
+  background: #6f6;
+}
+
+#agents .agent.status-available-on-demand {
+  -webkit-transition: 500ms;
+  -moz-transition: 500ms;
+  transition: 500ms;
+  background: #f6f;
+}
+
+#agents .agent.status-on-break {
+  -webkit-transition: 500ms;
+  -moz-transition: 500ms;
+  transition: 500ms;
+  background: #ff6;
+}
+
+#agents .agent.status-logged-out {
+  -webkit-transition: 500ms;
+  -moz-transition: 500ms;
+  transition: 500ms;
+  background: #f66;
+}
+
+#proto-agent {
+  display: none;
 }
 
 #agent_name, #server {
   display: none;
 }
 
-.agent-id {
-  z-index: 2;
+footer {
+  color: #fff;
+  padding-top: 2em;
+  clear: both;
+  text-align: center;
 }

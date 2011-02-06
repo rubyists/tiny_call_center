@@ -2,3 +2,4 @@
 *.swp
 services/*/log/*
 services/*/supervise/*
+db/call_center.db
