@@ -15,7 +15,7 @@ task :migrate, :version do |_, args|
   if args.version.nil?
     Sequel::Migrator.apply(TinyCallCenter.db, TinyCallCenter::MIGRATION_ROOT)
   else
-    Sequel::Migrator.run(TinyCallCenter.db, TinyCallCenter::MIGRATION_ROOT, :target => args.version.to_i)
+    Sequel::Migrator.apply(TinyCallCenter.db, TinyCallCenter::MIGRATION_ROOT, :target => args.version.to_i)
   end
 
 end

@@ -6,7 +6,7 @@ module TinyCallCenter
   end
 
   def self.db
-    @@db ||= Sequel.sqlite(TinyCallCenter.options.db)
+    @@db ||= Sequel.connect(TinyCallCenter.options.db)
   end
 
   def self.db=(other)

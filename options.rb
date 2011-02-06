@@ -30,6 +30,6 @@ module TinyCallCenter
       ENV["TinyCallCenter_OffHook"] || false
 
     o "Sqlite Database File", :db,
-      ENV["TinyCallCenter_DB"] || File.expand_path("../db/call_center.db", __FILE__)
+      ENV["TinyCallCenter_DB"] || "sqlite://%s" % File.expand_path("../db/call_center.db", __FILE__)
   end
 end
