@@ -119,13 +119,15 @@
       this.localLeg = localLeg;
       this.remoteLeg = remoteLeg;
       this.uuid = localLeg.uuid;
+      this.klass = "call-" + this.uuid;
       this.createDOM();
+      this.renderInAgent();
+      this.renderInDialog();
       this.agent.calls[this.uuid] = this;
     }
     Call.prototype.createDOM = function() {
       this.dom = store.protoCall.clone();
-      this.dom.attr('id', "call-" + this.uuid);
-      $('.calls', this.agent.dom).append(this.dom);
+      this.dom.attr('class', this.klass);
       $('.state', this.dom).text('On A Call');
       $('.cid-number', this.dom).text(this.remoteLeg.cid_number);
       $('.cid-name', this.dom).text(this.remoteLeg.cid_name);
@@ -133,16 +135,35 @@
       $('.queue-name', this.dom).text(this.localLeg.queue);
       $('.uuid', this.dom).text(this.localLeg.uuid);
       $('.channel', this.dom).text(this.localLeg.channel);
-      $('.calls', this.agent.dom).append(this.dom);
-      return this.dom.show();
+      return this.dialogDOM = this.dom.clone(true);
     };
     Call.prototype.hangup = function(msg) {
       delete this.agent.calls[this.uuid];
-      this.dom.remove();
-      return this.dom.slideUp("normal", function() {
+      this.dom.slideUp("normal", function() {
         return $(this).remove();
       });
+      return this.dialogDOM.remove();
     };
+    Call.prototype.renderInAgent = function() {
+      return $('.calls', this.agent.dom).append(this.dom);
+    };
+    Call.prototype.renderInDialog = function() {
+      if (this.agent.dialog != null) {
+        return $('.calls', this.agent.dialog).append(this.dialogDOM);
+      }
+    };
+    Call.prototype.calltap = function() {
+      p("tapping " + this.agent.name + ": " + this.agent.extension + " <=> " + this.remoteLeg.cid_number + " (" + this.localLeg.uuid + ") by " + store.agent);
+      return store.ws.say({
+        method: 'calltap_too',
+        tapper: store.agent,
+        name: this.agent.name,
+        extension: this.agent.extension,
+        uuid: this.localLeg.uuid,
+        phoneNumber: this.remoteLeg.cid_number
+      });
+    };
+    Call.prototype.tick = function() {};
     return Call;
   })();
   Agent = (function() {
@@ -210,7 +231,6 @@
       }
     };
     Agent.prototype.makeCall = function(left, right, msg) {
-      p(["makeCall", this, left, right, msg]);
       if (!this.calls[left.uuid]) {
         return new Call(this, left, right, msg);
       }
@@ -243,7 +263,6 @@
     Agent.prototype.setState = function(state) {
       var alias, klass, targetKlass, _i, _len, _ref;
       this.state = state;
-      p(["setState", state]);
       if (!(alias = store.stateMapping[state])) {
         return;
       }
@@ -257,12 +276,12 @@
         }
       }
       this.dom.addClass(targetKlass);
-      return $('.state', this.dom).text(state);
+      $('.state', this.dom).text(state);
+      return this.syncDialogState();
     };
     Agent.prototype.setStatus = function(status) {
       var klass, targetKlass, _i, _len, _ref;
       this.status = status;
-      p(["setStatus", status]);
       targetKlass = statusOrStateToClass("status-", status);
       _ref = this.dom.attr('class').split(' ');
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -281,7 +300,24 @@
     Agent.prototype.setExtension = function(extension) {
       this.extension = extension;
     };
-    Agent.prototype.tick = function() {};
+    Agent.prototype.calltap = function() {
+      p("Tapping " + this.name + " for " + store.agent);
+      return store.ws.say({
+        method: 'calltap',
+        agent: this.name,
+        tapper: store.agent
+      });
+    };
+    Agent.prototype.tick = function() {
+      var call, uuid, _ref, _results;
+      _ref = this.calls;
+      _results = [];
+      for (uuid in _ref) {
+        call = _ref[uuid];
+        _results.push(call.tick());
+      }
+      return _results;
+    };
     Agent.prototype.show = function() {
       return this.dom.show();
     };
@@ -289,35 +325,66 @@
       return this.dom.hide();
     };
     Agent.prototype.doubleClicked = function() {
-      var dialog;
-      dialog = store.protoAgentDialog.clone(true);
-      dialog.attr('id', "dialog-" + this.name);
-      return dialog.dialog({
+      this.dialog = store.protoAgentDialog.clone(true);
+      this.dialog.attr('id', "dialog-" + this.name);
+      return this.dialog.dialog({
         autoOpen: true,
         title: "" + this.extension + " " + this.username,
         modal: false,
         open: __bind(function(event, ui) {
-          this.syncDialogStatus();
-          return $('.status a', dialog).click(__bind(function(event) {
-            return store.ws.say({
+          var call, uuid, _ref;
+          this.syncDialog();
+          _ref = this.calls;
+          for (uuid in _ref) {
+            call = _ref[uuid];
+            call.renderInDialog();
+          }
+          $('.calltap', this.dialog).click(__bind(function(event) {
+            p(this.calltap);
+            this.calltap();
+            return false;
+          }, this));
+          $('.calls .uuid', this.dialog).click(__bind(function(event) {
+            this.calls[$(event.target).text()].calltap();
+            return false;
+          }, this));
+          $('.status a', this.dialog).click(__bind(function(event) {
+            store.ws.say({
               method: 'status_of',
               agent: this.name,
               status: statusOrStateToClass('', $(event.target).text()).replace(/-/g, '_')
             });
+            return false;
+          }, this));
+          return $('.state a', this.dialog).click(__bind(function(event) {
+            store.ws.say({
+              method: 'state_of',
+              agent: this.name,
+              state: $(event.target).attr('class')
+            });
+            return false;
           }, this));
         }, this),
         close: __bind(function(event, ui) {
-          return dialog.remove();
+          return this.dialog.remove();
         }, this)
       });
+    };
+    Agent.prototype.syncDialog = function() {
+      this.syncDialogStatus();
+      return this.syncDialogState();
     };
     Agent.prototype.syncDialogStatus = function() {
       var targetKlass;
       targetKlass = statusOrStateToClass("", this.status);
-      p(targetKlass);
-      p($("#dialog-" + this.name + " .status a"));
-      $("#dialog-" + this.name + " .status a").removeClass('active');
-      return $("#dialog-" + this.name + " .status a." + targetKlass).addClass('active');
+      $(".status a", this.dialog).removeClass('active');
+      return $(".status a." + targetKlass, this.dialog).addClass('active');
+    };
+    Agent.prototype.syncDialogState = function() {
+      var targetKlass;
+      targetKlass = this.state;
+      $(".state a", this.dialog).removeClass('active');
+      return $(".state a." + targetKlass, this.dialog).addClass('active');
     };
     return Agent;
   })();
@@ -346,7 +413,7 @@
     }, this));
     $('.agent').live('dblclick', __bind(function(event) {
       var agent, agent_id;
-      agent_id = $(event.target).attr('id').replace(/^agent-/, "");
+      agent_id = $(event.target).closest('.agent').attr('id').replace(/^agent-/, "");
       agent = store.agents[agent_id];
       return agent.doubleClicked();
     }, this));

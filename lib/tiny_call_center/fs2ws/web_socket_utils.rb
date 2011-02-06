@@ -45,12 +45,6 @@ module TinyCallCenter
       stat
     end
 
-    def got_status_of(msg)
-      mapped = STATUS_MAPPING[msg['status']]
-      agent = msg['agent']
-      reporter.callcenter!{|cc| cc.set(agent, :status, mapped) }
-    end
-
     def reply(obj)
       socket.send(obj.to_json)
     end

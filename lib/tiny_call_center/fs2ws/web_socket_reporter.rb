@@ -44,8 +44,10 @@ module TinyCallCenter
       subscribe
       update_status
       update_state
-      call
-      give_initial_status
+      calls = give_initial_status
+      call unless calls.detect { |c|
+        [c[:left][:cid_number],  c[:right][:cid_number]].include? '8675309'
+      }
     end
 
     def subscribe
@@ -94,7 +96,7 @@ module TinyCallCenter
       fsock = FSR::CommandSocket.new(server: registration_server)
       channels = fsock.channels(true).run
 
-      channels.each do |channel|
+      channels.map do |channel|
         FSR::Log.debug channel: channel
         next unless ['ACTIVE', 'RINGING'].include?(channel.callstate) &&
           (channel.dest == extension ||
@@ -113,13 +115,16 @@ module TinyCallCenter
             uuid:        channel.uuid,
           },
           right: {
+            cid_number:  channel.cid_num,
+            cid_name:    channel.cid_name,
             destination: channel.dest,
             uuid:        channel.uuid,
           }
         }
 
         reply msg
-      end
+        msg
+      end.compact
     end
 
     # TODO

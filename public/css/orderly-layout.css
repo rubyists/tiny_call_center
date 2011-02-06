@@ -74,19 +74,7 @@ nav li {
   display: none;
 }
 
-.agent-dialog .status .available.active {
-  border: 1px solid #f00;
-}
-
-.agent-dialog .status .available-on-demand.active {
-  border: 1px solid #f00;
-}
-
-.agent-dialog .status .on-break.active {
-  border: 1px solid #f00;
-}
-
-.agent-dialog .status .logged-out.active {
+.agent-dialog .state .active, .agent-dialog .status .active {
   border: 1px solid #f00;
 }
 

@@ -21,14 +21,17 @@ body {
 .call .channel { display: none; }
 .call .uuid { display: none; }
 
-#status { width: 6em; float: left; }
+#status { width: 7em; float: left; }
+#available { background: #0f0; color: #000; }
+#available.active { background: #afa; }
+#on_break { background: #ff0; color: #000; }
+#on_break.active { background: #afa; }
+#logged_out { background: #f00; color: #000; }
+#logged_out.active { background: #afa; }
+
 #state { width: 6em; float: left; }
 #wrap_up { background: #f00; }
 #wrap_up.active { background: #afa; }
-#on_break { background: #ff0; }
-#on_break.active { background: #afa; }
-#logged_out { background: #f00; }
-#logged_out.active { background: #afa; }
 
 #disposition {
   background: rgba(0, 0, 0, 0.5);

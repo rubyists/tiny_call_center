@@ -56,6 +56,17 @@ module TinyCallCenter
       give_queues
     end
 
+    def got_status_of(msg)
+      mapped = STATUS_MAPPING[msg['status']]
+      agent = msg['agent']
+      reporter.callcenter!{|cc| cc.set(agent, :status, mapped) }
+    end
+
+    def got_state_of(msg)
+      agent = msg['agent']
+      reporter.callcenter!{|cc| cc.set(agent, :state, msg['state']) }
+    end
+
     def got_agents_of(msg)
       queue_names = [msg["queue"], msg["queues"]].flatten.compact
       sock = fsr_socket(self.command_socket_server)
@@ -93,7 +104,6 @@ module TinyCallCenter
 
       utimes = %w[last_bridge_start last_offered_call last_bridge_end last_status_change]
       agents.map!{|agent|
-        p agent
         agent_ext = Account.extension(agent.name)
         agent_username = Account.username(agent.name)
         agent_server = agent.contact.to_s.split('@')[1]

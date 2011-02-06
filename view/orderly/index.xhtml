@@ -26,7 +26,7 @@
         <div class="queue-name"></div>
         <div class="destination-number"></div>
         <div class="channel"></div>
-        <div class="uuid"></div>
+        <a class="uuid" href="#"></a>
       </div>
       <div id="proto-agent" class="agent">
         <div class="name"></div>
@@ -42,12 +42,23 @@
         <button class="calltap ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" role="button" aria-disabled="false">
           <span class="ui-button-text">Tap Call</span>
         </button>
+
+        <h2>Calls</h2>
+        <ul class="calls">
+        </ul>
+
         <h2>Status</h2>
-        <div class="status">
-          <a class="available" href="#">Available</a>
-          <a class="available-on-demand" href="#">Available (On Demand)</a>
-          <a class="on-break" href="#">On Break</a>
-          <a class="logged-out" href="#">Logged Out</a>
+        <ul class="status">
+          <li><a class="available" href="#">Available</a></li>
+          <li><a class="available-on-demand" href="#">Available (On Demand)</a></li>
+          <li><a class="on-break" href="#">On Break</a></li>
+          <li><a class="logged-out" href="#">Logged Out</a></li>
+        </ul>
+
+        <h2>State</h2>
+        <ul class="state">
+          <li><a class="Waiting" href="#">Ready</a></li>
+          <li><a class="Idle" href="#">Wrap Up</a></li>
         </div>
       </div>
 

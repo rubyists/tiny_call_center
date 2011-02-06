@@ -80,13 +80,15 @@ class Controller
 class Call
   constructor: (@agent, @localLeg, @remoteLeg, msg) ->
     @uuid = localLeg.uuid
+    @klass = "call-#{@uuid}"
     @createDOM()
+    @renderInAgent()
+    @renderInDialog()
     @agent.calls[@uuid] = this
 
   createDOM: ->
     @dom = store.protoCall.clone()
-    @dom.attr('id', "call-#{@uuid}")
-    $('.calls', @agent.dom).append(@dom)
+    @dom.attr('class', @klass)
     $('.state', @dom).text('On A Call')
     $('.cid-number', @dom).text(@remoteLeg.cid_number)
     $('.cid-name', @dom).text(@remoteLeg.cid_name)
@@ -94,13 +96,32 @@ class Call
     $('.queue-name', @dom).text(@localLeg.queue)
     $('.uuid', @dom).text(@localLeg.uuid)
     $('.channel', @dom).text(@localLeg.channel)
-    $('.calls', @agent.dom).append(@dom)
-    @dom.show()
+    @dialogDOM = @dom.clone(true)
 
   hangup: (msg) ->
     delete @agent.calls[@uuid]
-    @dom.remove()
     @dom.slideUp("normal", -> $(this).remove())
+    @dialogDOM.remove()
+
+  renderInAgent: ->
+    $('.calls', @agent.dom).append(@dom)
+
+  renderInDialog: ->
+    $('.calls', @agent.dialog).append(@dialogDOM) if @agent.dialog?
+
+  calltap: ->
+    p "tapping #{@agent.name}: #{@agent.extension} <=> #{@remoteLeg.cid_number} (#{@localLeg.uuid}) by #{store.agent}"
+    store.ws.say(
+      method: 'calltap_too',
+      tapper: store.agent,
+      name: @agent.name,
+      extension: @agent.extension,
+      uuid: @localLeg.uuid,
+      phoneNumber: @remoteLeg.cid_number,
+    )
+
+  tick: ->
+
 
 class Agent
   constructor: (@name) ->
@@ -166,7 +187,6 @@ class Agent
       @makeCall(msg.right, msg.left, msg)
 
   makeCall: (left, right, msg) ->
-    p ["makeCall", this, left, right, msg]
     new Call(this, left, right, msg) unless @calls[left.uuid]
 
   got_channel_hangup: (msg) ->
@@ -187,7 +207,6 @@ class Agent
     $('.name', @dom).text(name)
 
   setState: (@state) ->
-    p ["setState", state]
     unless alias = store.stateMapping[state]
       return
     state = alias
@@ -196,9 +215,9 @@ class Agent
       @dom.removeClass(klass) if /^state-/.test(klass)
     @dom.addClass(targetKlass)
     $('.state', @dom).text(state)
+    @syncDialogState()
 
   setStatus: (@status) ->
-    p ["setStatus", status]
     targetKlass = statusOrStateToClass("status-", status)
     for klass in @dom.attr('class').split(' ')
       @dom.removeClass(klass) if /^status-/.test(klass)
@@ -209,8 +228,18 @@ class Agent
   setUsername: (@username) ->
   setExtension: (@extension) ->
 
+  calltap: ->
+    p "Tapping #{@name} for #{store.agent}"
+    store.ws.say(
+      method: 'calltap',
+      agent: @name,
+      tapper: store.agent,
+    )
+
   # do time ticking here
   tick: ->
+    for uuid, call of @calls
+      call.tick()
 
   show: ->
     @dom.show()
@@ -219,30 +248,55 @@ class Agent
     @dom.hide()
 
   doubleClicked: ->
-    dialog = store.protoAgentDialog.clone(true)
-    dialog.attr('id', "dialog-#{@name}")
-    dialog.dialog(
+    @dialog = store.protoAgentDialog.clone(true)
+    @dialog.attr('id', "dialog-#{@name}")
+    @dialog.dialog(
       autoOpen: true,
       title: "#{@extension} #{@username}",
       modal: false,
       open: (event, ui) =>
-        @syncDialogStatus()
-        $('.status a', dialog).click (event) =>
+        @syncDialog()
+        for uuid, call of @calls
+          call.renderInDialog()
+        $('.calltap', @dialog).click (event) =>
+          p @calltap
+          @calltap()
+          false
+        $('.calls .uuid', @dialog).click (event) =>
+          @calls[$(event.target).text()].calltap()
+          false
+        $('.status a', @dialog).click (event) =>
           store.ws.say(
             method: 'status_of',
             agent: @name,
             status: statusOrStateToClass('', $(event.target).text()).replace(/-/g, '_')
           )
+          false
+        $('.state a', @dialog).click (event) =>
+          store.ws.say(
+            method: 'state_of',
+            agent: @name,
+            state: $(event.target).attr('class'),
+          )
+          false
       close: (event, ui) =>
-        dialog.remove()
+        @dialog.remove()
     )
+
+
+  syncDialog: ->
+    @syncDialogStatus()
+    @syncDialogState()
 
   syncDialogStatus: ->
     targetKlass = statusOrStateToClass("", @status)
-    p targetKlass
-    p $("#dialog-#{@name} .status a")
-    $("#dialog-#{@name} .status a").removeClass('active')
-    $("#dialog-#{@name} .status a.#{targetKlass}").addClass('active')
+    $(".status a", @dialog).removeClass('active')
+    $(".status a.#{targetKlass}", @dialog).addClass('active')
+
+  syncDialogState: ->
+    targetKlass = @state
+    $(".state a", @dialog).removeClass('active')
+    $(".state a.#{targetKlass}", @dialog).addClass('active')
 
 $ ->
   store.server = $('#server').text()
@@ -260,7 +314,7 @@ $ ->
     agent.show() for name, agent of store.agents
 
   $('.agent').live 'dblclick', (event) =>
-    agent_id = $(event.target).attr('id').replace(/^agent-/, "")
+    agent_id = $(event.target).closest('.agent').attr('id').replace(/^agent-/, "")
     agent = store.agents[agent_id]
     agent.doubleClicked()
 

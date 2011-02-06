@@ -58,7 +58,7 @@ module TinyCallCenter
 
     def initialize(user)
       @uid = user
-      warn "<<<ERROR>>> No Such User #{user} in #{self.class.name} #initialize (from #user_raw)" unless @exists = user_raw
+      warn "<<<ERROR>>> No Such User #{user} in #{self.class} #initialize (from #user_raw)" unless @exists = user_raw
     end
 
     def exists?
