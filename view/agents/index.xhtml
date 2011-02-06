@@ -10,10 +10,10 @@
     </div>
     <?r @agents.each do |agent| ?>
       <form action="/agents/set/#{agent.name}" method="post" class="row #{agent.status.downcase.scan(/\w+/)*'-'}">
-        <div class="name">#{agent.full_name.tr('_', ' ')}</div>
+        <div class="name">#{TCC::Account.full_name(agent.name)}</div>
         <div class="extension">#{agent.extension}</div>
         <select name="status">
-          <?r TinyCallCenter::Agents::STATUSES.each do |option| ?>
+          <?r TCC::Agents::STATUSES.each do |option| ?>
           <option value="#{option}" #{option == agent.status ? 'selected="selected"' : ''}>#{option}</option>
           <?r end ?>
         </select>

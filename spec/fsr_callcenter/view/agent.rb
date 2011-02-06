@@ -22,12 +22,12 @@ describe 'FsrCallcenter Agents' do
                "wrap_up_time", "reject_delay_time", "busy_delay_time", "last_bridge_start",
                "last_bridge_end", "last_offered_call", "last_status_change", "no_answer_count",
                "calls_answered", "talk_time", "ready_time"]
-    data = ["2630@default", "single_box", nil, "callback", "[leg_timeout=10]sofia/internal/2630@192.168.6.240",
+    data = ["1011-John_Lennon", "single_box", nil, "callback", "[leg_timeout=10]sofia/internal/1011@192.168.6.240",
             "Available", "Waiting", "10", "10", "10", "10", "1288650045", "1288650221", "1288650038",
-            "1288640724", "0", "4", "320", "0"] 
-    data2 = ["2622@default", "single_box", nil, "callback", "[leg_timeout=10]sofia/internal/2622@192.168.6.240",
+            "1288640724", "0", "4", "320", "0"]
+    data2 = ["1012-Paul_McCartney", "single_box", nil, "callback", "[leg_timeout=10]sofia/internal/1012@192.168.6.240",
             "Logged Out", "Waiting", "10", "10", "10", "10", "1288650045", "1288650221", "1288650038",
-            "1288640724", "0", "4", "320", "0"] 
+            "1288640724", "0", "4", "320", "0"]
     agent = FSR::Model::Agent.new(headers, *data)
     agent2 = FSR::Model::Agent.new(headers, *data2)
 
@@ -35,8 +35,8 @@ describe 'FsrCallcenter Agents' do
 
     res = get('/agents/')
     doc = Nokogiri::HTML(res.body)
-    (doc/:form).first[:action].should == '/agents/set/2630@default'
-    (((doc/:table)/:tr).last/:td).first.text.should == '2630@default'
+    doc.xpath('//form[action="/agents/set/1011-John_Lennon"]').should.not == nil
+    doc.css('form .name').text.should == 'John Lennon'
     doc.xpath('//option[@selected]/@value').text.should == 'Available'
   end
 end

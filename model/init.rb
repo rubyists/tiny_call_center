@@ -5,10 +5,9 @@
 require_relative '../lib/tiny_call_center'
 require_relative '../lib/tiny_call_center/db'
 
-DB = TinyCallCenter.db unless Object.const_defined?("DB")
+DB ||= TinyCallCenter.db unless Object.const_defined?("DB")
 
 # Here go your requires for models:
-
 
 require_relative "./manager"
 if backend = TinyCallCenter.options.backend

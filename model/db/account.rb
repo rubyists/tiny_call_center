@@ -38,11 +38,11 @@ module TinyCallCenter
     end
 
     def self.username(agent)
-      full_name agent.gsub('_', '')
+      full_name agent.tr(' ', '')
     end
 
     def self.full_name(agent)
-      agent.split('-',2).last
+      agent.split('-', 2).last.tr("_", " ")
     end
 
     def self.extension(agent)
