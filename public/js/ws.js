@@ -47,7 +47,7 @@
         cidName: $('.cid-name', this.sel),
         answered: $('.answered', this.sel),
         called: $('.called', this.sel),
-        destinationNumber: $('.destination-number', this.sel),
+        destination: $('.destination', this.sel),
         queueName: $('.queue-name', this.sel),
         uuid: $('.uuid', this.sel),
         channel: $('.channel', this.sel)
@@ -55,7 +55,7 @@
       this.dom.state.text('On A Call');
       this.dom.cidNumber.text(this.remote_leg.cid_number);
       this.dom.cidName.text(this.remote_leg.cid_name);
-      this.dom.destinationNumber.text(this.remote_leg.destination_number);
+      this.dom.destination.text(this.remote_leg.destination);
       this.dom.queueName.text(this.local_leg.queue);
       this.dom.uuid.text(this.local_leg.uuid);
       return this.dom.channel.text(this.local_leg.channel);

@@ -40,21 +40,21 @@ class Call
     $('#calls').append(@sel)
 
     @dom = {
-      state:             $('.state', @sel),
-      cidNumber:         $('.cid-number', @sel),
-      cidName:           $('.cid-name', @sel),
-      answered:          $('.answered', @sel),
-      called:            $('.called', @sel),
-      destinationNumber: $('.destination-number', @sel),
-      queueName:         $('.queue-name', @sel),
-      uuid:              $('.uuid', @sel),
-      channel:           $('.channel', @sel),
+      state:       $('.state', @sel),
+      cidNumber:   $('.cid-number', @sel),
+      cidName:     $('.cid-name', @sel),
+      answered:    $('.answered', @sel),
+      called:      $('.called', @sel),
+      destination: $('.destination', @sel),
+      queueName:   $('.queue-name', @sel),
+      uuid:        $('.uuid', @sel),
+      channel:     $('.channel', @sel),
     }
 
     @dom.state.text('On A Call')
     @dom.cidNumber.text(@remote_leg.cid_number)
     @dom.cidName.text(@remote_leg.cid_name)
-    @dom.destinationNumber.text(@remote_leg.destination_number)
+    @dom.destination.text(@remote_leg.destination)
     @dom.queueName.text(@local_leg.queue)
     @dom.uuid.text(@local_leg.uuid)
     @dom.channel.text(@local_leg.channel)

@@ -1,5 +1,5 @@
 (function() {
-  var Agent, Call, Controller, Socket, p, statusOrStateToClass, store;
+  var Agent, Call, Controller, Socket, formatInterval, p, statusOrStateToClass, store;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   p = function() {
     var _ref;
@@ -14,6 +14,16 @@
   };
   statusOrStateToClass = function(prefix, str) {
     return prefix + str.toLowerCase().replace(/\W+/g, "-").replace(/^-+|-+$/g, "");
+  };
+  formatInterval = function(start) {
+    var minutes, seconds, total;
+    total = parseInt((Date.now() - start) / 1000, 10);
+    minutes = parseInt(total / 60, 10);
+    seconds = total % 60;
+    if (seconds < 10) {
+      seconds = "0" + seconds;
+    }
+    return "" + minutes + ":" + seconds;
   };
   Socket = (function() {
     function Socket(controller) {
@@ -90,20 +100,39 @@
       return _results;
     };
     Controller.prototype.got_agents_of = function(queue, tiers) {
-      var agent, name, tier, _i, _len, _ref, _results;
+      var agent, dom, hidden, hideDOMs, name, showDOMs, shown, tier, _i, _len, _ref;
+      shown = {};
+      hidden = {};
       _ref = store.agents;
       for (name in _ref) {
         agent = _ref[name];
-        agent.hide();
+        hidden[name] = agent.dom;
       }
-      _results = [];
       for (_i = 0, _len = tiers.length; _i < _len; _i++) {
         tier = tiers[_i];
         agent = store.agents[tier.agent] || new Agent(tier.agent);
         agent.fillFromTier(tier);
-        _results.push(agent.show());
+        delete hidden[agent.name];
+        shown[agent.name] = agent.dom;
       }
-      return _results;
+      showDOMs = (function() {
+        var _results;
+        _results = [];
+        for (name in shown) {
+          dom = shown[name];
+          _results.push(dom.removeClass('hidden').addClass('shown'));
+        }
+        return _results;
+      })();
+      return hideDOMs = (function() {
+        var _results;
+        _results = [];
+        for (name in hidden) {
+          dom = hidden[name];
+          _results.push(dom.removeClass('shown').addClass('hidden'));
+        }
+        return _results;
+      })();
     };
     Controller.prototype.got_call_start = function(msg) {
       return store.agents[msg.cc_agent].got_call_start(msg);
@@ -123,12 +152,12 @@
       this.createDOM();
       this.renderInAgent();
       this.renderInDialog();
+      this.setTimer();
       this.agent.calls[this.uuid] = this;
     }
     Call.prototype.createDOM = function() {
       this.dom = store.protoCall.clone();
       this.dom.attr('class', this.klass);
-      $('.state', this.dom).text('On A Call');
       $('.cid-number', this.dom).text(this.remoteLeg.cid_number);
       $('.cid-name', this.dom).text(this.remoteLeg.cid_name);
       $('.destination-number', this.dom).text(this.remoteLeg.destination_number);
@@ -137,8 +166,22 @@
       $('.channel', this.dom).text(this.localLeg.channel);
       return this.dialogDOM = this.dom.clone(true);
     };
+    Call.prototype.setTimer = function() {
+      this.startingTime = new Date(Date.now());
+      return this.timer = setInterval(__bind(function() {
+        var dom, _i, _len, _ref, _results;
+        _ref = [this.dom, this.dialgDOM];
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          dom = _ref[_i];
+          _results.push($('.timer', dom).text(formatInterval(this.startingTime)));
+        }
+        return _results;
+      }, this), 1000);
+    };
     Call.prototype.hangup = function(msg) {
       delete this.agent.calls[this.uuid];
+      clearInterval(this.timer);
       this.dom.slideUp("normal", function() {
         return $(this).remove();
       });
@@ -163,15 +206,14 @@
         phoneNumber: this.remoteLeg.cid_number
       });
     };
-    Call.prototype.tick = function() {};
     return Call;
   })();
   Agent = (function() {
     function Agent(name) {
       this.name = name;
-      this.meta = {};
       this.calls = {};
       store.agents[this.name] = this;
+      this.setTimer();
       this.createDOM();
     }
     Agent.prototype.createDOM = function() {
@@ -179,7 +221,14 @@
       this.dom.attr('id', "agent-" + this.name);
       $('.name', this.dom).text(this.name);
       $('#agents').append(this.dom);
-      return this.dom.show();
+      this.visible = false;
+      return this.show();
+    };
+    Agent.prototype.setTimer = function() {
+      this.startingTime = new Date(Date.now());
+      return this.timer = setInterval(__bind(function() {
+        return $('.timer', this.dom).text(formatInterval(this.startingTime));
+      }, this), 1000);
     };
     Agent.prototype.fillFromAgent = function(d) {
       this.setName(d.name);
@@ -277,6 +326,7 @@
       }
       this.dom.addClass(targetKlass);
       $('.state', this.dom).text(state);
+      this.startingTime = new Date(Date.now());
       return this.syncDialogState();
     };
     Agent.prototype.setStatus = function(status) {
@@ -292,6 +342,7 @@
       }
       this.dom.addClass(targetKlass);
       $('.status', this.dom).text(status);
+      this.startingTime = new Date(Date.now());
       return this.syncDialogStatus();
     };
     Agent.prototype.setUsername = function(username) {
@@ -308,21 +359,21 @@
         tapper: store.agent
       });
     };
-    Agent.prototype.tick = function() {
-      var call, uuid, _ref, _results;
-      _ref = this.calls;
-      _results = [];
-      for (uuid in _ref) {
-        call = _ref[uuid];
-        _results.push(call.tick());
-      }
-      return _results;
-    };
     Agent.prototype.show = function() {
-      return this.dom.show();
+      if (this.visible) {
+        return;
+      }
+      return this.dom.fadeIn('slow', __bind(function() {
+        return this.visible = true;
+      }, this));
     };
     Agent.prototype.hide = function() {
-      return this.dom.hide();
+      if (!this.visible) {
+        return;
+      }
+      return this.dom.fadeOut('slow', __bind(function() {
+        return this.visible = false;
+      }, this));
     };
     Agent.prototype.doubleClicked = function() {
       this.dialog = store.protoAgentDialog.clone(true);
@@ -401,30 +452,19 @@
       });
     }, this));
     $('#show-all-agents').live('click', __bind(function(event) {
-      var agent, name, _ref, _results;
+      var agent, doms, name, _ref;
       _ref = store.agents;
-      _results = [];
       for (name in _ref) {
         agent = _ref[name];
-        _results.push(agent.show());
+        doms = agent.dom;
       }
-      return _results;
+      return doms.fadeIn('slow');
     }, this));
-    $('.agent').live('dblclick', __bind(function(event) {
+    return $('.agent').live('dblclick', __bind(function(event) {
       var agent, agent_id;
       agent_id = $(event.target).closest('.agent').attr('id').replace(/^agent-/, "");
       agent = store.agents[agent_id];
       return agent.doubleClicked();
     }, this));
-    return setInterval(__bind(function() {
-      var agent, name, _ref, _results;
-      _ref = store.agents;
-      _results = [];
-      for (name in _ref) {
-        agent = _ref[name];
-        _results.push(agent.tick());
-      }
-      return _results;
-    }, this), 1000);
   });
 }).call(this);

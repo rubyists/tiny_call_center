@@ -12,6 +12,13 @@ store = {
 statusOrStateToClass = (prefix, str) ->
   prefix + str.toLowerCase().replace(/\W+/g, "-").replace(/^-+|-+$/g, "")
 
+formatInterval = (start) ->
+  total = parseInt((Date.now() - start) / 1000, 10)
+  minutes = parseInt(total / 60, 10)
+  seconds = total % 60
+  seconds = "0" + seconds if seconds < 10
+  "#{minutes}:#{seconds}"
+
 class Socket
   constructor: (@controller) ->
     @connect()
@@ -63,12 +70,23 @@ class Controller
       agent.fillFromAgent(rawAgent)
 
   got_agents_of: (queue, tiers) ->
-    agent.hide() for name, agent of store.agents
+    shown = {}
+    hidden = {}
+
+    for name, agent of store.agents
+      hidden[name] = agent.dom
 
     for tier in tiers
       agent = store.agents[tier.agent] || new Agent(tier.agent)
       agent.fillFromTier(tier)
-      agent.show()
+      delete hidden[agent.name]
+      shown[agent.name] = agent.dom
+
+    showDOMs = for name, dom of shown
+      dom.removeClass('hidden').addClass('shown')
+
+    hideDOMs = for name, dom of hidden
+      dom.removeClass('shown').addClass('hidden')
 
   got_call_start: (msg) ->
     store.agents[msg.cc_agent].got_call_start(msg)
@@ -84,12 +102,12 @@ class Call
     @createDOM()
     @renderInAgent()
     @renderInDialog()
+    @setTimer()
     @agent.calls[@uuid] = this
 
   createDOM: ->
     @dom = store.protoCall.clone()
     @dom.attr('class', @klass)
-    $('.state', @dom).text('On A Call')
     $('.cid-number', @dom).text(@remoteLeg.cid_number)
     $('.cid-name', @dom).text(@remoteLeg.cid_name)
     $('.destination-number', @dom).text(@remoteLeg.destination_number)
@@ -98,8 +116,16 @@ class Call
     $('.channel', @dom).text(@localLeg.channel)
     @dialogDOM = @dom.clone(true)
 
+  setTimer: ->
+    @startingTime = new Date(Date.now())
+    @timer = setInterval =>
+      for dom in [@dom, @dialgDOM]
+        $('.timer', dom).text(formatInterval(@startingTime))
+    , 1000
+
   hangup: (msg) ->
     delete @agent.calls[@uuid]
+    clearInterval(@timer)
     @dom.slideUp("normal", -> $(this).remove())
     @dialogDOM.remove()
 
@@ -120,14 +146,12 @@ class Call
       phoneNumber: @remoteLeg.cid_number,
     )
 
-  tick: ->
-
 
 class Agent
   constructor: (@name) ->
-    @meta = {}
     @calls = {}
     store.agents[@name] = this
+    @setTimer()
     @createDOM()
 
   createDOM: ->
@@ -135,7 +159,14 @@ class Agent
     @dom.attr('id', "agent-#{@name}")
     $('.name', @dom).text(@name)
     $('#agents').append(@dom)
-    @dom.show()
+    @visible = false
+    @show()
+
+  setTimer: ->
+    @startingTime = new Date(Date.now())
+    @timer = setInterval =>
+      $('.timer', @dom).text(formatInterval(@startingTime))
+    , 1000
 
   fillFromAgent: (d) ->
     @setName(d.name)
@@ -215,6 +246,7 @@ class Agent
       @dom.removeClass(klass) if /^state-/.test(klass)
     @dom.addClass(targetKlass)
     $('.state', @dom).text(state)
+    @startingTime = new Date(Date.now())
     @syncDialogState()
 
   setStatus: (@status) ->
@@ -223,6 +255,7 @@ class Agent
       @dom.removeClass(klass) if /^status-/.test(klass)
     @dom.addClass(targetKlass)
     $('.status', @dom).text(status)
+    @startingTime = new Date(Date.now())
     @syncDialogStatus()
 
   setUsername: (@username) ->
@@ -236,16 +269,15 @@ class Agent
       tapper: store.agent,
     )
 
-  # do time ticking here
-  tick: ->
-    for uuid, call of @calls
-      call.tick()
-
   show: ->
-    @dom.show()
+    return if @visible
+    @dom.fadeIn 'slow', =>
+      @visible = true
 
   hide: ->
-    @dom.hide()
+    return unless @visible
+    @dom.fadeOut 'slow', =>
+      @visible = false
 
   doubleClicked: ->
     @dialog = store.protoAgentDialog.clone(true)
@@ -310,13 +342,10 @@ $ ->
     store.ws.say(method: 'agents_of', queue: $(event.target).text())
 
   $('#show-all-agents').live 'click', (event) =>
-    agent.show() for name, agent of store.agents
+    doms = agent.dom for name, agent of store.agents
+    doms.fadeIn('slow')
 
   $('.agent').live 'dblclick', (event) =>
     agent_id = $(event.target).closest('.agent').attr('id').replace(/^agent-/, "")
     agent = store.agents[agent_id]
     agent.doubleClicked()
-
-  setInterval =>
-    agent.tick() for name, agent of store.agents
-  , 1000

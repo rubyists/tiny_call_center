@@ -16,13 +16,17 @@ body {
 .call .cid-number:before { content: "("; }
 .call .cid-number:after { content: ")"; }
 .call .answered { display: block; }
-.call .destination-number { }
+.call .destination { }
 .call .queue-name { }
 .call .channel { display: none; }
 .call .uuid { display: none; }
 
+#status, #state {
+  background: #aaf;
+  color: #666;
+}
 #status { width: 7em; float: left; }
-#available { background: #0f0; color: #000; }
+#available { }
 #available.active { background: #afa; }
 #on_break { background: #ff0; color: #000; }
 #on_break.active { background: #afa; }
@@ -30,8 +34,8 @@ body {
 #logged_out.active { background: #afa; }
 
 #state { width: 6em; float: left; }
-#wrap_up { background: #f00; }
-#wrap_up.active { background: #afa; }
+#Idle { background: #f00; }
+#Idle.active { background: #afa; }
 
 #disposition {
   background: rgba(0, 0, 0, 0.5);
@@ -93,8 +97,6 @@ ul li {
 a {
   display: block;
   border: none;
-  background: #aaf;
-  color: #666;
   margin: 0.1em;
 }
 

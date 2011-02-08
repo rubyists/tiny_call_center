@@ -48,6 +48,8 @@ nav li {
   height: 10em;
   overflow: auto;
   -moz-border-radius: 0.5em;
+  -webkit-border-radius: 0.5em;
+  border-radius: 0.5em;
   padding: 0.5em;
   margin: 0.1em;
   font-size: 0.7em;
@@ -67,6 +69,10 @@ nav li {
 }
 
 .agent .calls {
+  display: block;
+}
+
+.agent .timer {
   display: block;
 }
 
@@ -104,6 +110,24 @@ nav li {
   -moz-transition: 500ms;
   transition: 500ms;
   background: #f66;
+}
+
+#agents .agent.shown {
+  -moz-transition: all 1s ease-in 1s
+  opacity: 1;
+  height: 10em;
+  width: 15em;
+  display: block;
+  overflow: hidden;
+}
+
+#agents .agent.hidden {
+  -moz-transition: all 1s ease-out 1s
+  opacity: 0;
+  width: 0em;
+  height: 0em;
+  padding: 0;
+  overflow: hidden;
 }
 
 #proto-agent {
