@@ -15,7 +15,7 @@
             'locationbar=no,navigator=no,status=no,menubar=no,location=no,toolbar=no,personalbar=no,resizable=yes,height=250'
         );
       };
-      <?r unless @user.manager? ?>
+      <?r unless user.manager? ?>
         $(TinyCallCenterOpenRibbon);
       <?r end ?>
     </script>
@@ -27,7 +27,7 @@
         <li>
           <a href="#" onClick="javascript:TinyCallCenterOpenRibbon();">Ribbon</a>
         </li>
-        <?r if @user.manager? ?>
+        <?r if user.manager? ?>
           <li>
             #{TinyCallCenter::Tiers.a('Call Center View', :/)}
           </li>

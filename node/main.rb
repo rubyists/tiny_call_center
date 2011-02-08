@@ -6,6 +6,5 @@ class Main
 
   def index
     redirect TinyCallCenter::Accounts.r(:login) unless logged_in?
-    @user = user
   end
 end
