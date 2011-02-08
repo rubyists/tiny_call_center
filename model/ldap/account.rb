@@ -56,6 +56,10 @@ module TinyCallCenter
       new name.gsub("_", '').gsub(/\s/,'')
     end
 
+    def self.full_name(agent)
+      agent.split('-', 2).last.tr("_", " ")
+    end
+
     def initialize(user)
       @uid = user
       warn "<<<ERROR>>> No Such User #{user} in #{self.class} #initialize (from #user_raw)" unless @exists = user_raw
