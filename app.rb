@@ -7,6 +7,8 @@ require TinyCallCenter::ROOT/"model/init"
 require "fsr"
 require "fsr/command_socket"
 FSR::Cmd.load_command('call_center')
+require 'log4r/outputter/syslogoutputter'
+FSR::Log.outputters = Log4r::SyslogOutputter.new "TCC_Innate"
 
 require_relative 'node/main'
 require_relative 'node/queues'
