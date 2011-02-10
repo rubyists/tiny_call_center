@@ -51,7 +51,6 @@ class Call
       channel:     $('.channel', @sel),
     }
 
-    @dom.state.text('On A Call')
     @dom.cidNumber.text(@remote_leg.cid_number)
     @dom.cidName.text(@remote_leg.cid_name)
     @dom.destination.text(@remote_leg.destination)
@@ -109,8 +108,11 @@ class Call
     @askDisposition()
 
   askDisposition: ->
+    if @local_leg.cid_number == "8675309" || @local_leg.destination == "19999"
+      @sel.remove()
+      return
+
     $('#disposition button').one 'click', (event) =>
-      p event
       jbutton = $(event.target)
       store.send(
         method: 'disposition',
@@ -142,7 +144,8 @@ currentState = (tag) ->
   tag.attr('class', 'active')
 
 agentStateChange = (msg) ->
-  currentState($("##{msg.cc_agent_state}"))
+  state = msg.cc_agent_state.replace(/\s+/g, "_")
+  currentState($("##{state}"))
 
 onMessage = (event) ->
   msg = JSON.parse(event.data)
@@ -153,7 +156,7 @@ onMessage = (event) ->
     when 'state_change'
       agentStateChange(msg)
     when 'call_start'
-      extMatch = /(?:^|\/)(\d+)[@-]/
+      extMatch = /(?:^|\/)(?:sip:)?(\d+)[@-]/
       makeCall = (left, right, msg) ->
         new Call(left, right, msg) unless store.calls[left.uuid]
 
@@ -204,7 +207,7 @@ agentWantsStateChange = (a) ->
   curState = $('#state a[class=active').text()
   store.send(
     method: 'state',
-    state: a.target.id,
+    state: a.target.id.replace(/_/g, ' '),
     curState: curState,
   )
   false

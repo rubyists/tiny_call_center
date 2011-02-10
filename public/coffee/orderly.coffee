@@ -12,6 +12,9 @@ store = {
 statusOrStateToClass = (prefix, str) ->
   prefix + str.toLowerCase().replace(/\W+/g, "-").replace(/^-+|-+$/g, "")
 
+queueToClass = (queue) ->
+  queue.toLowerCase().replace(/\W+/g, '_').replace(/^_+|_+$/g, "")
+
 formatInterval = (start) ->
   total = parseInt((Date.now() - start) / 1000, 10)
   minutes = parseInt(total / 60, 10)
@@ -31,11 +34,12 @@ class Socket
 
     @ws.onmessage = (message) =>
       data = JSON.parse(message.data)
-      p "onMessage", data
+      # p "onMessage", data
       @controller.dispatch(data)
 
     @ws.onclose = =>
       p "Closing WebSocket"
+      return if @reconnectInterval
       @reconnectInterval = setInterval =>
         p "Reconnect"
         @connect()
@@ -45,7 +49,7 @@ class Socket
       p "WebSocket Error:", error
 
   say: (obj) ->
-    p "Socket.send", obj
+    # p "Socket.send", obj
     @ws.send(JSON.stringify(obj))
 
 
@@ -70,23 +74,10 @@ class Controller
       agent.fillFromAgent(rawAgent)
 
   got_agents_of: (queue, tiers) ->
-    shown = {}
-    hidden = {}
-
-    for name, agent of store.agents
-      hidden[name] = agent.dom
-
     for tier in tiers
       agent = store.agents[tier.agent] || new Agent(tier.agent)
       agent.fillFromTier(tier)
-      delete hidden[agent.name]
-      shown[agent.name] = agent.dom
-
-    showDOMs = for name, dom of shown
-      dom.removeClass('hidden').addClass('shown')
-
-    hideDOMs = for name, dom of hidden
-      dom.removeClass('shown').addClass('hidden')
+    $('#agents').isotope(filter: ".#{queueToClass(queue)}")
 
   got_call_start: (msg) ->
     store.agents[msg.cc_agent].got_call_start(msg)
@@ -107,10 +98,11 @@ class Call
 
   createDOM: ->
     @dom = store.protoCall.clone()
-    @dom.attr('class', @klass)
+    @dom.attr('id', '')
+    @dom.attr('class', "#{@klass} call")
     $('.cid-number', @dom).text(@remoteLeg.cid_number)
     $('.cid-name', @dom).text(@remoteLeg.cid_name)
-    $('.destination-number', @dom).text(@remoteLeg.destination_number)
+    $('.destination', @dom).text(@remoteLeg.destination)
     $('.queue-name', @dom).text(@localLeg.queue)
     $('.uuid', @dom).text(@localLeg.uuid)
     $('.channel', @dom).text(@localLeg.channel)
@@ -119,8 +111,8 @@ class Call
   setTimer: ->
     @startingTime = new Date(Date.now())
     @timer = setInterval =>
-      for dom in [@dom, @dialgDOM]
-        $('.timer', dom).text(formatInterval(@startingTime))
+      $('.time-of-call-start', @dom).text(formatInterval(@startingTime)) if @dom
+      $('.time-of-call-start', @dialogDOM).text(formatInterval(@startingTime)) if @dialogDOM
     , 1000
 
   hangup: (msg) ->
@@ -146,26 +138,24 @@ class Call
       phoneNumber: @remoteLeg.cid_number,
     )
 
-
 class Agent
   constructor: (@name) ->
     @calls = {}
-    store.agents[@name] = this
-    @setTimer()
     @createDOM()
+    @setTimer()
+    store.agents[@name] = this
 
   createDOM: ->
     @dom = store.protoAgent.clone()
     @dom.attr('id', "agent-#{@name}")
     $('.name', @dom).text(@name)
-    $('#agents').append(@dom)
-    @visible = false
-    @show()
+    $('#agents').isotope('insert', @dom)
 
   setTimer: ->
     @startingTime = new Date(Date.now())
     @timer = setInterval =>
-      $('.timer', @dom).text(formatInterval(@startingTime))
+      $('.time-since-status-change', @dom).text(formatInterval(@startingTime))
+      $('#agents').isotope('updateSortData', @dom)
     , 1000
 
   fillFromAgent: (d) ->
@@ -197,7 +187,7 @@ class Agent
     @setState(d.state)
     @level = d.level
     @position = d.position
-    @queue = d.queue
+    @setQueue(d.queue)
 
   got_call_start: (msg) ->
     extMatch = /(?:^|\/)(\d+)[@-]/
@@ -233,9 +223,11 @@ class Agent
   got_state_change: (msg) ->
     @setState(msg.cc_agent_state)
 
+  setQueue: (@queue) ->
+    @dom.addClass(queueToClass(queue))
+
   setName: (@name) ->
     @dom.attr('id', "agent-#{name}")
-    $('.name', @dom).text(name)
 
   setState: (@state) ->
     unless alias = store.stateMapping[state]
@@ -247,6 +239,7 @@ class Agent
     @dom.addClass(targetKlass)
     $('.state', @dom).text(state)
     @startingTime = new Date(Date.now())
+    $('#agents').isotope('updateSortData', @dom)
     @syncDialogState()
 
   setStatus: (@status) ->
@@ -256,10 +249,16 @@ class Agent
     @dom.addClass(targetKlass)
     $('.status', @dom).text(status)
     @startingTime = new Date(Date.now())
+    $('#agents').isotope('updateSortData', @dom)
     @syncDialogStatus()
 
   setUsername: (@username) ->
+    $('.username', @dom).text(@username)
+    $('#agents').isotope('updateSortData', @dom)
+
   setExtension: (@extension) ->
+    $('.extension', @dom).text(@extension)
+    $('#agents').isotope('updateSortData', @dom)
 
   calltap: ->
     p "Tapping #{@name} for #{store.agent}"
@@ -270,14 +269,10 @@ class Agent
     )
 
   show: ->
-    return if @visible
-    @dom.fadeIn 'slow', =>
-      @visible = true
+    @dom.show()
 
   hide: ->
-    return unless @visible
-    @dom.fadeOut 'slow', =>
-      @visible = false
+    @dom.hide()
 
   doubleClicked: ->
     @dialog = store.protoAgentDialog.clone(true)
@@ -332,20 +327,43 @@ class Agent
 $ ->
   store.server = $('#server').text()
   store.agent = $('#agent_name').text()
-  store.ws = new Socket(new Controller())
 
   store.protoCall = $('#proto-call').detach()
   store.protoAgent = $('#proto-agent').detach()
   store.protoAgentDialog = $('#proto-agent-dialog').detach()
 
   $('#nav-queues a').live 'click', (event) =>
-    store.ws.say(method: 'agents_of', queue: $(event.target).text())
+    queue = $(event.target).text()
+    store.ws.say(method: 'agents_of', queue: queue)
+    false
 
   $('#show-all-agents').live 'click', (event) =>
-    doms = agent.dom for name, agent of store.agents
-    doms.fadeIn('slow')
+    $('#agents').isotope(filter: '*')
+    false
+
+  $('#nav-sort a').click (event) ->
+    sorter = $(event.target).attr('id').replace(/^sort-/, "")
+    $('#agents').isotope(sortBy: sorter)
+    false
 
   $('.agent').live 'dblclick', (event) =>
     agent_id = $(event.target).closest('.agent').attr('id').replace(/^agent-/, "")
     agent = store.agents[agent_id]
     agent.doubleClicked()
+    false
+
+  $('#agents').isotope(
+    itemSelector: '.agent',
+    layoutMode: 'fitRows',
+    getSortData: {
+      username: (e) ->
+        e.find('.username').text()
+      extension: (e) ->
+        e.find('.extension').text()
+      status: (e) ->
+        [e.find('.status').text(), e.find('.username').text()].join("_")
+      idle: (e) ->
+        e.find('.time-since-status-change').text()
+    })
+
+  store.ws = new Socket(new Controller())

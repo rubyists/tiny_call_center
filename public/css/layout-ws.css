@@ -33,9 +33,11 @@ body {
 #logged_out { background: #f00; color: #000; }
 #logged_out.active { background: #afa; }
 
-#state { width: 6em; float: left; }
+#state { width: 9em; float: left; }
 #Idle { background: #f00; }
 #Idle.active { background: #afa; }
+#In_a_queue_call { background: #ff0; }
+#In_a_queue_call.active { background: #afa; }
 
 #disposition {
   background: rgba(0, 0, 0, 0.5);

@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/css/orderly-layout.css" type="text/css" media="screen" />
     <script type="text/javascript" src="/js/jquery-1.4.4.min.js"></script>
     <script type="text/javascript" src="/js/jquery-ui-1.8.8.custom.min.js"></script>
+    <script type="text/javascript" src="/js/jquery.isotope.min.js"></script>
     <script type="text/javascript" src="/js/orderly.js"></script>
   </head>
   <body>
@@ -14,7 +15,14 @@
       <ul id="nav-queues">
       </ul>
       <ul id="nav-meta">
-        <a href="#" id="show-all-agents">All</a>
+        <li><a href="#" id="show-all-agents">All</a></li>
+        <li id="nav-sort">
+          Sort by
+          <a href="#" id="sort-username">Name</a>
+          <a href="#" id="sort-extension">Extension</a>
+          <a href="#" id="sort-status">Status</a>
+          <a href="#" id="sort-idle">Idle Time</a>
+        </li>
       </nav>
     </nav>
 
@@ -22,20 +30,23 @@
       <div id="proto-call" class="call">
         <div class="cid-name"></div>
         <div class="cid-number"></div>
-        <div class="timer"></div>
         <div class="answered"></div>
+        <div class="destination"></div>
+        <span class="time-of-call-start"></span>
         <div class="queue-name"></div>
-        <div class="destination-number"></div>
         <div class="channel"></div>
         <a class="uuid" href="#"></a>
       </div>
+
       <div id="proto-agent" class="agent">
-        <div class="name"></div>
-        <div class="state"></div>
-        <div class="status"></div>
-        <div class="calls"></div>
-        <div class="timer"></div>
+        <span class="extension"></span>
+        <span class="username"></span>
+        <span class="state"></span>
+        <span class="status"></span>
+        <span class="time-since-status-change"></span>
+        <span class="calls"></span>
       </div>
+
       <div id="agents">
       </div>
 

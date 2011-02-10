@@ -1,5 +1,5 @@
 (function() {
-  var Agent, Call, Controller, Socket, formatInterval, p, statusOrStateToClass, store;
+  var Agent, Call, Controller, Socket, formatInterval, p, queueToClass, statusOrStateToClass, store;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   p = function() {
     var _ref;
@@ -14,6 +14,9 @@
   };
   statusOrStateToClass = function(prefix, str) {
     return prefix + str.toLowerCase().replace(/\W+/g, "-").replace(/^-+|-+$/g, "");
+  };
+  queueToClass = function(queue) {
+    return queue.toLowerCase().replace(/\W+/g, '_').replace(/^_+|_+$/g, "");
   };
   formatInterval = function(start) {
     var minutes, seconds, total;
@@ -44,11 +47,13 @@
       this.ws.onmessage = __bind(function(message) {
         var data;
         data = JSON.parse(message.data);
-        p("onMessage", data);
         return this.controller.dispatch(data);
       }, this);
       this.ws.onclose = __bind(function() {
         p("Closing WebSocket");
+        if (this.reconnectInterval) {
+          return;
+        }
         return this.reconnectInterval = setInterval(__bind(function() {
           p("Reconnect");
           return this.connect();
@@ -59,7 +64,6 @@
       }, this);
     };
     Socket.prototype.say = function(obj) {
-      p("Socket.send", obj);
       return this.ws.send(JSON.stringify(obj));
     };
     return Socket;
@@ -100,39 +104,15 @@
       return _results;
     };
     Controller.prototype.got_agents_of = function(queue, tiers) {
-      var agent, dom, hidden, hideDOMs, name, showDOMs, shown, tier, _i, _len, _ref;
-      shown = {};
-      hidden = {};
-      _ref = store.agents;
-      for (name in _ref) {
-        agent = _ref[name];
-        hidden[name] = agent.dom;
-      }
+      var agent, tier, _i, _len;
       for (_i = 0, _len = tiers.length; _i < _len; _i++) {
         tier = tiers[_i];
         agent = store.agents[tier.agent] || new Agent(tier.agent);
         agent.fillFromTier(tier);
-        delete hidden[agent.name];
-        shown[agent.name] = agent.dom;
       }
-      showDOMs = (function() {
-        var _results;
-        _results = [];
-        for (name in shown) {
-          dom = shown[name];
-          _results.push(dom.removeClass('hidden').addClass('shown'));
-        }
-        return _results;
-      })();
-      return hideDOMs = (function() {
-        var _results;
-        _results = [];
-        for (name in hidden) {
-          dom = hidden[name];
-          _results.push(dom.removeClass('shown').addClass('hidden'));
-        }
-        return _results;
-      })();
+      return $('#agents').isotope({
+        filter: "." + (queueToClass(queue))
+      });
     };
     Controller.prototype.got_call_start = function(msg) {
       return store.agents[msg.cc_agent].got_call_start(msg);
@@ -157,10 +137,11 @@
     }
     Call.prototype.createDOM = function() {
       this.dom = store.protoCall.clone();
-      this.dom.attr('class', this.klass);
+      this.dom.attr('id', '');
+      this.dom.attr('class', "" + this.klass + " call");
       $('.cid-number', this.dom).text(this.remoteLeg.cid_number);
       $('.cid-name', this.dom).text(this.remoteLeg.cid_name);
-      $('.destination-number', this.dom).text(this.remoteLeg.destination_number);
+      $('.destination', this.dom).text(this.remoteLeg.destination);
       $('.queue-name', this.dom).text(this.localLeg.queue);
       $('.uuid', this.dom).text(this.localLeg.uuid);
       $('.channel', this.dom).text(this.localLeg.channel);
@@ -169,14 +150,12 @@
     Call.prototype.setTimer = function() {
       this.startingTime = new Date(Date.now());
       return this.timer = setInterval(__bind(function() {
-        var dom, _i, _len, _ref, _results;
-        _ref = [this.dom, this.dialgDOM];
-        _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          dom = _ref[_i];
-          _results.push($('.timer', dom).text(formatInterval(this.startingTime)));
+        if (this.dom) {
+          $('.time-of-call-start', this.dom).text(formatInterval(this.startingTime));
         }
-        return _results;
+        if (this.dialogDOM) {
+          return $('.time-of-call-start', this.dialogDOM).text(formatInterval(this.startingTime));
+        }
       }, this), 1000);
     };
     Call.prototype.hangup = function(msg) {
@@ -212,22 +191,21 @@
     function Agent(name) {
       this.name = name;
       this.calls = {};
-      store.agents[this.name] = this;
-      this.setTimer();
       this.createDOM();
+      this.setTimer();
+      store.agents[this.name] = this;
     }
     Agent.prototype.createDOM = function() {
       this.dom = store.protoAgent.clone();
       this.dom.attr('id', "agent-" + this.name);
       $('.name', this.dom).text(this.name);
-      $('#agents').append(this.dom);
-      this.visible = false;
-      return this.show();
+      return $('#agents').isotope('insert', this.dom);
     };
     Agent.prototype.setTimer = function() {
       this.startingTime = new Date(Date.now());
       return this.timer = setInterval(__bind(function() {
-        return $('.timer', this.dom).text(formatInterval(this.startingTime));
+        $('.time-since-status-change', this.dom).text(formatInterval(this.startingTime));
+        return $('#agents').isotope('updateSortData', this.dom);
       }, this), 1000);
     };
     Agent.prototype.fillFromAgent = function(d) {
@@ -258,7 +236,7 @@
       this.setState(d.state);
       this.level = d.level;
       this.position = d.position;
-      return this.queue = d.queue;
+      return this.setQueue(d.queue);
     };
     Agent.prototype.got_call_start = function(msg) {
       var extMatch, leftMatch, rightMatch, _ref, _ref2, _ref3, _ref4;
@@ -304,10 +282,13 @@
     Agent.prototype.got_state_change = function(msg) {
       return this.setState(msg.cc_agent_state);
     };
+    Agent.prototype.setQueue = function(queue) {
+      this.queue = queue;
+      return this.dom.addClass(queueToClass(queue));
+    };
     Agent.prototype.setName = function(name) {
       this.name = name;
-      this.dom.attr('id', "agent-" + name);
-      return $('.name', this.dom).text(name);
+      return this.dom.attr('id', "agent-" + name);
     };
     Agent.prototype.setState = function(state) {
       var alias, klass, targetKlass, _i, _len, _ref;
@@ -327,6 +308,7 @@
       this.dom.addClass(targetKlass);
       $('.state', this.dom).text(state);
       this.startingTime = new Date(Date.now());
+      $('#agents').isotope('updateSortData', this.dom);
       return this.syncDialogState();
     };
     Agent.prototype.setStatus = function(status) {
@@ -343,13 +325,18 @@
       this.dom.addClass(targetKlass);
       $('.status', this.dom).text(status);
       this.startingTime = new Date(Date.now());
+      $('#agents').isotope('updateSortData', this.dom);
       return this.syncDialogStatus();
     };
     Agent.prototype.setUsername = function(username) {
       this.username = username;
+      $('.username', this.dom).text(this.username);
+      return $('#agents').isotope('updateSortData', this.dom);
     };
     Agent.prototype.setExtension = function(extension) {
       this.extension = extension;
+      $('.extension', this.dom).text(this.extension);
+      return $('#agents').isotope('updateSortData', this.dom);
     };
     Agent.prototype.calltap = function() {
       p("Tapping " + this.name + " for " + store.agent);
@@ -360,20 +347,10 @@
       });
     };
     Agent.prototype.show = function() {
-      if (this.visible) {
-        return;
-      }
-      return this.dom.fadeIn('slow', __bind(function() {
-        return this.visible = true;
-      }, this));
+      return this.dom.show();
     };
     Agent.prototype.hide = function() {
-      if (!this.visible) {
-        return;
-      }
-      return this.dom.fadeOut('slow', __bind(function() {
-        return this.visible = false;
-      }, this));
+      return this.dom.hide();
     };
     Agent.prototype.doubleClicked = function() {
       this.dialog = store.protoAgentDialog.clone(true);
@@ -441,30 +418,57 @@
   $(function() {
     store.server = $('#server').text();
     store.agent = $('#agent_name').text();
-    store.ws = new Socket(new Controller());
     store.protoCall = $('#proto-call').detach();
     store.protoAgent = $('#proto-agent').detach();
     store.protoAgentDialog = $('#proto-agent-dialog').detach();
     $('#nav-queues a').live('click', __bind(function(event) {
-      return store.ws.say({
+      var queue;
+      queue = $(event.target).text();
+      store.ws.say({
         method: 'agents_of',
-        queue: $(event.target).text()
+        queue: queue
       });
+      return false;
     }, this));
     $('#show-all-agents').live('click', __bind(function(event) {
-      var agent, doms, name, _ref;
-      _ref = store.agents;
-      for (name in _ref) {
-        agent = _ref[name];
-        doms = agent.dom;
-      }
-      return doms.fadeIn('slow');
+      $('#agents').isotope({
+        filter: '*'
+      });
+      return false;
     }, this));
-    return $('.agent').live('dblclick', __bind(function(event) {
+    $('#nav-sort a').click(function(event) {
+      var sorter;
+      sorter = $(event.target).attr('id').replace(/^sort-/, "");
+      $('#agents').isotope({
+        sortBy: sorter
+      });
+      return false;
+    });
+    $('.agent').live('dblclick', __bind(function(event) {
       var agent, agent_id;
       agent_id = $(event.target).closest('.agent').attr('id').replace(/^agent-/, "");
       agent = store.agents[agent_id];
-      return agent.doubleClicked();
+      agent.doubleClicked();
+      return false;
     }, this));
+    $('#agents').isotope({
+      itemSelector: '.agent',
+      layoutMode: 'fitRows',
+      getSortData: {
+        username: function(e) {
+          return e.find('.username').text();
+        },
+        extension: function(e) {
+          return e.find('.extension').text();
+        },
+        status: function(e) {
+          return [e.find('.status').text(), e.find('.username').text()].join("_");
+        },
+        idle: function(e) {
+          return e.find('.time-since-status-change').text();
+        }
+      }
+    });
+    return store.ws = new Socket(new Controller());
   });
 }).call(this);

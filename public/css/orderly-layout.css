@@ -43,10 +43,9 @@ nav li {
 }
 
 #agents .agent {
-  float: left;
+  height: 6em;
   width: 15em;
-  height: 10em;
-  overflow: auto;
+  float: left;
   -moz-border-radius: 0.5em;
   -webkit-border-radius: 0.5em;
   border-radius: 0.5em;
@@ -55,28 +54,31 @@ nav li {
   font-size: 0.7em;
 }
 
-.agent > div {
+.agent > span {
   display: none;
 }
 
-.agent .name {
-  display: block;
+.agent .username, .agent .extension {
+  display: inline;
   font-weight: bold;
 }
 
 .agent .state {
-  display: inline;
+  display: block;
+  position: absolute;
+  bottom: 0.5em;
+  right: 0.5em;
 }
 
 .agent .calls {
   display: block;
 }
 
-.agent .timer {
+.agent .time-since-status-change {
   display: block;
 }
 
-.call .channel, .call .uuid {
+.call .uuid, .call .channel {
   display: none;
 }
 
@@ -112,22 +114,13 @@ nav li {
   background: #f66;
 }
 
-#agents .agent.shown {
-  -moz-transition: all 1s ease-in 1s
-  opacity: 1;
-  height: 10em;
-  width: 15em;
-  display: block;
-  overflow: hidden;
+.isotope-item {
+  z-index: 2;
 }
 
-#agents .agent.hidden {
-  -moz-transition: all 1s ease-out 1s
-  opacity: 0;
-  width: 0em;
-  height: 0em;
-  padding: 0;
-  overflow: hidden;
+.isotope-hidden.isotope-item {
+  pointer-events: none;
+  z-index: 1;
 }
 
 #proto-agent {

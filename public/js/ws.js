@@ -52,7 +52,6 @@
         uuid: $('.uuid', this.sel),
         channel: $('.channel', this.sel)
       };
-      this.dom.state.text('On A Call');
       this.dom.cidNumber.text(this.remote_leg.cid_number);
       this.dom.cidName.text(this.remote_leg.cid_name);
       this.dom.destination.text(this.remote_leg.destination);
@@ -104,9 +103,12 @@
       return this.askDisposition();
     };
     Call.prototype.askDisposition = function() {
+      if (this.local_leg.cid_number === "8675309" || this.local_leg.destination === "19999") {
+        this.sel.remove();
+        return;
+      }
       $('#disposition button').one('click', __bind(function(event) {
         var jbutton;
-        p(event);
         jbutton = $(event.target);
         store.send({
           method: 'disposition',
@@ -143,7 +145,9 @@
     return tag.attr('class', 'active');
   };
   agentStateChange = function(msg) {
-    return currentState($("#" + msg.cc_agent_state));
+    var state;
+    state = msg.cc_agent_state.replace(/\s+/g, "_");
+    return currentState($("#" + state));
   };
   onMessage = function(event) {
     var call, extMatch, key, makeCall, msg, value, _name, _ref, _ref10, _ref11, _ref12, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9, _results;
@@ -155,7 +159,7 @@
       case 'state_change':
         return agentStateChange(msg);
       case 'call_start':
-        extMatch = /(?:^|\/)(\d+)[@-]/;
+        extMatch = /(?:^|\/)(?:sip:)?(\d+)[@-]/;
         makeCall = function(left, right, msg) {
           if (!store.calls[left.uuid]) {
             return new Call(left, right, msg);
@@ -221,7 +225,7 @@
     curState = $('#state a[class=active').text();
     store.send({
       method: 'state',
-      state: a.target.id,
+      state: a.target.id.replace(/_/g, ' '),
       curState: curState
     });
     return false;
