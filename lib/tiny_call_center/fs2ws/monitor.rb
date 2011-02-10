@@ -12,18 +12,31 @@ module TinyCallCenter
       [ :CHANNEL_ORIGINATE, # Call being placed/ringing
         :CHANNEL_ANSWER,    # Call starts
         :CHANNEL_HANGUP,    # Call ends
+        :CHANNEL_CREATE,    # Channel created
       ].each{|flag| add_event(flag, &method(flag.to_s.downcase)) }
     end
 
-    def channel_originate(event)
-      cont, uuid = event.content, event.content[:unique_id]
-      FSR::Log.debug "Call Origniated: %s => %s (%s) (%s)" % [cont[:caller_caller_id_number], cont[:caller_destination_number], uuid, cont[:other_leg_unique_id]]
-      FSR::Log.info cont.inspect
+    def channel_create(event)
+      msg = cleanup(event.content)
+      relay msg
+    end
 
-      clean_event = cleanup_msg(cont)
-      @channel_originates[uuid] = clean_event
-      @channel_originates[cont[:other_leg_unique_id]] = clean_event
-      try_call_dispatch(uuid, cont[:other_leg_unique_id])
+    def channel_originate(event)
+      content, uuid = event.content, event.content[:unique_id]
+      FSR::Log.debug "Call Origniated: %s => %s (%s) (%s)" % [
+        content[:caller_caller_id_number],
+        content[:caller_destination_number],
+        uuid,
+        content[:other_leg_unique_id]
+      ]
+
+      msg = cleanup(content)
+      FSR::Log.debug "<<< Channel Originate >>>"
+      FSR::Log.debug msg
+
+      @channel_originates[uuid] = msg
+      @channel_originates[content[:other_leg_unique_id]] = msg
+      try_call_dispatch(uuid, content[:other_leg_unique_id])
     end
 
     def channel_answer(event)
@@ -36,33 +49,30 @@ module TinyCallCenter
         content[:unique_id],
       ]
 
-      @channel_answers[content[:unique_id]] = cleanup_msg(content)
+      msg = cleanup(content)
+      FSR::Log.debug "<<< Channel Answer >>>"
+      FSR::Log.debug msg
+
+      @channel_answers[content[:unique_id]] = msg
       try_call_dispatch(content[:unique_id])
     end
 
     def channel_hangup(event)
-      content = event.content
+      msg = event.content
 
-      FSR::Log.debug "Call hungup: %s <%s> => %s (%s)" % [
-        content[:caller_caller_id_number],
-        content[:caller_caller_id_name],
-        content[:caller_destination_number],
-        content[:unique_id],
-      ]
+      FSR::Log.debug "Call hungup: %s <%s> => %s (%s)" % msg.values_at(
+        :caller_caller_id_number, :caller_caller_id_name,
+        :caller_destination_number, :unique_id,
+      )
 
-      relay_agent cleanup_msg(content).merge(tiny_action: 'channel_hangup')
+      FSR::Log.debug "<<< Channel Hangup >>>"
+      FSR::Log.debug msg
+
+      relay_agent prepare_channel_hangup(msg)
     end
 
-    def cleanup_msg(content)
-      msg = content.reject do |key, value|
-        key =~ /^variable_/
-      end
-
-      msg.values.each do |value|
-        value.replace(CGI.unescape(value.to_str)) if value.respond_to?(:to_str)
-      end
-
-      msg
+    def prepare_channel_hangup(msg)
+      cleanup(msg).merge(tiny_action: 'channel_hangup')
     end
 
     def dispatch_call(left, right, originate)
@@ -88,7 +98,7 @@ module TinyCallCenter
         }
       }
 
-      FSR::Log.debug "Dispatching call #{msg}"
+      FSR::Log.debug "Dispatching call %p" % [msg]
       relay_agent msg
     end
 

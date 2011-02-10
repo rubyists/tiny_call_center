@@ -79,7 +79,7 @@ module TinyCallCenter
 
         if registration_server == command_server
           sock.originate(
-            target: "{tcc_agent=#{agent}}loopback/#{extension}/default/XML",
+            target: "{tcc_agent=#{agent}}user/#{extension}",
             endpoint: "&transfer(19999)"
           ).run
         else

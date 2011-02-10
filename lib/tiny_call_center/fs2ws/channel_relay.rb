@@ -10,14 +10,18 @@ module TinyCallCenter
     # the WebSocketChannel
     def relay_agent(message)
       possible = possible_numbers(message)
-      FSR::Log.debug "Relay #{message} to #{possible}"
       agent_lists = WebSocketReporter::SubscribedAgents.values_at(*possible).compact
-      FSR::Log.debug "Relay found #{agent_lists}"
 
       agent_lists.each do |agent_list|
         next unless agent = agent_list.last
-        relay message.merge(cc_agent: agent.agent)
-        agent.on_fs_event(message)
+        if agent.respond_to?(:on_fs_event)
+          FSR::Log.debug "Relay found for #{agent.agent}"
+          relay message.merge(cc_agent: agent.agent)
+          agent.on_fs_event(message)
+        else # agent is (supposed to be) a string, only relay to channel
+          FSR::Log.debug "No relay found for #{agent}"
+          relay message.merge(cc_agent: agent)
+        end
       end
     end
 
@@ -36,9 +40,23 @@ module TinyCallCenter
         message[:other_leg_rdnis],
       ].grep(/^\d{4}$/).uniq
 
-      FSR::Log.debug "Possible Numbers: #{possible}"
+      FSR::Log.debug "Possible Numbers: %p" % [possible]
 
       possible
+    end
+
+    def cleanup(msg)
+=begin
+      msg.reject! do |k,v|
+        k !~ /^(cc|event)_/ ||
+        k =~ /^event_(subclass|name|date_local|calling_file|calling_function|calling_line_number)$/
+      end
+=end
+      msg.values.each do |value|
+        value.replace(CGI.unescape(value.to_str)) if value.respond_to?(:to_str)
+      end
+
+      Hash[msg.sort]
     end
   end
 end

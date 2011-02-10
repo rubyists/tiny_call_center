@@ -105,13 +105,14 @@ module TinyCallCenter
       utimes = %w[last_bridge_start last_offered_call last_bridge_end last_status_change]
       agents.map!{|agent|
         agent_ext = Account.extension(agent.name)
-        agent_username = Account.username(agent.name)
+        agent_username = Account.full_name(agent.name)
         agent_server = agent.contact.to_s.split('@')[1]
         agent_calls = servers[agent_server]
         agent_hash = agent.to_hash.
           merge(agent_status(agent_ext, agent_calls)).
           merge(extension: agent_ext, username: agent_username)
         utimes.each{|key| agent_hash[key] = Time.at(agent_hash[key].to_i).rfc2822 }
+        WebSocketReporter::SubscribedAgents[agent_ext] ||= [agent.name]
         agent_hash
       }
 
@@ -119,8 +120,6 @@ module TinyCallCenter
     end
 
     def can_view?(message)
-      FSR::Log.debug("#{agent} Asking for access to #{message}")
-
       return false unless agent
 
       self.user ||= Account.from_call_center_name(agent)
@@ -135,14 +134,14 @@ module TinyCallCenter
 
       numbers = possible_numbers(message)
       unless numbers.size > 1
-        FSR::Log.warn("#{agent} Asking for access to crazysauce: #{message}")
+        FSR::Log.warn "%p Asking for access to crazysauce: %p" % [agent, message]
         return true
       end
 
-      FSR::Log.debug("#{agent} Asking for access to #{numbers}")
+      FSR::Log.debug "%p asking for access to %p" % [agent, numbers]
       return true if numbers.detect{|number| number.size == 4 && user.can_view?(number) }
 
-      FSR::Log.debug("#{agent} DENIED access to: #{numbers}")
+      FSR::Log.debug "%p denied access to %p" % [agent, numbers]
       false
     end
 
@@ -180,8 +179,8 @@ module TinyCallCenter
         else
           cmd = sock.originate(:target => "sofia/internal/#{tapper.extension}@#{tapper.registration_server}", :endpoint => "&eavesdrop(#{uuid})")
         end
-        FSR::Log.info("Tap Command %s" % cmd.raw)
-        p cmd.run
+        FSR::Log.info("Tap Command %p" % cmd.raw)
+        cmd.run
       end
     end
   end
