@@ -20,8 +20,7 @@ formatInterval = (start) ->
   total = parseInt((Date.now() - start) / 1000, 10)
   minutes = parseInt(total / 60, 10)
   seconds = total % 60
-  seconds = "0" + seconds if seconds < 10
-  "#{minutes}:#{seconds}"
+  sprintf("%02d:%02d", minutes, seconds)
 
 searchToQuery = (raw) ->
   if /^[,\s]*$/.test(raw)

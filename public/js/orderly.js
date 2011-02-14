@@ -24,10 +24,7 @@
     total = parseInt((Date.now() - start) / 1000, 10);
     minutes = parseInt(total / 60, 10);
     seconds = total % 60;
-    if (seconds < 10) {
-      seconds = "0" + seconds;
-    }
-    return "" + minutes + ":" + seconds;
+    return sprintf("%02d:%02d", minutes, seconds);
   };
   searchToQuery = function(raw) {
     var part, query, _i, _len, _ref;
