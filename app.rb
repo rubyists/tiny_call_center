@@ -24,7 +24,7 @@ Innate.middleware! do |mw|
   mw.use Rack::ShowExceptions
   mw.use Rack::ETag
   mw.use Rack::ConditionalGet
-  mw.use Rack::Static, :urls => %w[/css /stylesheets /js /coffee], :root => "public"
+  mw.use Rack::Static, :urls => %w[/css /stylesheets /js /coffee /images], :root => "public"
   mw.innate
 end
 
