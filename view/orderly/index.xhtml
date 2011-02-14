@@ -11,19 +11,26 @@
     <script type="text/javascript" src="/js/orderly.js"></script>
   </head>
   <body>
-    <nav>
-      <ul id="nav-queues">
+    <nav id="nav-search">
+      <select id="prev-search"></select>
+      <input type="search" id="search" placeholder="Search anything" />
+      <button id="save-search">Keep</button>
+    </nav>
+
+    <nav id="nav-queues">
+      <h3>Queues</h3>
+      <ul><li><a href="#" id="show-all-agents">Show All</a></li></ul>
+      <ul></ul>
+    </nav>
+
+    <nav id="nav-sort">
+      <ul>
+        <li><h3>Sort</h3></li>
+        <li><a href="#" id="sort-username">Name</a></li>
+        <li><a href="#" id="sort-extension">Extension</a></li>
+        <li><a href="#" id="sort-status">Status</a></li>
+        <li><a href="#" id="sort-idle">Idle Time</a></li>
       </ul>
-      <ul id="nav-meta">
-        <li><a href="#" id="show-all-agents">All</a></li>
-        <li id="nav-sort">
-          Sort by
-          <a href="#" id="sort-username">Name</a>
-          <a href="#" id="sort-extension">Extension</a>
-          <a href="#" id="sort-status">Status</a>
-          <a href="#" id="sort-idle">Idle Time</a>
-        </li>
-      </nav>
     </nav>
 
     <div id="content">
@@ -34,9 +41,8 @@
         <span class="answered"></span>
         <span class="destination"></span>
         <span class="time-of-call-start"></span>
-        <div class="queue-name"></div>
-        <div class="channel"></div>
-        <a class="uuid" href="#"></a>
+        <span class="queue-name"></span>
+        <span class="channel"></span>
       </div>
 
       <div id="proto-agent" class="agent">
@@ -45,6 +51,7 @@
         <span class="state"></span>
         <span class="status"></span>
         <span class="time-since-status-change"></span>
+        <span class="queue"></span>
         <span class="calls"></span>
       </div>
 

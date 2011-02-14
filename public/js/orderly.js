@@ -1,5 +1,5 @@
 (function() {
-  var Agent, Call, Controller, Socket, formatInterval, p, queueToClass, statusOrStateToClass, store;
+  var Agent, Call, Controller, Socket, formatInterval, p, queueToClass, searchToQuery, statusOrStateToClass, store;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   p = function() {
     var _ref;
@@ -7,6 +7,7 @@
   };
   store = {
     agents: {},
+    searches: {},
     stateMapping: {
       Idle: 'Wrap Up',
       Waiting: 'Ready'
@@ -27,6 +28,23 @@
       seconds = "0" + seconds;
     }
     return "" + minutes + ":" + seconds;
+  };
+  searchToQuery = function(raw) {
+    var part, query, _i, _len, _ref;
+    if (/^[,\s]*$/.test(raw)) {
+      $('#agents').isotope({
+        filter: '*'
+      });
+      return false;
+    }
+    query = [];
+    _ref = raw.split(/\s*,\s*/g);
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      part = _ref[_i];
+      part = part.replace(/'/, '');
+      query.push(":contains('" + part + "')");
+    }
+    return query.join(", ");
   };
   Socket = (function() {
     function Socket(controller) {
@@ -79,9 +97,9 @@
       }
     };
     Controller.prototype.got_queues = function(queues) {
-      var a, li, queue, _i, _len, _results;
-      $('#nav-queues').html('');
-      _results = [];
+      var a, li, list, queue, _i, _len;
+      list = $('#nav-queues ul');
+      list.html('');
       for (_i = 0, _len = queues.length; _i < _len; _i++) {
         queue = queues[_i];
         li = $('<li>');
@@ -89,12 +107,13 @@
           href: '#'
         }).text(queue.name);
         li.append(a);
-        _results.push($('#nav-queues').append(li));
+        list.append(li);
       }
-      return _results;
+      return list.prepend('<li><a href="#" id="show-all-agents">Show All</a></li>');
     };
     Controller.prototype.got_agent_list = function(agents) {
       var agent, rawAgent, _i, _len, _results;
+      p(agents);
       _results = [];
       for (_i = 0, _len = agents.length; _i < _len; _i++) {
         rawAgent = agents[_i];
@@ -132,7 +151,7 @@
       this.createDOM();
       this.renderInAgent();
       this.renderInDialog();
-      this.setTimer();
+      this.setTimer(new Date(Date.parse(msg.call_created)));
       this.agent.calls[this.uuid] = this;
     }
     Call.prototype.createDOM = function() {
@@ -143,12 +162,12 @@
       $('.cid-name', this.dom).text(this.remoteLeg.cid_name);
       $('.destination', this.dom).text(this.remoteLeg.destination);
       $('.queue-name', this.dom).text(this.localLeg.queue);
-      $('.uuid', this.dom).text(this.localLeg.uuid);
+      $('.uuid', this.dom).attr('href', "#" + this.localLeg.uuid);
       $('.channel', this.dom).text(this.localLeg.channel);
       return this.dialogDOM = this.dom.clone(true);
     };
-    Call.prototype.setTimer = function() {
-      this.startingTime = new Date(Date.now());
+    Call.prototype.setTimer = function(startingTime) {
+      this.startingTime = startingTime;
       return this.timer = setInterval(__bind(function() {
         if (this.dom) {
           $('.time-of-call-start', this.dom).text(formatInterval(this.startingTime));
@@ -159,6 +178,7 @@
       }, this), 1000);
     };
     Call.prototype.hangup = function(msg) {
+      this.agent.startingTime = new Date(Date.now());
       delete this.agent.calls[this.uuid];
       clearInterval(this.timer);
       this.dom.slideUp("normal", function() {
@@ -192,7 +212,6 @@
       this.name = name;
       this.calls = {};
       this.createDOM();
-      this.setTimer();
       store.agents[this.name] = this;
     }
     Agent.prototype.createDOM = function() {
@@ -201,14 +220,16 @@
       $('.name', this.dom).text(this.name);
       return $('#agents').isotope('insert', this.dom);
     };
-    Agent.prototype.setTimer = function() {
-      this.startingTime = new Date(Date.now());
+    Agent.prototype.setTimer = function(startingTime) {
+      this.startingTime = startingTime;
+      $('.time-since-status-change', this.dom).text(formatInterval(this.startingTime));
+      $('#agents').isotope('updateSortData', this.dom);
       return this.timer = setInterval(__bind(function() {
-        $('.time-since-status-change', this.dom).text(formatInterval(this.startingTime));
-        return $('#agents').isotope('updateSortData', this.dom);
+        return $('.time-since-status-change', this.dom).text(formatInterval(this.startingTime));
       }, this), 1000);
     };
     Agent.prototype.fillFromAgent = function(d) {
+      var msg;
       this.setName(d.name);
       this.setState(d.state);
       this.setStatus(d.status);
@@ -229,7 +250,27 @@
       this.talk_time = d.talk_time;
       this.type = d.type;
       this.uuid = d.uuid;
-      return this.wrap_up_time = d.wrap_up_time;
+      this.wrap_up_time = d.wrap_up_time;
+      this.setTimer(this.last_bridge_end);
+      if (d.call_created) {
+        msg = {
+          call_created: d.call_created,
+          left: {
+            cid_number: d.caller_cid_num,
+            cid_name: d.caller_cid_name,
+            destination: d.caller_dest_num,
+            channel: d.contact,
+            uuid: d.uuid
+          },
+          right: {
+            cid_number: d.callee_cid_num,
+            cid_name: d.callee_cid_name,
+            channel: d.contact,
+            uuid: d.uuid
+          }
+        };
+        return this.got_call_start(msg);
+      }
     };
     Agent.prototype.fillFromTier = function(d) {
       this.setName(d.agent);
@@ -239,22 +280,23 @@
       return this.setQueue(d.queue);
     };
     Agent.prototype.got_call_start = function(msg) {
-      var extMatch, leftMatch, rightMatch, _ref, _ref2, _ref3, _ref4;
-      extMatch = /(?:^|\/)(\d+)[@-]/;
-      leftMatch = (_ref = msg.left.channel) != null ? typeof _ref.match === "function" ? (_ref2 = _ref.match(extMatch)) != null ? _ref2[1] : void 0 : void 0 : void 0;
-      rightMatch = (_ref3 = msg.right.channel) != null ? typeof _ref3.match === "function" ? (_ref4 = _ref3.match(extMatch)) != null ? _ref4[1] : void 0 : void 0 : void 0;
+      var extMatch, left, leftMatch, right, rightMatch, _ref, _ref2, _ref3, _ref4, _ref5;
+      extMatch = /(?:^|\/)(?:sip:)?(\d+)[@-]/;
+      _ref = [msg.left, msg.right], left = _ref[0], right = _ref[1];
+      leftMatch = (_ref2 = left.channel) != null ? typeof _ref2.match === "function" ? (_ref3 = _ref2.match(extMatch)) != null ? _ref3[1] : void 0 : void 0 : void 0;
+      rightMatch = (_ref4 = right.channel) != null ? typeof _ref4.match === "function" ? (_ref5 = _ref4.match(extMatch)) != null ? _ref5[1] : void 0 : void 0 : void 0;
       if (this.extension === leftMatch) {
-        return this.makeCall(msg.left, msg.right, msg);
+        return this.makeCall(left, right, msg);
       } else if (this.extension === rightMatch) {
-        return this.makeCall(msg.right, msg.left, msg);
-      } else if (msg.right.destination === rightMatch) {
-        return this.makeCall(msg.right, msg.left, msg);
-      } else if (msg.left.destination === leftMatch) {
-        return this.makeCall(msg.left, msg.right, msg);
-      } else if (msg.left.cid_number === leftMatch) {
-        return this.makeCall(msg.left, msg.right, msg);
-      } else if (msg.right.cid_number === rightMatch) {
-        return this.makeCall(msg.right, msg.left, msg);
+        return this.makeCall(right, left, msg);
+      } else if (right.destination === rightMatch) {
+        return this.makeCall(right, left, msg);
+      } else if (left.destination === leftMatch) {
+        return this.makeCall(left, right, msg);
+      } else if (left.cid_number === leftMatch) {
+        return this.makeCall(left, right, msg);
+      } else if (right.cid_number === rightMatch) {
+        return this.makeCall(right, left, msg);
       }
     };
     Agent.prototype.makeCall = function(left, right, msg) {
@@ -284,6 +326,7 @@
     };
     Agent.prototype.setQueue = function(queue) {
       this.queue = queue;
+      $('.queue', this.dom).text(this.queue);
       return this.dom.addClass(queueToClass(queue));
     };
     Agent.prototype.setName = function(name) {
@@ -307,7 +350,6 @@
       }
       this.dom.addClass(targetKlass);
       $('.state', this.dom).text(state);
-      this.startingTime = new Date(Date.now());
       $('#agents').isotope('updateSortData', this.dom);
       return this.syncDialogState();
     };
@@ -324,7 +366,6 @@
       }
       this.dom.addClass(targetKlass);
       $('.status', this.dom).text(status);
-      this.startingTime = new Date(Date.now());
       $('#agents').isotope('updateSortData', this.dom);
       return this.syncDialogStatus();
     };
@@ -371,8 +412,8 @@
             this.calltap();
             return false;
           }, this));
-          $('.calls .uuid', this.dialog).click(__bind(function(event) {
-            this.calls[$(event.target).text()].calltap();
+          $('.calls .uuid img', this.dialog).click(__bind(function(event) {
+            this.calls[$(event.target).attr('href').slice(1)].calltap();
             return false;
           }, this));
           $('.status a', this.dialog).click(__bind(function(event) {
@@ -436,6 +477,38 @@
       });
       return false;
     }, this));
+    $('#search').keyup(__bind(function(event) {
+      var query, raw;
+      if (event.keyCode === 13) {
+        event.preventDefault();
+      }
+      raw = $(event.target).val();
+      if (query = searchToQuery(raw)) {
+        $('#agents').isotope({
+          filter: query
+        });
+      }
+      return false;
+    }, this));
+    $('#save-search').click(__bind(function(event) {
+      var query, raw;
+      raw = $('#search').val();
+      if (query = searchToQuery(raw)) {
+        if (!store.searches[raw]) {
+          store.searches[raw] = query;
+          return $('#prev-search').append($('<option>', {
+            value: query
+          }).text(raw));
+        }
+      }
+    }, this));
+    $('#prev-search').change(__bind(function(event) {
+      var query;
+      query = $(event.target).val();
+      return $('#agents').isotope({
+        filter: query
+      });
+    }, this));
     $('#nav-sort a').click(function(event) {
       var sorter;
       sorter = $(event.target).attr('id').replace(/^sort-/, "");
@@ -462,12 +535,28 @@
           return e.find('.extension').text();
         },
         status: function(e) {
-          return [e.find('.status').text(), e.find('.username').text()].join("_");
+          var extension, order, s;
+          s = e.find('.status').text();
+          order = (function() {
+            switch (s) {
+              case 'Available':
+                return 0.8;
+              case 'On Break':
+                return 0.9;
+              case 'Logged Out':
+                return 1.0;
+            }
+          })();
+          extension = e.find('.username').text();
+          return parseFloat("" + order + extension);
         },
         idle: function(e) {
-          return e.find('.time-since-status-change').text();
+          var min, sec, _ref;
+          _ref = e.find('.time-since-status-change').text().split(':'), min = _ref[0], sec = _ref[1];
+          return (parseInt(min, 10) * 60) + parseInt(sec, 10);
         }
-      }
+      },
+      sortBy: 'status'
     });
     return store.ws = new Socket(new Controller());
   });

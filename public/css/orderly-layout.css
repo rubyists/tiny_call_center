@@ -5,13 +5,11 @@ body {
   font-family: sans-serif;
 }
 
-nav {
-  top: 0;
-  position: fixed;
-  overflow: hidden;
-  height: 2em;
-  line-height: 2em;
-  width: 100%;
+h3 {
+  font-size: 1.2em;
+  margin: 0;
+  padding: 0;
+  color: #fff;
 }
 
 nav a {
@@ -25,21 +23,41 @@ nav ul {
 }
 
 nav li {
-  display: inline;
+  display: block;
   padding: 0;
   margin: 0em 0.5em;
 }
 
-#nav-queues {
-  float: left;
+#nav-search {
+  position: absolute;
+  top: 0.5em;
+  right: 1em;
+  height: 2em;
+  overflow: hidden;
 }
 
-#nav-meta {
-  float: right;
+#nav-queues {
+  position: absolute;
+  top: 1em;
+  left: 1em;
+  width: 15em;
+  overflow: hidden;
+}
+
+#nav-sort {
+  position: absolute;
+  top: 0.5em;
+  left: 16em;
+}
+
+#nav-sort li {
+  float: left;
+  line-height: 2em;
 }
 
 #content {
-  margin-top: 2em;
+  margin-top: 3em;
+  margin-left: 16em;
 }
 
 #agents .agent {
@@ -74,12 +92,21 @@ nav li {
   display: block;
 }
 
+.calls .call {
+  border: 1px solid black;
+}
+
 .agent .time-since-status-change {
   display: block;
 }
 
 .call .uuid, .call .channel {
   display: none;
+}
+
+.agent-dialog .call .uuid {
+  display: inline;
+  float: right;
 }
 
 .agent-dialog .state .active, .agent-dialog .status .active {
@@ -121,6 +148,24 @@ nav li {
 .isotope-hidden.isotope-item {
   pointer-events: none;
   z-index: 1;
+}
+
+.isotope, .isotope .isotope-item {
+  -webkit-transition-duration: 0.8s;
+     -moz-transition-duration: 0.8s;
+          transition-duration: 0.8s;
+}
+
+.isotope {
+  -webkit-transition-property: height, width;
+     -moz-transition-property: height, width;
+          transition-property: height, width;
+}
+
+.isotope .isotope-item {
+  -webkit-transition-property: -webkit-transform, opacity;
+     -moz-transition-property:    -moz-transform, opacity;
+          transition-property:         transform, opacity;
 }
 
 #proto-agent {

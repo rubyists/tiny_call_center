@@ -3,6 +3,7 @@ p = () ->
 
 store = {
   agents: {},
+  searches: {},
   stateMapping: {
     Idle: 'Wrap Up',
     Waiting: 'Ready',
@@ -21,6 +22,18 @@ formatInterval = (start) ->
   seconds = total % 60
   seconds = "0" + seconds if seconds < 10
   "#{minutes}:#{seconds}"
+
+searchToQuery = (raw) ->
+  if /^[,\s]*$/.test(raw)
+    $('#agents').isotope(filter: '*')
+    return false
+
+  query = []
+  for part in raw.split(/\s*,\s*/g)
+    part = part.replace(/'/, '')
+    query.push(":contains('#{part}')")
+
+  return query.join(", ")
 
 class Socket
   constructor: (@controller) ->
@@ -61,14 +74,18 @@ class Controller
       store.agents[msg.cc_agent]["got_#{action}"](msg)
 
   got_queues: (queues) ->
-    $('#nav-queues').html('')
+    list = $('#nav-queues ul')
+    list.html('')
+
     for queue in queues
       li = $('<li>')
       a = $('<a>', href: '#').text(queue.name)
       li.append(a)
-      $('#nav-queues').append(li)
+      list.append(li)
+    list.prepend('<li><a href="#" id="show-all-agents">Show All</a></li>')
 
   got_agent_list: (agents) ->
+    p agents
     for rawAgent in agents
       agent = store.agents[rawAgent.name] || new Agent(rawAgent.name)
       agent.fillFromAgent(rawAgent)
@@ -341,6 +358,26 @@ $ ->
     $('#agents').isotope(filter: '*')
     false
 
+  $('#search').keyup (event) =>
+    if event.keyCode == 13
+      event.preventDefault()
+
+    raw = $(event.target).val()
+    if query = searchToQuery(raw)
+      $('#agents').isotope(filter: query)
+    false
+
+  $('#save-search').click (event) =>
+    raw = $('#search').val()
+    if query = searchToQuery(raw)
+      unless store.searches[raw]
+        store.searches[raw] = query
+        $('#prev-search').append($('<option>', value: query).text(raw))
+
+  $('#prev-search').change (event) =>
+    query = $(event.target).val()
+    $('#agents').isotope(filter: query)
+
   $('#nav-sort a').click (event) ->
     sorter = $(event.target).attr('id').replace(/^sort-/, "")
     $('#agents').isotope(sortBy: sorter)
@@ -361,9 +398,23 @@ $ ->
       extension: (e) ->
         e.find('.extension').text()
       status: (e) ->
-        [e.find('.status').text(), e.find('.username').text()].join("_")
+        s = e.find('.status').text()
+        order =
+          switch s
+            when 'Available'
+              0.8
+            when 'On Break'
+              0.9
+            when 'Logged Out'
+              1.0
+
+        extension = e.find('.username').text()
+        parseFloat("" + order + extension)
       idle: (e) ->
-        e.find('.time-since-status-change').text()
-    })
+        [min, sec] = e.find('.time-since-status-change').text().split(':')
+        (parseInt(min, 10) * 60) + parseInt(sec, 10)
+    },
+    sortBy: 'status',
+  )
 
   store.ws = new Socket(new Controller())
