@@ -12,7 +12,7 @@ module TinyCallCenter
       [ :CHANNEL_ORIGINATE, # Call being placed/ringing
         :CHANNEL_ANSWER,    # Call starts
         :CHANNEL_HANGUP,    # Call ends
-        :CHANNEL_CREATE,    # Channel created
+        #:CHANNEL_CREATE,    # Channel created
       ].each{|flag| add_event(flag, &method(flag.to_s.downcase)) }
     end
 
@@ -34,9 +34,40 @@ module TinyCallCenter
       FSR::Log.debug "<<< Channel Originate >>>"
       FSR::Log.debug msg
 
+      return if try_pure_originate(msg)
+
       @channel_originates[uuid] = msg
       @channel_originates[content[:other_leg_unique_id]] = msg
       try_call_dispatch(uuid, content[:other_leg_unique_id])
+    end
+
+    def try_pure_originate(msg)
+      return unless msg[:answer_state] == 'answered' &&
+        [msg[:caller_caller_id_number], msg[:caller_callee_id_number]].include?('8675309')
+
+      out = {
+        tiny_action: 'call_start',
+        call_created: msg[:event_date_gmt],
+        cc_agent: msg[:variable_tcc_agent],
+
+        left: {
+          cid_number:   msg[:caller_caller_id_number],
+          cid_name:     msg[:caller_caller_id_name],
+          destination:  msg[:caller_destination_number],
+          channel:      msg[:caller_channel_name],
+          uuid:         msg[:variable_call_uuid],
+        },
+        right: {
+          cid_number:   msg[:caller_caller_id_number],
+          cid_name:     msg[:caller_caller_id_name],
+          destination:  msg[:caller_destination_number],
+          channel:      msg[:channel_name],
+          uuid:         msg[:channel_call_uuid],
+        }
+      }
+
+      relay_agent(out)
+      true
     end
 
     def channel_answer(event)

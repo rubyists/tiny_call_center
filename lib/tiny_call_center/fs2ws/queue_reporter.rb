@@ -54,34 +54,6 @@ module TinyCallCenter
       relay_agent out
     end
 
-    def member_queue_start(msg)
-      if msg[:answer_state] == 'answered' && (msg[:caller_caller_id_number] == '8675309' || msg[:caller_destination_number] == '19999')
-        relay_msg = {
-          tiny_action: 'call_start',
-          call_created: msg[:event_date_gmt],
-          cc_agent: msg[:cc_agent] || msg[:variable_cc_agent],
-
-          left: {
-            cid_number:  msg[:caller_caller_id_number],
-            cid_name:    msg[:caller_caller_id_name],
-            destination: msg[:caller_destination_number],
-            channel:     msg[:caller_channel_name],
-            uuid:        msg[:unique_id],
-          },
-
-          right: {
-            cid_number:  msg[:caller_caller_id_number],
-            cid_name:    msg[:caller_caller_id_name],
-            destination: msg[:caller_destination_number],
-            channel:     msg[:channel_name],
-            uuid:        msg[:unique_id],
-          }
-        }
-
-        relay_agent relay_msg
-      end
-    end
-
     def callcenter
       @callcenter ||= FSR::Cmd::CallCenter.new(nil, :agent)
     end
