@@ -36,12 +36,20 @@ nav li {
   overflow: hidden;
 }
 
-#nav-queues {
+#nav-main {
   position: absolute;
   top: 1em;
   left: 1em;
   width: 15em;
   overflow: hidden;
+}
+
+#show-all-agents {
+  color: #f00;
+}
+
+#nav-queues, #nav-show-all {
+  margin-bottom: 1.5em;
 }
 
 #nav-sort {
@@ -93,7 +101,11 @@ nav li {
 }
 
 .calls .call {
-  border: 1px solid black;
+  background: rgba(255,255,255,0.5);
+}
+
+.calls .call .time-of-call-start {
+  float: right;
 }
 
 .agent .time-since-status-change {
@@ -131,7 +143,7 @@ nav li {
   -webkit-transition: 500ms;
   -moz-transition: 500ms;
   transition: 500ms;
-  background: #ff6;
+  background: #999;
 }
 
 #agents .agent.status-logged-out {

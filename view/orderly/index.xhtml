@@ -18,10 +18,18 @@
       <button id="save-search">Keep</button>
     </nav>
 
-    <nav id="nav-queues">
+    <nav id="nav-main">
       <h3>Queues</h3>
-      <ul><li><a href="#" id="show-all-agents">Show All</a></li></ul>
-      <ul></ul>
+      <ul id="nav-queues"></ul>
+
+      <ul id="nav-show-all">
+        <li><a href="#" id="show-all-agents">Show All</a></li>
+      </ul>
+
+      <ul id="nav-sections">
+        <li>#{TCC::Tiers.a('Tiers', :/)}</li>
+        <li>#{TCC::Agents.a('Agents', :/)}</li>
+      </ul>
     </nav>
 
     <nav id="nav-sort">
@@ -61,9 +69,6 @@
 
       <div id='proto-agent-dialog' class="agent-dialog">
         <span class="agent-name"></span>
-        <button class="calltap ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" role="button" aria-disabled="false">
-          <span class="ui-button-text">Tap Call</span>
-        </button>
 
         <h2>Calls</h2>
         <ul class="calls">
@@ -81,14 +86,18 @@
         <ul class="state">
           <li><a class="Waiting" href="#">Ready</a></li>
           <li><a class="Idle" href="#">Wrap Up</a></li>
-        </div>
-      </div>
+        </ul>
 
-      <footer>
-        <span id="agent_name">#{h @agent}</span>
-        <span id="server">#{h @server}</span>
-        <div id="copyright">Live CallCenter &copy; by The Rubyists LLC. 2010</div>
-      </footer>
+        <button class="calltap ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" role="button" aria-disabled="false">
+          <span class="ui-button-text">Tap</span>
+        </button>
+      </div>
     </div>
+
+    <footer>
+      <span id="agent_name">#{h @agent}</span>
+      <span id="server">#{h @server}</span>
+      <div id="copyright">Live CallCenter &copy; by The Rubyists LLC. 2010</div>
+    </footer>
   </body>
 </html>

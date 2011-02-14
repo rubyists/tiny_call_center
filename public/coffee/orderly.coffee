@@ -73,7 +73,7 @@ class Controller
       store.agents[msg.cc_agent]["got_#{action}"](msg)
 
   got_queues: (queues) ->
-    list = $('#nav-queues ul')
+    list = $('#nav-queues')
     list.html('')
 
     for queue in queues
@@ -81,7 +81,6 @@ class Controller
       a = $('<a>', href: '#').text(queue.name)
       li.append(a)
       list.append(li)
-    list.prepend('<li><a href="#" id="show-all-agents">Show All</a></li>')
 
   got_agent_list: (agents) ->
     p agents
@@ -375,7 +374,7 @@ $ ->
     store.ws.say(method: 'agents_of', queue: queue)
     false
 
-  $('#show-all-agents').live 'click', (event) =>
+  $('#show-all-agents').live 'click', (event) ->
     $('#agents').isotope(filter: '*')
     false
 

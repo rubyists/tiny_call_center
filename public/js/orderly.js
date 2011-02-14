@@ -94,9 +94,10 @@
       }
     };
     Controller.prototype.got_queues = function(queues) {
-      var a, li, list, queue, _i, _len;
-      list = $('#nav-queues ul');
+      var a, li, list, queue, _i, _len, _results;
+      list = $('#nav-queues');
       list.html('');
+      _results = [];
       for (_i = 0, _len = queues.length; _i < _len; _i++) {
         queue = queues[_i];
         li = $('<li>');
@@ -104,9 +105,9 @@
           href: '#'
         }).text(queue.name);
         li.append(a);
-        list.append(li);
+        _results.push(list.append(li));
       }
-      return list.prepend('<li><a href="#" id="show-all-agents">Show All</a></li>');
+      return _results;
     };
     Controller.prototype.got_agent_list = function(agents) {
       var agent, rawAgent, _i, _len, _results;
@@ -468,12 +469,12 @@
       });
       return false;
     }, this));
-    $('#show-all-agents').live('click', __bind(function(event) {
+    $('#show-all-agents').live('click', function(event) {
       $('#agents').isotope({
         filter: '*'
       });
       return false;
-    }, this));
+    });
     $('#search').keyup(__bind(function(event) {
       var query, raw;
       if (event.keyCode === 13) {
@@ -544,7 +545,7 @@
                 return 1.0;
             }
           })();
-          extension = e.find('.username').text();
+          extension = e.find('.extension').text();
           return parseFloat("" + order + extension);
         },
         idle: function(e) {
