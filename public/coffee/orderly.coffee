@@ -110,7 +110,7 @@ class Call
     @createDOM()
     @renderInAgent()
     @renderInDialog()
-    @setTimer()
+    @setTimer(new Date(Date.parse(msg.call_created)))
     @agent.calls[@uuid] = this
 
   createDOM: ->
@@ -121,18 +121,18 @@ class Call
     $('.cid-name', @dom).text(@remoteLeg.cid_name)
     $('.destination', @dom).text(@remoteLeg.destination)
     $('.queue-name', @dom).text(@localLeg.queue)
-    $('.uuid', @dom).text(@localLeg.uuid)
+    $('.uuid', @dom).attr('href', "##{@localLeg.uuid}")
     $('.channel', @dom).text(@localLeg.channel)
     @dialogDOM = @dom.clone(true)
 
-  setTimer: ->
-    @startingTime = new Date(Date.now())
+  setTimer: (@startingTime) ->
     @timer = setInterval =>
       $('.time-of-call-start', @dom).text(formatInterval(@startingTime)) if @dom
       $('.time-of-call-start', @dialogDOM).text(formatInterval(@startingTime)) if @dialogDOM
     , 1000
 
   hangup: (msg) ->
+    @agent.startingTime = new Date(Date.now())
     delete @agent.calls[@uuid]
     clearInterval(@timer)
     @dom.slideUp("normal", -> $(this).remove())
@@ -159,7 +159,6 @@ class Agent
   constructor: (@name) ->
     @calls = {}
     @createDOM()
-    @setTimer()
     store.agents[@name] = this
 
   createDOM: ->
@@ -168,11 +167,12 @@ class Agent
     $('.name', @dom).text(@name)
     $('#agents').isotope('insert', @dom)
 
-  setTimer: ->
-    @startingTime = new Date(Date.now())
+  setTimer: (@startingTime) ->
+    $('.time-since-status-change', @dom).text(formatInterval(@startingTime))
+    $('#agents').isotope('updateSortData', @dom)
+
     @timer = setInterval =>
       $('.time-since-status-change', @dom).text(formatInterval(@startingTime))
-      $('#agents').isotope('updateSortData', @dom)
     , 1000
 
   fillFromAgent: (d) ->
@@ -199,6 +199,28 @@ class Agent
     @uuid = d.uuid
     @wrap_up_time = d.wrap_up_time
 
+    @setTimer(@last_bridge_end)
+
+    if d.call_created
+      msg = {
+        call_created: d.call_created,
+        left: {
+          cid_number: d.caller_cid_num,
+          cid_name: d.caller_cid_name,
+          destination: d.caller_dest_num,
+          channel: d.contact
+          uuid: d.uuid,
+        },
+        right: {
+          cid_number: d.callee_cid_num,
+          cid_name: d.callee_cid_name,
+          channel: d.contact,
+          uuid: d.uuid,
+        }
+      }
+
+      @got_call_start(msg)
+
   fillFromTier: (d) ->
     @setName(d.agent)
     @setState(d.state)
@@ -207,22 +229,23 @@ class Agent
     @setQueue(d.queue)
 
   got_call_start: (msg) ->
-    extMatch = /(?:^|\/)(\d+)[@-]/
-    leftMatch = msg.left.channel?.match?(extMatch)?[1]
-    rightMatch = msg.right.channel?.match?(extMatch)?[1]
+    extMatch = /(?:^|\/)(?:sip:)?(\d+)[@-]/
+    [left, right] = [msg.left, msg.right]
+    leftMatch = left.channel?.match?(extMatch)?[1]
+    rightMatch = right.channel?.match?(extMatch)?[1]
 
     if @extension == leftMatch
-      @makeCall(msg.left, msg.right, msg)
+      @makeCall(left, right, msg)
     else if @extension == rightMatch
-      @makeCall(msg.right, msg.left, msg)
-    else if msg.right.destination == rightMatch
-      @makeCall(msg.right, msg.left, msg)
-    else if msg.left.destination == leftMatch
-      @makeCall(msg.left, msg.right, msg)
-    else if msg.left.cid_number == leftMatch
-      @makeCall(msg.left, msg.right, msg)
-    else if msg.right.cid_number == rightMatch
-      @makeCall(msg.right, msg.left, msg)
+      @makeCall(right, left, msg)
+    else if right.destination == rightMatch
+      @makeCall(right, left, msg)
+    else if left.destination == leftMatch
+      @makeCall(left, right, msg)
+    else if left.cid_number == leftMatch
+      @makeCall(left, right, msg)
+    else if right.cid_number == rightMatch
+      @makeCall(right, left, msg)
 
   makeCall: (left, right, msg) ->
     new Call(this, left, right, msg) unless @calls[left.uuid]
@@ -241,6 +264,7 @@ class Agent
     @setState(msg.cc_agent_state)
 
   setQueue: (@queue) ->
+    $('.queue', @dom).text(@queue)
     @dom.addClass(queueToClass(queue))
 
   setName: (@name) ->
@@ -255,7 +279,6 @@ class Agent
       @dom.removeClass(klass) if /^state-/.test(klass)
     @dom.addClass(targetKlass)
     $('.state', @dom).text(state)
-    @startingTime = new Date(Date.now())
     $('#agents').isotope('updateSortData', @dom)
     @syncDialogState()
 
@@ -265,7 +288,6 @@ class Agent
       @dom.removeClass(klass) if /^status-/.test(klass)
     @dom.addClass(targetKlass)
     $('.status', @dom).text(status)
-    @startingTime = new Date(Date.now())
     $('#agents').isotope('updateSortData', @dom)
     @syncDialogStatus()
 
@@ -305,8 +327,8 @@ class Agent
         $('.calltap', @dialog).click (event) =>
           @calltap()
           false
-        $('.calls .uuid', @dialog).click (event) =>
-          @calls[$(event.target).text()].calltap()
+        $('.calls .uuid img', @dialog).click (event) =>
+          @calls[$(event.target).attr('href')[1..]].calltap()
           false
         $('.status a', @dialog).click (event) =>
           store.ws.say(
