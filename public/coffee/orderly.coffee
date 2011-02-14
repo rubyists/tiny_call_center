@@ -16,11 +16,20 @@ statusOrStateToClass = (prefix, str) ->
 queueToClass = (queue) ->
   queue.toLowerCase().replace(/\W+/g, '_').replace(/^_+|_+$/g, "")
 
+divmod = (num1, num2) ->
+  [num1 / num2, num1 % num2]
+
 formatInterval = (start) ->
-  total = parseInt((Date.now() - start) / 1000, 10)
-  minutes = parseInt(total / 60, 10)
-  seconds = total % 60
-  sprintf("%02d:%02d", minutes, seconds)
+  total   = parseInt((Date.now() - start) / 1000, 10)
+  [hours, rest] = divmod(total, 60 * 60)
+  [minutes, seconds] = divmod(rest, 60)
+  sprintf("%02d:%02d:%02d", hours, minutes, seconds)
+
+formatPhoneNumber = (number) ->
+  return number unless number?
+  md = number.match(/^(\d{3})(\d{3})(\d*)/)
+  return number unless md?
+  "(#{md[1]})-#{md[2]}-#{md[3]}"
 
 searchToQuery = (raw) ->
   if /^[,\s]*$/.test(raw)
@@ -115,9 +124,9 @@ class Call
     @dom = store.protoCall.clone()
     @dom.attr('id', '')
     @dom.attr('class', "#{@klass} call")
-    $('.cid-number', @dom).text(@remoteLeg.cid_number)
+    $('.cid-number', @dom).text(formatPhoneNumber(@remoteLeg.cid_number))
     $('.cid-name', @dom).text(@remoteLeg.cid_name)
-    $('.destination', @dom).text(@remoteLeg.destination)
+    $('.destination', @dom).text(formatPhoneNumber(@remoteLeg.destination))
     $('.queue-name', @dom).text(@localLeg.queue)
     $('.uuid', @dom).attr('href', "##{@localLeg.uuid}")
     $('.channel', @dom).text(@localLeg.channel)
@@ -398,7 +407,7 @@ $ ->
     query = $(event.target).val()
     $('#agents').isotope(filter: query)
 
-  $('#nav-sort a').click (event) ->
+  $('.sorter').click (event) ->
     sorter = $(event.target).attr('id').replace(/^sort-/, "")
     $('#agents').isotope(sortBy: sorter)
     false

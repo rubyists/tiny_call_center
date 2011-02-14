@@ -1,5 +1,5 @@
 (function() {
-  var Agent, Call, Controller, Socket, formatInterval, p, queueToClass, searchToQuery, statusOrStateToClass, store;
+  var Agent, Call, Controller, Socket, divmod, formatInterval, formatPhoneNumber, p, queueToClass, searchToQuery, statusOrStateToClass, store;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   p = function() {
     var _ref;
@@ -19,12 +19,26 @@
   queueToClass = function(queue) {
     return queue.toLowerCase().replace(/\W+/g, '_').replace(/^_+|_+$/g, "");
   };
+  divmod = function(num1, num2) {
+    return [num1 / num2, num1 % num2];
+  };
   formatInterval = function(start) {
-    var minutes, seconds, total;
+    var hours, minutes, rest, seconds, total, _ref, _ref2;
     total = parseInt((Date.now() - start) / 1000, 10);
-    minutes = parseInt(total / 60, 10);
-    seconds = total % 60;
-    return sprintf("%02d:%02d", minutes, seconds);
+    _ref = divmod(total, 60 * 60), hours = _ref[0], rest = _ref[1];
+    _ref2 = divmod(rest, 60), minutes = _ref2[0], seconds = _ref2[1];
+    return sprintf("%02d:%02d:%02d", hours, minutes, seconds);
+  };
+  formatPhoneNumber = function(number) {
+    var md;
+    if (number == null) {
+      return number;
+    }
+    md = number.match(/^(\d{3})(\d{3})(\d*)/);
+    if (md == null) {
+      return number;
+    }
+    return "(" + md[1] + ")-" + md[2] + "-" + md[3];
   };
   searchToQuery = function(raw) {
     var part, query, _i, _len, _ref;
@@ -156,9 +170,9 @@
       this.dom = store.protoCall.clone();
       this.dom.attr('id', '');
       this.dom.attr('class', "" + this.klass + " call");
-      $('.cid-number', this.dom).text(this.remoteLeg.cid_number);
+      $('.cid-number', this.dom).text(formatPhoneNumber(this.remoteLeg.cid_number));
       $('.cid-name', this.dom).text(this.remoteLeg.cid_name);
-      $('.destination', this.dom).text(this.remoteLeg.destination);
+      $('.destination', this.dom).text(formatPhoneNumber(this.remoteLeg.destination));
       $('.queue-name', this.dom).text(this.localLeg.queue);
       $('.uuid', this.dom).attr('href', "#" + this.localLeg.uuid);
       $('.channel', this.dom).text(this.localLeg.channel);
@@ -507,7 +521,7 @@
         filter: query
       });
     }, this));
-    $('#nav-sort a').click(function(event) {
+    $('.sorter').click(function(event) {
       var sorter;
       sorter = $(event.target).attr('id').replace(/^sort-/, "");
       $('#agents').isotope({
