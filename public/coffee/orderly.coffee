@@ -428,7 +428,7 @@ $ ->
             when 'Logged Out'
               1.0
 
-        extension = e.find('.username').text()
+        extension = e.find('.extension').text()
         parseFloat("" + order + extension)
       idle: (e) ->
         [min, sec] = e.find('.time-since-status-change').text().split(':')
