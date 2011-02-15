@@ -1,0 +1,30 @@
+<include>
+  <extension name="direct_transfer">
+    <condition field="destination_number" expression="^direct_transfer$">
+      <action application="answer" />
+      <action application="set" data="cc_warning_tone=tone_stream://%(200,0,500,600,700)"/>
+      <action application="callcenter" data="${tcc_queue}"/>
+    </condition>
+  </extension>
+  <extension name="dialer_loop">
+    <condition field="destination_number" expression="^(19999)$">
+      <action application="answer" />
+      <action application="set" data="cc_warning_tone=tone_stream://%(200,0,500,600,700)"/>
+      <action application="set" data="res=${callcenter_config(agent set uuid ${tcc_agent} '${uuid}')}" />
+      <action application="set" data="res=${callcenter_config(agent set type ${tcc_agent} 'uuid-standby')}" />
+      <action application="set" data="res=${callcenter_config(agent set status ${tcc_agent} 'Available (On Demand)')}" />
+      <action application="set" data="tcc_agent=${tcc_agent}"/>
+      <action application="set" data="hangup_after_bridge=false"/>
+      <action application="set" data="continue_on_fail=true"/>
+      <action application="set" data="transfer_after_bridge=19999:XML:default"/>
+      <action application="playback" data="$${hold_music}"/>
+      <action application="transfer" data="19999 XML default"/> <!-- Remove this if you just want to get a single call --> 
+    </condition>
+  </extension>
+  <extension name="sales">
+    <condition field="destination_number" expression="^(sales|19998)$">
+      <action application="answer" />
+      <action application="callcenter" data="sales" />
+    </condition>
+  </extension>
+</include>
