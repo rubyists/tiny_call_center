@@ -139,8 +139,8 @@ agentStatusChange = (msg) ->
       currentStatus($('#logged_out'))
 
 currentState = (tag) ->
-  $('.state').attr('class', 'inactive')
-  tag.attr('class', 'active')
+  $('#state li > *').attr('class', 'state inactive')
+  tag.attr('class', 'state active')
 
 agentStateChange = (msg) ->
   state = msg.cc_agent_state.replace(/\s+/g, "_")
@@ -203,7 +203,7 @@ agentWantsStatusChange = (a) ->
   false
 
 agentWantsStateChange = (a) ->
-  curState = $('.state[class=active').text()
+  curState = $('.state[class=active]').text()
   store.send(
     method: 'state',
     state: a.target.id.replace(/_/g, ' '),

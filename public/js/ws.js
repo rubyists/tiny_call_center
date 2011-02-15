@@ -42,7 +42,6 @@
       this.sel.attr('id', '');
       $('#calls').append(this.sel);
       this.dom = {
-        state: $('.state', this.sel),
         cidNumber: $('.cid-number', this.sel),
         cidName: $('.cid-name', this.sel),
         answered: $('.answered', this.sel),
@@ -141,8 +140,8 @@
     }
   };
   currentState = function(tag) {
-    $('#state a').attr('class', 'inactive');
-    return tag.attr('class', 'active');
+    $('#state li > *').attr('class', 'state inactive');
+    return tag.attr('class', 'state active');
   };
   agentStateChange = function(msg) {
     var state;
@@ -222,7 +221,7 @@
   };
   agentWantsStateChange = function(a) {
     var curState;
-    curState = $('#state a[class=active').text();
+    curState = $('.state[class=active]').text();
     store.send({
       method: 'state',
       state: a.target.id.replace(/_/g, ' '),
