@@ -40,7 +40,6 @@ class Call
     $('#calls').append(@sel)
 
     @dom = {
-      state:       $('.state', @sel),
       cidNumber:   $('.cid-number', @sel),
       cidName:     $('.cid-name', @sel),
       answered:    $('.answered', @sel),
@@ -140,7 +139,7 @@ agentStatusChange = (msg) ->
       currentStatus($('#logged_out'))
 
 currentState = (tag) ->
-  $('#state a').attr('class', 'inactive')
+  $('.state').attr('class', 'inactive')
   tag.attr('class', 'active')
 
 agentStateChange = (msg) ->
@@ -204,7 +203,7 @@ agentWantsStatusChange = (a) ->
   false
 
 agentWantsStateChange = (a) ->
-  curState = $('#state a[class=active').text()
+  curState = $('.state[class=active').text()
   store.send(
     method: 'state',
     state: a.target.id.replace(/_/g, ' '),
