@@ -108,12 +108,22 @@
       }
     };
     Controller.prototype.got_queues = function(queues) {
-      var a, li, list, queue, _i, _len, _results;
+      var a, li, list, queue, sorted, unsorted, _i, _j, _len, _len2, _results;
       list = $('#nav-queues');
       list.html('');
-      _results = [];
+      unsorted = [];
       for (_i = 0, _len = queues.length; _i < _len; _i++) {
         queue = queues[_i];
+        p(queue.name, queue);
+        unsorted.push(queue);
+      }
+      sorted = unsorted.sort(function(a, b) {
+        return a.name > b.name;
+      });
+      _results = [];
+      for (_j = 0, _len2 = sorted.length; _j < _len2; _j++) {
+        queue = sorted[_j];
+        p("a", a);
         li = $('<li>');
         a = $('<a>', {
           href: '#'

@@ -85,7 +85,14 @@ class Controller
     list = $('#nav-queues')
     list.html('')
 
+    unsorted = []
     for queue in queues
+      p queue.name, queue
+      unsorted.push(queue)
+    sorted = unsorted.sort (a, b) -> a.name > b.name
+
+    for queue in sorted
+      p "a", a
       li = $('<li>')
       a = $('<a>', href: '#').text(queue.name)
       li.append(a)
