@@ -4,8 +4,6 @@ module TinyCallCenter
     SubscribedAgents = {}
 
     def initialize(reporter, socket, command_socket_server)
-      @_last_state = @_last_status = nil
-
       self.reporter, self.socket = reporter, socket
       self.command_socket_server = command_socket_server
 
@@ -163,11 +161,6 @@ module TinyCallCenter
     def got_state(msg)
       FSR::Log.debug "State Change: #{msg}"
       current, new = msg.values_at('curState', 'state')
-      if current == new or new == @_last_state
-        FSR::Log.warn "Got a dupe state request #{self.agent}: #{msg}"
-        return false
-      end
-      @_last_state = new
       reporter.callcenter!{|cc| cc.set(self.agent, :state, new) }
     end
 
@@ -175,11 +168,6 @@ module TinyCallCenter
       FSR::Log.debug "Status Change: #{msg}"
       current, new = msg.values_at('curStatus', 'status')
       mapped = STATUS_MAPPING[new]
-      if current == mapped or mapped == @_last_status
-        FSR::Log.warn "Got a dupe status request #{self.agent}: #{msg}"
-        return false
-      end
-      @_last_status = mapped
       reporter.callcenter!{|cc| cc.set(self.agent, :status, mapped) }
     end
 
