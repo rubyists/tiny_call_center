@@ -25,6 +25,21 @@ p = (msg) ->
 showError = (msg) ->
   $('#error').text(msg)
 
+divmod = (num1, num2) ->
+  [num1 / num2, num1 % num2]
+
+formatInterval = (start) ->
+  total   = parseInt((Date.now() - start) / 1000, 10)
+  [hours, rest] = divmod(total, 60 * 60)
+  [minutes, seconds] = divmod(rest, 60)
+  sprintf("%02d:%02d:%02d", hours, minutes, seconds)
+
+formatPhoneNumber = (number) ->
+  return number unless number?
+  md = number.match(/^(\d{3})(\d{3})(\d{4})/)
+  return number unless md?
+  "(#{md[1]})-#{md[2]}-#{md[3]}"
+
 class Call
   constructor: (local_leg, remote_leg, msg) ->
     @uuid = local_leg.uuid
@@ -50,21 +65,19 @@ class Call
       channel:     $('.channel', @sel),
     }
 
-    @dom.cidNumber.text(@remote_leg.cid_number)
+    @dom.cidNumber.text(formatPhoneNumber(@remote_leg.cid_number))
     @dom.cidName.text(@remote_leg.cid_name)
-    @dom.destination.text(@remote_leg.destination)
+    @dom.destination.text(formatPhoneNumber(@remote_leg.destination))
     @dom.queueName.text(@local_leg.queue)
     @dom.uuid.text(@local_leg.uuid)
     @dom.channel.text(@local_leg.channel)
 
   'bridge-agent-start': (msg) ->
     @dom.cidName.text(msg.cc_caller_cid_name)
-    @dom.cidNumber.text(msg.cc_caller_cid_number)
+    @dom.cidNumber.text(formatPhoneNumber(msg.cc_caller_cid_number))
     @talkingStart(new Date(Date.now()))
 
   'bridge-agent-end': (msg) ->
-    @dom.cidName.text('')
-    @dom.cidNumber.text('')
     @talkingEnd()
 
   channel_hangup: (msg) ->
@@ -95,9 +108,8 @@ class Call
     return if @answered?
     @answered = answeredTime || new Date(Date.now())
     @answeredInterval = setInterval =>
-      talkTime = parseInt((Date.now() - @answered) / 1000, 10)
       @dom.answered.text(
-        "#{@answered.toLocaleTimeString()} (#{talkTime}s)"
+        "#{@answered.toLocaleTimeString()} #{formatInterval(@answered)}"
       )
     , 1000
 

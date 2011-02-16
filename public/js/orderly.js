@@ -34,7 +34,7 @@
     if (number == null) {
       return number;
     }
-    md = number.match(/^(\d{3})(\d{3})(\d*)/);
+    md = number.match(/^(\d{3})(\d{3})(\d{4})/);
     if (md == null) {
       return number;
     }
