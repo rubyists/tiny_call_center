@@ -19,8 +19,8 @@ keyCodes = {
   F12: 123,
 }
 
-p = (msg) ->
-  window.console?.debug?(msg)
+p = ->
+  window.console?.debug?(arguments)
 
 showError = (msg) ->
   $('#error').text(msg)
@@ -42,7 +42,7 @@ formatPhoneNumber = (number) ->
 
 class Call
   constructor: (local_leg, remote_leg, msg) ->
-    @uuid = local_leg.uuid
+    @uuid = remote_leg.uuid
     @local_leg = local_leg
     @remote_leg = remote_leg
     store.calls[@uuid] = this
@@ -69,7 +69,7 @@ class Call
     @dom.cidName.text(@remote_leg.cid_name)
     @dom.destination.text(formatPhoneNumber(@remote_leg.destination))
     @dom.queueName.text(@local_leg.queue)
-    @dom.uuid.text(@local_leg.uuid)
+    @dom.uuid.text(@remote_leg.uuid)
     @dom.channel.text(@local_leg.channel)
 
   'bridge-agent-start': (msg) ->
