@@ -49,6 +49,8 @@ module TinyCallCenter
         tiny_action: 'call_start',
         call_created: msg[:event_date_gmt],
         cc_agent: msg[:variable_tcc_agent],
+        producer: 'try_pure_originate',
+        original: msg,
 
         left: {
           cid_number:   msg[:caller_caller_id_number],
@@ -84,9 +86,45 @@ module TinyCallCenter
       FSR::Log.debug "<<< Channel Answer >>>"
       FSR::Log.debug msg
 
+      return if try_pure_channel_answer(msg)
+
       @channel_answers[content[:unique_id]] = msg
       try_call_dispatch(content[:unique_id])
     end
+
+    def try_pure_channel_answer(msg)
+      return unless msg[:call_direction] == 'inbound' &&
+        msg[:answer_state] == 'answered' &&
+        msg[:caller_destination_number] == '19999' &&
+        msg[:channel_call_state] == 'ACTIVE'
+
+      out = {
+        tiny_action: 'call_start',
+        call_created: msg[:event_date_gmt],
+        cc_agent: msg[:variable_tcc_agent],
+        producer: 'try_pure_channel_answer',
+        original: msg,
+
+        left: {
+          cid_number:   msg[:caller_caller_id_number],
+          cid_name:     msg[:caller_caller_id_name],
+          destination:  msg[:caller_destination_number],
+          channel:      msg[:caller_channel_name],
+          uuid:         msg[:variable_uuid],
+        },
+        right: {
+          cid_number:   msg[:caller_caller_id_number],
+          cid_name:     msg[:caller_caller_id_name],
+          destination:  msg[:caller_destination_number],
+          channel:      msg[:channel_name],
+          uuid:         msg[:channel_uuid],
+        }
+      }
+
+      relay_agent(out)
+      true
+    end
+
 
     def channel_hangup(event)
       msg = event.content
@@ -111,6 +149,8 @@ module TinyCallCenter
         tiny_action: 'call_start',
         call_created: originate[:event_date_gmt],
         queue_name: originate[:cc_queue],
+        producer: 'dispatch_call',
+        original: [left, right, originate],
 
         left: {
           cid_number:   left[:caller_caller_id_number],

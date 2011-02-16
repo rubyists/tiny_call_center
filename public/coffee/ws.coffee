@@ -169,7 +169,22 @@ onMessage = (event) ->
     when 'call_start'
       extMatch = /(?:^|\/)(?:sip:)?(\d+)[@-]/
       makeCall = (left, right, msg) ->
-        new Call(left, right, msg) unless store.calls[left.uuid]
+        uuid = right.uuid
+        p "makeCall"
+        if store.calls[uuid]
+          p "Got Call with #{uuid}"
+          p store.calls[uuid]
+        else
+          call = new Call(left, right, msg)
+          p "Created Call"
+          p call
+
+      p store.agent_ext, msg.left.channel?.match?(extMatch)?[1]
+      p store.agent_ext, msg.right.channel?.match?(extMatch)?[1]
+      p msg.right.destination, msg.right.channel?.match?(extMatch)?[1]
+      p msg.left.destination, msg.left.channel?.match?(extMatch)?[1]
+      p msg.left.cid_number, msg.left.channel?.match?(extMatch)?[1]
+      p msg.right.cid_number, msg.right.channel?.match?(extMatch)?[1]
 
       if store.agent_ext == msg.left.channel?.match?(extMatch)?[1]
         makeCall(msg.left, msg.right, msg)

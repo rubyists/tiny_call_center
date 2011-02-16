@@ -106,6 +106,8 @@ module TinyCallCenter
         msg = {
           tiny_action: 'call_start',
           call_created: Time.at(channel.created_epoch.to_i).rfc2822,
+          producer: 'give_initial_status',
+          original: channel,
 
           left: {
             cid_number:  channel.cid_num,

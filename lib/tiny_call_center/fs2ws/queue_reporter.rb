@@ -33,18 +33,22 @@ module TinyCallCenter
         tiny_action: 'call_start',
         call_created: msg[:variable_rfc2822_date],
         cc_agent: msg[:cc_agent],
+        producer: 'bridge_agent_start',
+        original: msg,
 
         left: {
-          cid_number: msg[:caller_caller_id_number],
-          cid_name:   msg[:caller_caller_id_name],
-          channel:    msg[:caller_channel_name],
-          uuid:       msg[:variable_call_uuid],
+          cid_number:  msg[:caller_caller_id_number],
+          cid_name:    msg[:caller_caller_id_name],
+          channel:     msg[:caller_channel_name],
+          destination: msg[:variable_dialed_user],
+          uuid:        msg[:cc_agent_uuid],
         },
         right: {
-          cid_number: msg[:cc_caller_cid_number],
-          cid_name:   msg[:cc_caller_cid_name],
-          channel:    msg[:channel_name],
-          uuid:       msg[:channel_call_uuid],
+          cid_number:  msg[:cc_caller_cid_number],
+          cid_name:    msg[:cc_caller_cid_name],
+          channel:     msg[:channel_name],
+          destination: msg[:variable_dialed_user],
+          uuid:        msg[:cc_caller_uuid],
         }
       }
 
