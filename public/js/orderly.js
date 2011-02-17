@@ -258,6 +258,7 @@
       this.busy_delay_time = d.busy_delay_time;
       this.class_answered = d.class_answered;
       this.contact = d.contact;
+      this.last_call_time = new Date(Date.parse(d.last_call_time));
       this.last_bridge_end = new Date(Date.parse(d.last_bridge_end));
       this.last_bridge_start = new Date(Date.parse(d.last_bridge_start));
       this.last_offered_call = new Date(Date.parse(d.last_offered_call));
@@ -271,7 +272,9 @@
       this.type = d.type;
       this.uuid = d.uuid;
       this.wrap_up_time = d.wrap_up_time;
-      this.setTimer(this.last_bridge_end);
+      if (this.last_call_time) {
+        this.setTimer(this.last_call_time);
+      }
       if (d.call_created) {
         msg = {
           call_created: d.call_created,

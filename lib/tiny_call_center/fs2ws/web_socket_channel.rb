@@ -108,9 +108,18 @@ module TinyCallCenter
         agent_username = Account.full_name(agent.name)
         agent_server = agent.contact.to_s.split('@')[1]
         agent_calls = servers[agent_server]
-        agent_hash = agent.to_hash.
-          merge(agent_status(agent_ext, agent_calls)).
-          merge(extension: agent_ext, username: agent_username)
+
+        agent_hash = agent.marshal_dump
+        agent_hash.merge!(agent_status(agent_ext, agent_calls))
+        agent_hash.merge!(extension: agent_ext, username: agent_username)
+
+        last_call_time = [
+          CallRecord.last(agent.name).created_at,
+          Time.at(agent_hash['last_bridge_end'].to_i),
+          Date.today.to_time + (8 * 60 * 60), # 08:00
+        ].compact.max
+        agent_hash.merge!(last_call_time: last_call_time.rfc2822)
+
         utimes.each{|key| agent_hash[key] = Time.at(agent_hash[key].to_i).rfc2822 }
         WebSocketReporter::SubscribedAgents[agent_ext] ||= [agent.name]
         agent_hash

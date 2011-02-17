@@ -197,10 +197,13 @@ class Agent
     @busy_delay_time = d.busy_delay_time
     @class_answered = d.class_answered
     @contact = d.contact
+
+    @last_call_time = new Date(Date.parse(d.last_call_time))
     @last_bridge_end = new Date(Date.parse(d.last_bridge_end))
     @last_bridge_start = new Date(Date.parse(d.last_bridge_start))
     @last_offered_call = new Date(Date.parse(d.last_offered_call))
     @last_status_change = new Date(Date.parse(d.last_status_change))
+
     @max_no_answer = d.max_no_answer
     @no_answer_count = d.no_answer_count
     @ready_time = d.ready_time
@@ -211,7 +214,8 @@ class Agent
     @uuid = d.uuid
     @wrap_up_time = d.wrap_up_time
 
-    @setTimer(@last_bridge_end)
+    if @last_call_time
+      @setTimer(@last_call_time)
 
     if d.call_created
       msg = {
