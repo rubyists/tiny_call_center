@@ -2,14 +2,19 @@
   <extension name="direct_transfer">
     <condition field="destination_number" expression="^direct_transfer$">
       <action application="answer" />
-      <action application="set" data="cc_warning_tone=tone_stream://%(200,0,500,600,700)"/>
-      <action application="callcenter" data="${tcc_queue}"/>
+      <action application="socket" data="127.0.0.1:8084" />
+      <!-- <action application="callcenter" data="${tcc_queue}"/> If you don't want to use the direct listener, just go to queue-->
+    </condition>
+  </extension>
+  <extension name="direct_transfer_dial">
+    <condition field="destination_number" expression="^19996$">
+      <action application="set" data="tcc_queue=sales" />
+      <action application="set" data="lead_id=2" />
+      <action application="socket" data="127.0.0.1:8084" />
     </condition>
   </extension>
   <extension name="dialer_loop">
     <condition field="destination_number" expression="^(19999)$">
-      <action application="answer" />
-      <action application="set" data="cc_warning_tone=tone_stream://%(200,0,500,600,700)"/>
       <action application="set" data="res=${callcenter_config(agent set uuid ${tcc_agent} '${uuid}')}" />
       <action application="set" data="res=${callcenter_config(agent set type ${tcc_agent} 'uuid-standby')}" />
       <action application="set" data="res=${callcenter_config(agent set status ${tcc_agent} 'Available (On Demand)')}" />
@@ -17,14 +22,26 @@
       <action application="set" data="hangup_after_bridge=false"/>
       <action application="set" data="continue_on_fail=true"/>
       <action application="set" data="transfer_after_bridge=19999:XML:default"/>
+      <!-- <action application="set" data="cc_warning_tone=tone_stream://%(800,0,500)/"/>
+      <action application="export" data="cc_warning_tone=tone_stream://%(800,0,500)/"/> -->
+      <action application="answer" />
       <action application="playback" data="$${hold_music}"/>
       <action application="transfer" data="19999 XML default"/> <!-- Remove this if you just want to get a single call --> 
     </condition>
+  </extension>
+  <extension name="dialer_in">
+    
   </extension>
   <extension name="sales">
     <condition field="destination_number" expression="^(sales|19998)$">
       <action application="answer" />
       <action application="callcenter" data="sales" />
+    </condition>
+  </extension>
+  <extension name="tone">
+    <condition field="destination_number" expression="^(19997)$">
+      <action application="answer" />
+      <action application="playback" data="tone_stream://%(800,0,500)"/>
     </condition>
   </extension>
 </include>
