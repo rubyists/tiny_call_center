@@ -72,14 +72,14 @@ module TinyCallCenter
       sock = fsr_socket(self.command_socket_server)
       queue_names.each do |queue_name|
         tiers = sock.call_center(:tier).list(queue_name).run.select{|tier| can_view?(cc_agent: tier.agent) }
-        reply method: :agents_of, args: [queue_name, tiers.map(&:to_hash)]
+        reply method: :agents_of, args: [queue_name, tiers]
       end
     end
 
     def give_queues
       sock = fsr_socket(self.command_socket_server)
       queues = sock.call_center(:queue).list.run
-      reply method: :queues, args: [queues.map(&:to_hash)]
+      reply method: :queues, args: [queues.map(&:marshal_dump)]
     end
 
     def give_agent_listing
@@ -94,7 +94,7 @@ module TinyCallCenter
       end
 
       servers = {}
-      registrars = agents.map {|agent| agent.to_hash["contact"].split("@")[1] }.uniq
+      registrars = agents.map {|agent| agent.contact.split("@")[1] }.uniq
       registrars.each do |r|
         fsock = FSR::CommandSocket.new server: r
         servers[r] = fsock.channels(true).run

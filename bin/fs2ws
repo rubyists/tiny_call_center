@@ -40,7 +40,7 @@ EM.run do
   end
 
   EventMachine.connect(command_socket_server, port, TinyCallCenter::QueueReporter, host: command_socket_server, port: port, auth: auth, output_format: 'plain') do |reporter|
-    FSR::Log.debug "Connecting to #{reporter}"
+    FSR::Log.debug "Connecting to #{command_socket_server}:#{port}"
     EventMachine.start_server('0.0.0.0', 8080, EventMachine::WebSocket::Connection, {}) do |websocket|
       FSR::Log.debug "Starting WebSocket Reporter: #{websocket}"
       TinyCallCenter::WebSocketReporter.new(reporter, websocket, command_socket_server)

@@ -114,7 +114,6 @@
       unsorted = [];
       for (_i = 0, _len = queues.length; _i < _len; _i++) {
         queue = queues[_i];
-        p(queue.name, queue);
         unsorted.push(queue);
       }
       sorted = unsorted.sort(function(a, b) {
@@ -123,7 +122,6 @@
       _results = [];
       for (_j = 0, _len2 = sorted.length; _j < _len2; _j++) {
         queue = sorted[_j];
-        p("a", a);
         li = $('<li>');
         a = $('<a>', {
           href: '#'
