@@ -1,0 +1,10 @@
+#!/bin/sh
+if [ -w /var/log ];then
+  service=$(basename $(dirname $(pwd)))
+  [ -d /var/log/$service ] || mkdir -p /var/log/$service
+  [ -L ./main ] || [ -d ./main ] || ln -s /var/log/$service ./main
+  [ -L ./current ] || ln -s main/current
+else
+  ln -s ./ main
+fi
+exec svlogd -t ./main
