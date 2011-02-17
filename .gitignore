@@ -4,3 +4,4 @@ services/*/log/*
 services/*/supervise/*
 db/call_center.db
 migrations/optional/*.rb
+sv/*

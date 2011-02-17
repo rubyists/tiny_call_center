@@ -238,6 +238,16 @@ agentWantsStateChange = (a) ->
   )
   false
 
+agentWantsCallHangup = (event) ->
+  call_div = $(event.target).closest('.call')
+  uuid = $('.uuid', call_div).text()
+  store.send(
+    method: 'hangup',
+    uuid: uuid,
+    cause: "Agent #{store.agent_name} wants to hang up"
+  )
+  false
+
 setupWs = ->
   store.ws = new WebSocket(store.server)
 
@@ -273,6 +283,7 @@ $ ->
 
   $('#status a').live 'click', agentWantsStatusChange
   $('#state a').live 'click', agentWantsStateChange
+  $('.call .hangup').live 'click', agentWantsCallHangup
 
   setTimeout ->
     $(window).resize (event) ->

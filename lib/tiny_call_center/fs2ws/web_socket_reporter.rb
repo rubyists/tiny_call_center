@@ -27,6 +27,7 @@ module TinyCallCenter
       when 'status'; got_status(msg)
       when 'state'; got_state(msg)
       when 'disposition'; got_disposition(msg)
+      when 'hangup'; got_hangup(msg)
       else
         FSR::Log.warn "Unknown message: %p" % [msg]
       end
@@ -169,6 +170,14 @@ module TinyCallCenter
       current, new = msg.values_at('curStatus', 'status')
       mapped = STATUS_MAPPING[new]
       reporter.callcenter!{|cc| cc.set(self.agent, :status, mapped) }
+    end
+
+    def got_hangup(msg)
+      FSR::Log.debug "Hanging up: #{msg}"
+      uuid, cause = msg.values_at('uuid', 'cause')
+      command_server = TCC.options.command_server
+      sock = FSR::CommandSocket.new(:server => command_server)
+      FSR::Log.debug sock.sched_hangup(uuid: uuid, cause: cause).run
     end
 
     def on_close

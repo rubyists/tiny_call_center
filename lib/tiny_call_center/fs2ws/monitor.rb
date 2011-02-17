@@ -57,14 +57,14 @@ module TinyCallCenter
           cid_name:     msg[:caller_caller_id_name],
           destination:  msg[:caller_destination_number],
           channel:      msg[:caller_channel_name],
-          uuid:         msg[:variable_call_uuid],
+          uuid:         msg[:caller_unique_id],
         },
         right: {
           cid_number:   msg[:caller_caller_id_number],
           cid_name:     msg[:caller_caller_id_name],
           destination:  msg[:caller_destination_number],
           channel:      msg[:channel_name],
-          uuid:         msg[:channel_call_uuid],
+          uuid:         msg[:caller_unique_id],
         }
       }
 

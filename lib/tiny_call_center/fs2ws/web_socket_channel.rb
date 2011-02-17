@@ -113,8 +113,11 @@ module TinyCallCenter
         agent_hash.merge!(agent_status(agent_ext, agent_calls))
         agent_hash.merge!(extension: agent_ext, username: agent_username)
 
+        if cr = CallRecord.last(agent.name)
+          cr_at = cr.created_at
+        end
         last_call_time = [
-          CallRecord.last(agent.name).created_at,
+          cr_at,
           Time.at(agent_hash['last_bridge_end'].to_i),
           Date.today.to_time + (8 * 60 * 60), # 08:00
         ].compact.max

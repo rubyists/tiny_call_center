@@ -1,5 +1,5 @@
 (function() {
-  var Call, agentStateChange, agentStatusChange, agentWantsStateChange, agentWantsStatusChange, currentState, currentStatus, divmod, formatInterval, formatPhoneNumber, keyCodes, onClose, onError, onMessage, onOpen, p, setupWs, showError, store;
+  var Call, agentStateChange, agentStatusChange, agentWantsCallHangup, agentWantsStateChange, agentWantsStatusChange, currentState, currentStatus, divmod, formatInterval, formatPhoneNumber, keyCodes, onClose, onError, onMessage, onOpen, p, setupWs, showError, store;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   store = {
     calls: {},
@@ -23,7 +23,7 @@
   };
   p = function() {
     var _ref;
-    return (_ref = window.console) != null ? typeof _ref.debug === "function" ? _ref.debug(arguments) : void 0 : void 0;
+    return (_ref = window.console) != null ? typeof _ref.debug == "function" ? _ref.debug(arguments) : void 0 : void 0;
   };
   showError = function(msg) {
     return $('#error').text(msg);
@@ -189,35 +189,36 @@
             return p(call);
           }
         };
-        p(store.agent_ext, (_ref = msg.left.channel) != null ? typeof _ref.match === "function" ? (_ref2 = _ref.match(extMatch)) != null ? _ref2[1] : void 0 : void 0 : void 0);
-        p(store.agent_ext, (_ref3 = msg.right.channel) != null ? typeof _ref3.match === "function" ? (_ref4 = _ref3.match(extMatch)) != null ? _ref4[1] : void 0 : void 0 : void 0);
-        p(msg.right.destination, (_ref5 = msg.right.channel) != null ? typeof _ref5.match === "function" ? (_ref6 = _ref5.match(extMatch)) != null ? _ref6[1] : void 0 : void 0 : void 0);
-        p(msg.left.destination, (_ref7 = msg.left.channel) != null ? typeof _ref7.match === "function" ? (_ref8 = _ref7.match(extMatch)) != null ? _ref8[1] : void 0 : void 0 : void 0);
-        p(msg.left.cid_number, (_ref9 = msg.left.channel) != null ? typeof _ref9.match === "function" ? (_ref10 = _ref9.match(extMatch)) != null ? _ref10[1] : void 0 : void 0 : void 0);
-        p(msg.right.cid_number, (_ref11 = msg.right.channel) != null ? typeof _ref11.match === "function" ? (_ref12 = _ref11.match(extMatch)) != null ? _ref12[1] : void 0 : void 0 : void 0);
-        if (store.agent_ext === ((_ref13 = msg.left.channel) != null ? typeof _ref13.match === "function" ? (_ref14 = _ref13.match(extMatch)) != null ? _ref14[1] : void 0 : void 0 : void 0)) {
+        p(store.agent_ext, (_ref = msg.left.channel) != null ? typeof _ref.match == "function" ? (_ref2 = _ref.match(extMatch)) != null ? _ref2[1] : void 0 : void 0 : void 0);
+        p(store.agent_ext, (_ref3 = msg.right.channel) != null ? typeof _ref3.match == "function" ? (_ref4 = _ref3.match(extMatch)) != null ? _ref4[1] : void 0 : void 0 : void 0);
+        p(msg.right.destination, (_ref5 = msg.right.channel) != null ? typeof _ref5.match == "function" ? (_ref6 = _ref5.match(extMatch)) != null ? _ref6[1] : void 0 : void 0 : void 0);
+        p(msg.left.destination, (_ref7 = msg.left.channel) != null ? typeof _ref7.match == "function" ? (_ref8 = _ref7.match(extMatch)) != null ? _ref8[1] : void 0 : void 0 : void 0);
+        p(msg.left.cid_number, (_ref9 = msg.left.channel) != null ? typeof _ref9.match == "function" ? (_ref10 = _ref9.match(extMatch)) != null ? _ref10[1] : void 0 : void 0 : void 0);
+        p(msg.right.cid_number, (_ref11 = msg.right.channel) != null ? typeof _ref11.match == "function" ? (_ref12 = _ref11.match(extMatch)) != null ? _ref12[1] : void 0 : void 0 : void 0);
+        if (store.agent_ext === ((_ref13 = msg.left.channel) != null ? typeof _ref13.match == "function" ? (_ref14 = _ref13.match(extMatch)) != null ? _ref14[1] : void 0 : void 0 : void 0)) {
           return makeCall(msg.left, msg.right, msg);
-        } else if (store.agent_ext === ((_ref15 = msg.right.channel) != null ? typeof _ref15.match === "function" ? (_ref16 = _ref15.match(extMatch)) != null ? _ref16[1] : void 0 : void 0 : void 0)) {
+        } else if (store.agent_ext === ((_ref15 = msg.right.channel) != null ? typeof _ref15.match == "function" ? (_ref16 = _ref15.match(extMatch)) != null ? _ref16[1] : void 0 : void 0 : void 0)) {
           return makeCall(msg.right, msg.left, msg);
-        } else if (msg.right.destination === ((_ref17 = msg.right.channel) != null ? typeof _ref17.match === "function" ? (_ref18 = _ref17.match(extMatch)) != null ? _ref18[1] : void 0 : void 0 : void 0)) {
+        } else if (msg.right.destination === ((_ref17 = msg.right.channel) != null ? typeof _ref17.match == "function" ? (_ref18 = _ref17.match(extMatch)) != null ? _ref18[1] : void 0 : void 0 : void 0)) {
           return makeCall(msg.right, msg.left, msg);
-        } else if (msg.left.destination === ((_ref19 = msg.left.channel) != null ? typeof _ref19.match === "function" ? (_ref20 = _ref19.match(extMatch)) != null ? _ref20[1] : void 0 : void 0 : void 0)) {
+        } else if (msg.left.destination === ((_ref19 = msg.left.channel) != null ? typeof _ref19.match == "function" ? (_ref20 = _ref19.match(extMatch)) != null ? _ref20[1] : void 0 : void 0 : void 0)) {
           return makeCall(msg.left, msg.right, msg);
-        } else if (msg.left.cid_number === ((_ref21 = msg.left.channel) != null ? typeof _ref21.match === "function" ? (_ref22 = _ref21.match(extMatch)) != null ? _ref22[1] : void 0 : void 0 : void 0)) {
+        } else if (msg.left.cid_number === ((_ref21 = msg.left.channel) != null ? typeof _ref21.match == "function" ? (_ref22 = _ref21.match(extMatch)) != null ? _ref22[1] : void 0 : void 0 : void 0)) {
           return makeCall(msg.left, msg.right, msg);
-        } else if (msg.right.cid_number === ((_ref23 = msg.right.channel) != null ? typeof _ref23.match === "function" ? (_ref24 = _ref23.match(extMatch)) != null ? _ref24[1] : void 0 : void 0 : void 0)) {
+        } else if (msg.right.cid_number === ((_ref23 = msg.right.channel) != null ? typeof _ref23.match == "function" ? (_ref24 = _ref23.match(extMatch)) != null ? _ref24[1] : void 0 : void 0 : void 0)) {
           return makeCall(msg.right, msg.left, msg);
         }
+        break;
       default:
         _results = [];
         for (key in msg) {
           value = msg[key];
           if (/unique|uuid/.test(key)) {
             if (call = store.calls[value]) {
-              if (typeof call[_name = msg.tiny_action] === "function") {
+              if (typeof call[_name = msg.tiny_action] == "function") {
                 call[_name](msg);
               }
-              return void 0;
+              return;
             }
           }
         }
@@ -260,6 +261,17 @@
     });
     return false;
   };
+  agentWantsCallHangup = function(event) {
+    var call_div, uuid;
+    call_div = $(event.target).closest('.call');
+    uuid = $('.uuid', call_div).text();
+    store.send({
+      method: 'hangup',
+      uuid: uuid,
+      cause: "Agent " + store.agent_name + " wants to hang up"
+    });
+    return false;
+  };
   setupWs = function() {
     store.ws = new WebSocket(store.server);
     store.ws.onerror = onError;
@@ -285,10 +297,10 @@
         keyName = jbutton.attr('accesskey');
         buttonKeyCode = keyCodes[keyName];
         if (keyCode === buttonKeyCode) {
-          if (typeof event.stopPropagation === "function") {
+          if (typeof event.stopPropagation == "function") {
             event.stopPropagation();
           }
-          if (typeof event.preventDefault === "function") {
+          if (typeof event.preventDefault == "function") {
             event.preventDefault();
           }
           bubble = false;
@@ -300,6 +312,7 @@
     $('#disposition').focus();
     $('#status a').live('click', agentWantsStatusChange);
     $('#state a').live('click', agentWantsStateChange);
+    $('.call .hangup').live('click', agentWantsCallHangup);
     setTimeout(function() {
       return $(window).resize(function(event) {
         localStorage.setItem('agent.bar.width', top.outerWidth);
