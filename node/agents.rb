@@ -81,11 +81,7 @@ module TinyCallCenter
     private
 
     def find_contact(extension, timeout)
-      if extension.match(/^2([45]([1-9]\d|0[1-9])|(705|807))$/)
-        ("[leg_timeout=%d]sofia/internal/%s@192.168.6.249" % [timeout, extension])
-      else
-        ("[leg_timeout=%d]sofia/internal/%s@192.168.6.240" % [timeout, extension])
-      end
+      "[leg_timeout=%d]sofia/internal/%s@%s" % [timeout, extension, Account.registration_server(extension)]
     end
 
     def create_agent(agent)
@@ -125,7 +121,7 @@ module TinyCallCenter
       else
       eagent = cmd.run.select {|x| x.name == agt }.first
       timeout = eagent ? eagent.contact.scan(/timeout=../)[0].to_s.gsub(/\D/,'') : 9
-      contact = agent["contact"] || ("[leg_timeout=%d]sofia/internal/%s@192.168.6.240" % [timeout, extension])
+      contact = agent["contact"] || find_contact(extension, timeout)
       cmd = fsr.call_center(:agent).set(agt, :contact, contact)
         unless cmd.run
           flash[:errors] << "Could not set a contact string! #{cmd.last_response}"
