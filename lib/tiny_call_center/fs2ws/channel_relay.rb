@@ -5,11 +5,22 @@ module TinyCallCenter
       WebSocketChannel::Channel << content
     end
 
+    def ext_match(ext)
+      /(?:^|\/)(?:sip:)?#{ext}[@-]/
+    end
     # FIXME:
     # if an agent isn't in SubscribedAgents, the message won't be relayed to
     # the WebSocketChannel
     def relay_agent(message)
       possible = possible_numbers(message)
+      if message[:tiny_action] == 'call_start'
+        FSR::Log.info "<<< Call Start Channel Search >>>"
+        left_chan, right_chan = message[:left][:channel], message[:right][:channel]
+        FSR::Log.info [possible, left_chan, right_chan]
+        possible.select! { |num|
+          left_chan =~ ext_match(num) || right_chan =~ ext_match(num)
+        }
+      end
       agent_lists = WebSocketReporter::SubscribedAgents.values_at(*possible).compact
 
       agent_lists.each do |agent_list|
@@ -46,12 +57,6 @@ module TinyCallCenter
     end
 
     def cleanup(msg)
-=begin
-      msg.reject! do |k,v|
-        k !~ /^(cc|event)_/ ||
-        k =~ /^event_(subclass|name|date_local|calling_file|calling_function|calling_line_number)$/
-      end
-=end
       msg.values.each do |value|
         value.replace(CGI.unescape(value.to_str)) if value.respond_to?(:to_str)
       end

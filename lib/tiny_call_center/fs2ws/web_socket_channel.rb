@@ -79,7 +79,7 @@ module TinyCallCenter
     def give_queues
       sock = fsr_socket(self.command_socket_server)
       queues = sock.call_center(:queue).list.run
-      reply method: :queues, args: [queues.map(&:marshal_dump)]
+      reply method: :queues, args: [queues]
     end
 
     def give_agent_listing
@@ -109,7 +109,7 @@ module TinyCallCenter
         agent_server = agent.contact.to_s.split('@')[1]
         agent_calls = servers[agent_server]
 
-        agent_hash = agent.marshal_dump
+        agent_hash = agent.to_hash
         agent_hash.merge!(agent_status(agent_ext, agent_calls))
         agent_hash.merge!(extension: agent_ext, username: agent_username)
 
