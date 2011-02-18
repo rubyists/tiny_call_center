@@ -9,6 +9,7 @@ body {
   float: left;
   padding: 0.5em;
   margin: 0.5em;
+  position: relative;
 }
 
 .call .cid-name { font-weight: bold; }
@@ -20,6 +21,14 @@ body {
 .call .queue-name { }
 .call .channel { display: none; }
 .call .uuid { display: none; }
+.call .hangup {
+  position: absolute;
+  top: 0.5em;
+  right: 0.5em;
+  content: 'x';
+  font-family: monospace;
+  text-decoration: none;
+}
 
 #status, #state {
   background: #aaf;
