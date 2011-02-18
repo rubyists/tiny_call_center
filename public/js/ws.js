@@ -1,5 +1,5 @@
 (function() {
-  var Call, agentStateChange, agentStatusChange, agentWantsCallHangup, agentWantsStateChange, agentWantsStatusChange, currentState, currentStatus, divmod, formatInterval, formatPhoneNumber, keyCodes, onClose, onError, onMessage, onOpen, p, setupWs, showError, store;
+  var Call, agentStateChange, agentStatusChange, agentWantsCallHangup, agentWantsCallTransfer, agentWantsStateChange, agentWantsStatusChange, currentState, currentStatus, divmod, formatInterval, formatPhoneNumber, keyCodes, onClose, onError, onMessage, onOpen, p, setupWs, showError, store;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   store = {
     calls: {},
@@ -181,7 +181,7 @@
           uuid = right.uuid;
           p("makeCall");
           if (store.calls[uuid]) {
-            p("Got Call with " + uuid);
+            p("Got duplicate Call with " + uuid);
             return p(store.calls[uuid]);
           } else {
             call = new Call(left, right, msg);
@@ -272,6 +272,23 @@
     });
     return false;
   };
+  agentWantsCallTransfer = function(clickEvent) {
+    var call_div, uuid;
+    call_div = $(event.target).closest('.call');
+    uuid = $('.uuid', call_div).text();
+    $('#transfer').submit(__bind(function(submitEvent) {
+      store.send({
+        method: 'transfer',
+        uuid: uuid,
+        dest: $('#transfer-dest').val()
+      });
+      store.calls[uuid].talkingEnd();
+      $('#transfer').hide();
+      return false;
+    }, this));
+    $('#transfer').show();
+    return false;
+  };
   setupWs = function() {
     store.ws = new WebSocket(store.server);
     store.ws.onerror = onError;
@@ -286,6 +303,7 @@
     store.agent_ext = $('#agent_ext').text();
     store.call_template = $('#call-template').detach();
     $('#disposition').hide();
+    $('#transfer').hide();
     $(document).keydown(function(event) {
       var bubble, keyCode;
       keyCode = event.keyCode;
@@ -313,6 +331,7 @@
     $('#status a').live('click', agentWantsStatusChange);
     $('#state a').live('click', agentWantsStateChange);
     $('.call .hangup').live('click', agentWantsCallHangup);
+    $('.call .transfer').live('click', agentWantsCallTransfer);
     setTimeout(function() {
       return $(window).resize(function(event) {
         localStorage.setItem('agent.bar.width', top.outerWidth);

@@ -12,14 +12,19 @@
   </ul>
 
   <div id="call-template" class="call">
-    <a href="#" class="hangup">X</a>
-    <div class="cid-name"></div>
-    <div class="cid-number"></div>
-    <div class="destination"></div>
-    <div class="answered"></div>
-    <div class="queue-name"></div>
-    <div class="channel"></div>
-    <div class="uuid"></div>
+    <div class="call-control">
+      <a href="#" class="hangup">&#x2715;</a>
+      <a href="#" class="transfer">&#x27f9;</a>
+    </div>
+    <div class="call-data">
+      <div class="cid-name"></div>
+      <div class="cid-number"></div>
+      <div class="destination"></div>
+      <div class="answered"></div>
+      <div class="queue-name"></div>
+      <div class="channel"></div>
+      <div class="uuid"></div>
+    </div>
   </div>
 
   <div id="calls">
@@ -35,6 +40,13 @@
         </li>
       <?r end ?>
     </ul>
+  </form>
+
+  <form id="transfer">
+    <fieldset>
+      <input id="transfer-dest" type="phone" placeholder="Transfer to">
+      <input type="submit" value="Initiate Transfer">
+    </fieldset>
   </form>
 
   <div id="console">

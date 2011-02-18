@@ -172,7 +172,7 @@ onMessage = (event) ->
         uuid = right.uuid
         p "makeCall"
         if store.calls[uuid]
-          p "Got Call with #{uuid}"
+          p "Got duplicate Call with #{uuid}"
           p store.calls[uuid]
         else
           call = new Call(left, right, msg)
@@ -248,6 +248,21 @@ agentWantsCallHangup = (event) ->
   )
   false
 
+agentWantsCallTransfer = (clickEvent) ->
+  call_div = $(event.target).closest('.call')
+  uuid = $('.uuid', call_div).text()
+  $('#transfer').submit (submitEvent) =>
+    store.send(
+      method: 'transfer',
+      uuid: uuid,
+      dest: $('#transfer-dest').val(),
+    )
+    store.calls[uuid].talkingEnd()
+    $('#transfer').hide()
+    false
+  $('#transfer').show()
+  false
+
 setupWs = ->
   store.ws = new WebSocket(store.server)
 
@@ -263,6 +278,7 @@ $ ->
   store.call_template = $('#call-template').detach()
 
   $('#disposition').hide()
+  $('#transfer').hide()
 
   $(document).keydown (event) ->
     keyCode = event.keyCode
@@ -284,6 +300,7 @@ $ ->
   $('#status a').live 'click', agentWantsStatusChange
   $('#state a').live 'click', agentWantsStateChange
   $('.call .hangup').live 'click', agentWantsCallHangup
+  $('.call .transfer').live 'click', agentWantsCallTransfer
 
   setTimeout ->
     $(window).resize (event) ->

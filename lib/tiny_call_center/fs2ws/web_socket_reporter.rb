@@ -28,6 +28,7 @@ module TinyCallCenter
       when 'state'; got_state(msg)
       when 'disposition'; got_disposition(msg)
       when 'hangup'; got_hangup(msg)
+      when 'transfer'; got_transfer(msg)
       else
         FSR::Log.warn "Unknown message: %p" % [msg]
       end
@@ -178,6 +179,14 @@ module TinyCallCenter
       command_server = TCC.options.command_server
       sock = FSR::CommandSocket.new(:server => command_server)
       FSR::Log.debug sock.sched_hangup(uuid: uuid, cause: cause).run
+    end
+
+    def got_transfer(msg)
+      FSR::Log.debug "Transfer: #{msg}"
+      uuid, dest = msg.values_at('uuid', 'dest')
+      command_server = TCC.options.command_server
+      sock = FSR::CommandSocket.new(:server => command_server)
+      FSR::Log.debug sock.sched_transfer(uuid: uuid, to: dest).run
     end
 
     def on_close

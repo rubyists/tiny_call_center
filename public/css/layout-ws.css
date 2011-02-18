@@ -7,9 +7,32 @@ body {
   display: block;
   border: 1px solid black;
   float: left;
-  padding: 0.5em;
   margin: 0.5em;
   position: relative;
+}
+
+.call .call-control {
+  display: block;
+  width: 100%;
+  background: #ccc;
+  line-height: 1em;
+  height: 1em;
+  font-size: 1em;
+}
+
+.call .hangup {
+  position: absolute;
+  right: 0.2em;
+}
+
+.call .transfer {
+  position: absolute;
+  left: 0.2em;
+}
+
+.call .call-data {
+  display: block;
+  padding: 0.5em;
 }
 
 .call .cid-name { font-weight: bold; }
@@ -21,14 +44,6 @@ body {
 .call .queue-name { }
 .call .channel { display: none; }
 .call .uuid { display: none; }
-.call .hangup {
-  position: absolute;
-  top: 0.5em;
-  right: 0.5em;
-  content: 'x';
-  font-family: monospace;
-  text-decoration: none;
-}
 
 #status, #state {
   background: #aaf;
@@ -92,7 +107,28 @@ body {
   color: #fff;
 }
 
-#information {
+#transfer {
+  background: rgba(0, 0, 0, 0.5);
+  position: absolute;
+  display: block;
+  top: 0em;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  clear: both;
+  line-height: 1em;
+  text-align: center;
+}
+
+#transfer fieldset {
+  position: absolute;
+  top: 50%;
+  width: 100%;
+  border: 0px;
+  padding: 0;
+  margin: auto;
+  margin-top: -1em;
 }
 
 ul {
@@ -108,6 +144,7 @@ ul li {
 a {
   display: block;
   border: none;
+  text-decoration: none;
   margin: 0.1em;
 }
 
