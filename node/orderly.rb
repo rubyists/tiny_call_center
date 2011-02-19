@@ -9,7 +9,7 @@ module TinyCallCenter
       redirect Main.r(:index) unless user.manager?
 
       @agent = user.agent
-      @server = TinyCallCenter.options.listener.server
+      @server = TinyCallCenter.options.listener.server if request.local_net?
       @title = @agent
     end
   end

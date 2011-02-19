@@ -136,6 +136,7 @@ module TinyCallCenter
 
     def manager?
       return false unless u = find_user
+      return true if manager
       [*u['dn'], *u['groupMembership']].find{|c|
         c =~ %r{manager|executive|technology|fellinger}i
       }

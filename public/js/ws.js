@@ -299,6 +299,9 @@
   $(function() {
     var height, width, _ref;
     store.server = $('#server').text();
+    if (store.server === '') {
+      store.server = "ws://" + location.hostname + ":8080/websocket";
+    }
     store.agent_name = $('#agent_name').text();
     store.agent_ext = $('#agent_ext').text();
     store.call_template = $('#call-template').detach();

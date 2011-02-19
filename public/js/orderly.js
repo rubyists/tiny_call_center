@@ -481,6 +481,9 @@
   })();
   $(function() {
     store.server = $('#server').text();
+    if (store.server === '') {
+      store.server = "ws://" + location.hostname + ":8081/websocket";
+    }
     store.agent = $('#agent_name').text();
     store.protoCall = $('#proto-call').detach();
     store.protoAgent = $('#proto-agent').detach();

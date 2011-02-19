@@ -273,6 +273,7 @@ setupWs = ->
 
 $ ->
   store.server = $('#server').text()
+  store.server = "ws://#{location.hostname}:8080/websocket" if store.server == ''
   store.agent_name = $('#agent_name').text()
   store.agent_ext = $('#agent_ext').text()
   store.call_template = $('#call-template').detach()

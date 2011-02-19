@@ -381,6 +381,7 @@ class Agent
 
 $ ->
   store.server = $('#server').text()
+  store.server = "ws://#{location.hostname}:8081/websocket" if store.server == ''
   store.agent = $('#agent_name').text()
 
   store.protoCall = $('#proto-call').detach()
