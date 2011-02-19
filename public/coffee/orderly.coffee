@@ -441,6 +441,8 @@ $ ->
         order =
           switch s
             when 'Available'
+              0.7
+            when 'Available (On Demand)'
               0.8
             when 'On Break'
               0.9
