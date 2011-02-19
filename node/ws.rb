@@ -12,11 +12,20 @@ module TinyCallCenter
     trait :user_model => TinyCallCenter::Account
     layout :ws
 
+    def who
+      request.inspect
+    end
     def index
       redirect Accounts.r(:login) unless logged_in?
       @agent = user.agent
       @extension = user.extension
-      @server = TinyCallCenter.options.ribbon.server
+      octet = "(?:[01][0-5][0-5]|2[0-5][0-5])"
+      ip_regex = /^(?:#{octet}\.){3}#{octet}/
+      @server = if request.env["SERVER_NAME"] =~ ip_regex
+                  TinyCallCenter.options.ribbon.server.sub /ws:\/\/#{ip_regex}:/ws:\/\/#{request.env["SERVER_NAME"]}:/
+                else
+                  TinyCallCenter.options.ribbon.server
+                end
       @title = @agent
     end
   end
