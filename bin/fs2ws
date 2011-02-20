@@ -12,7 +12,6 @@ require 'fsr'
 require "fsr/listener/inbound"
 require "fsr/command_socket"
 require 'log4r/outputter/syslogoutputter'
-require 'logging'
 FSR::Log.outputters = Log4r::SyslogOutputter.new("FS2WS")
 FSR::Log.level = Log4r::DEBUG
 FSR.load_all_commands
