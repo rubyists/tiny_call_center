@@ -22,16 +22,13 @@ module TinyCallCenter
     def on_message(json)
       msg = JSON.parse(json)
 
-      case msg['method']
-      when 'subscribe'; got_subscribe(msg)
-      when 'status'; got_status(msg)
-      when 'state'; got_state(msg)
-      when 'disposition'; got_disposition(msg)
-      when 'hangup'; got_hangup(msg)
-      when 'transfer'; got_transfer(msg)
+      method = "got_#{msg['method']}"
+      if respond_to?(method)
+        EM.defer{ __send__(method, msg) }
       else
         FSR::Log.warn "Unknown message: %p" % [msg]
       end
+
     rescue JSON::ParserError => ex
       FSR::Log.error ex
     end
@@ -44,10 +41,7 @@ module TinyCallCenter
       subscribe
       update_status
       update_state
-      calls = give_initial_status
-      call unless calls.detect { |c|
-        [c[:left][:cid_number],  c[:right][:cid_number]].include? '8675309'
-      }
+      give_initial_status
     end
 
     def subscribe
@@ -67,27 +61,26 @@ module TinyCallCenter
       reporter.callcenter!{|cc| cc.set(agent, :state, 'Idle') }
     end
 
-    def call
+    def got_callme(msg)
       FSR::Log.debug "Check whether we should call #{agent}, off_hook is #{TCC.options.off_hook}"
       return unless TCC.options.off_hook
-      EM.add_timer 5 do
-        FSR::Log.info "Calling #{agent}@#{registration_server}"
 
-        command_server = TCC.options.command_server
-        sock = FSR::CommandSocket.new(:server => command_server)
-        FSR.load_all_commands
+      FSR::Log.info "Calling #{agent}@#{registration_server}"
 
-        if registration_server == command_server
-          sock.originate(
-            target: "{tcc_agent=#{agent}}user/#{extension}",
-            endpoint: "&transfer(19999)"
-          ).run
-        else
-          sock.originate(
-            target: "{tcc_agent=#{agent}}sofia/internal/#{extension}@#{registration_server}",
-            endpoint: "&transfer(19999)"
-          ).run
-        end
+      command_server = TCC.options.command_server
+      sock = FSR::CommandSocket.new(:server => command_server)
+      FSR.load_all_commands
+
+      if registration_server == command_server
+        sock.originate(
+          target: "{tcc_agent=#{agent}}user/#{extension}",
+          endpoint: "&transfer(19999)"
+        ).run
+      else
+        sock.originate(
+          target: "{tcc_agent=#{agent}}sofia/internal/#{extension}@#{registration_server}",
+          endpoint: "&transfer(19999)"
+        ).run
       end
     end
 

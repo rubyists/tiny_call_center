@@ -336,10 +336,22 @@ class Agent
       autoOpen: true,
       title: "#{@extension} #{@username}",
       modal: false,
+      width: 800,
       open: (event, ui) =>
         @syncDialog()
         for uuid, call of @calls
           call.renderInDialog()
+
+        $('.dialog-tabs .tab-title', @dialog).each (i,t) =>
+          $(t).attr('href', "#dialog-tab-#{@name}-#{i}")
+        $('.dialog-tabs .tab-content', @dialog).each (i,t) =>
+          $(t).attr('id', "dialog-tab-#{@name}-#{i}")
+
+        $('.dialog-tabs', @dialog).tabs(
+          idPrefix: "dialog-tab-#{@name}",
+          show: (showEvent, showUi) => @handleShowTab(showEvent, showUi),
+        )
+
         $('.calltap', @dialog).click (event) =>
           @calltap()
           false
@@ -367,6 +379,34 @@ class Agent
         @dialog.remove()
     )
 
+  handleShowTab: (event, ui) ->
+    href = $(ui.tab).attr('href')
+    tab = $(href)
+
+    if tab.hasClass('tab-status-log')
+      store.ws.say(
+        method: 'agent_status_history',
+        agent: @name
+      )
+    if tab.hasClass('tab-state-log')
+      store.ws.say(
+        method: 'agent_state_history',
+        agent: @name
+      )
+
+  got_agent_status_history: (msg) ->
+    $('.tab-status-log tbody', @dialog).html('')
+    for row in msg.history
+      created_at = new Date(Date.parse(row.created_at))
+      $('.tab-status-log tbody', @dialog).append(
+        $('<tr>').html("<td>#{row.new_status}</td><td>#{created_at}</td>"))
+
+  got_agent_state_history: (msg) ->
+    $('.tab-state-log tbody', @dialog).html('')
+    for row in msg.history
+      created_at = new Date(Date.parse(row.created_at))
+      $('.tab-state-log tbody', @dialog).append(
+        $('<tr>').html("<td>#{row.new_state}</td><td>#{created_at}</td>"))
 
   syncDialog: ->
     @syncDialogStatus()

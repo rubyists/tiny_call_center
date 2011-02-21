@@ -6,14 +6,27 @@ require_relative '../lib/tiny_call_center'
 require_relative '../lib/tiny_call_center/db'
 
 DB ||= TinyCallCenter.db unless Object.const_defined?("DB")
+module FSCallCenter
+  @db ||= nil
+
+  def self.db
+    @db ||= Sequel.connect("postgres://callcenter@localhost/callcenter")
+  end
+
+  def self.db=(other)
+    @db = other
+  end
+end
 
 # Here go your requires for models:
 
-require_relative "./manager"
+require_relative "manager"
 if backend = TinyCallCenter.options.backend
-  require_relative "./#{backend}/account"
+  require_relative "#{backend}/account"
 else
-  require_relative "./db/account"
+  require_relative "db/account"
 end
-require_relative "./disposition"
-require_relative "./call_record"
+require_relative "disposition"
+require_relative "call_record"
+require_relative 'status_log'
+require_relative 'state_log'

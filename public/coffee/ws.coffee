@@ -138,8 +138,8 @@ class Call
     $('#disposition').show()
 
 currentStatus = (tag) ->
-  $('#status a').attr('class', 'inactive')
-  tag.attr("class", "active")
+  $('.change-status').removeClass('active inactive')
+  tag.addClass('active')
 
 agentStatusChange = (msg) ->
   switch msg.cc_agent_status.toLowerCase()
@@ -151,8 +151,8 @@ agentStatusChange = (msg) ->
       currentStatus($('#logged_out'))
 
 currentState = (tag) ->
-  $('#state li > *').attr('class', 'state inactive')
-  tag.attr('class', 'state active')
+  $('.change-state').removeClass('active inactive')
+  tag.addClass('active')
 
 agentStateChange = (msg) ->
   state = msg.cc_agent_state.replace(/\s+/g, "_")
@@ -170,21 +170,11 @@ onMessage = (event) ->
       extMatch = /(?:^|\/)(?:sip:)?(\d+)[@-]/
       makeCall = (left, right, msg) ->
         uuid = right.uuid
-        p "makeCall"
         if store.calls[uuid]
-          p "Got duplicate Call with #{uuid}"
-          p store.calls[uuid]
+          p "Found duplicate Call", store.calls[uuid]
         else
           call = new Call(left, right, msg)
-          p "Created Call"
-          p call
-
-      p store.agent_ext, msg.left.channel?.match?(extMatch)?[1]
-      p store.agent_ext, msg.right.channel?.match?(extMatch)?[1]
-      p msg.right.destination, msg.right.channel?.match?(extMatch)?[1]
-      p msg.left.destination, msg.left.channel?.match?(extMatch)?[1]
-      p msg.left.cid_number, msg.left.channel?.match?(extMatch)?[1]
-      p msg.right.cid_number, msg.right.channel?.match?(extMatch)?[1]
+          p "Created Call", call
 
       if store.agent_ext == msg.left.channel?.match?(extMatch)?[1]
         makeCall(msg.left, msg.right, msg)
@@ -205,6 +195,10 @@ onMessage = (event) ->
           if call = store.calls[value]
             call[msg.tiny_action]?(msg)
             return undefined
+  if $.isEmptyObject(store.calls)
+    $('#callme').show()
+  else
+    $('#callme').hide()
 
 onOpen = ->
   store.send(method: 'subscribe', agent: store.agent_name)
@@ -221,7 +215,7 @@ onError = (event) ->
 
 
 agentWantsStatusChange = (a) ->
-  curStatus = $('#status a[class=active]').text()
+  curStatus = $('.change-status[class=active]').text()
   store.send(
     method: 'status',
     status: a.target.id,
@@ -230,12 +224,16 @@ agentWantsStatusChange = (a) ->
   false
 
 agentWantsStateChange = (a) ->
-  curState = $('.state[class=active]').text()
+  curState = $('.change-state[class=active]').text()
   store.send(
     method: 'state',
     state: a.target.id.replace(/_/g, ' '),
     curState: curState,
   )
+  false
+
+agentWantsToBeCalled = (event) =>
+  store.send(method: 'callme')
   false
 
 agentWantsCallHangup = (event) ->
@@ -287,7 +285,6 @@ $ ->
 
   $(document).keydown (event) ->
     keyCode = event.keyCode
-    p event.keyCode
     bubble = true
     $('#disposition button').each (i, button) ->
       jbutton = $(button)
@@ -302,10 +299,11 @@ $ ->
 
   $('#disposition').focus()
 
-  $('#status a').live 'click', agentWantsStatusChange
-  $('#state a').live 'click', agentWantsStateChange
+  $('.change-status').live 'click', agentWantsStatusChange
+  $('.change-state').live 'click', agentWantsStateChange
   $('.call .hangup').live 'click', agentWantsCallHangup
   $('.call .transfer').live 'click', agentWantsCallTransfer
+  $('.callme').live 'click', agentWantsToBeCalled
 
   setTimeout ->
     $(window).resize (event) ->

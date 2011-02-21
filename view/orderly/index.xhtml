@@ -70,28 +70,69 @@
 
       <div id='proto-agent-dialog' class="agent-dialog">
         <span class="agent-name"></span>
+        <div class="dialog-tabs">
+          <ul>
+            <li><a href="#" class="tab-title">Overview</a></li>
+            <li><a href="#" class="tab-title">Status Log</a></li>
+            <li><a href="#" class="tab-title">State Log</a></li>
+            <li><a href="#" class="tab-title">Call History</a></li>
+            <li><a href="#" class="tab-title">Dispositions</a></li>
+          </ul>
 
-        <h2>Calls</h2>
-        <ul class="calls">
-        </ul>
+          <div class="tab-content tab-overview">
+            <h2>Calls</h2>
+            <ul class="calls">
+            </ul>
 
-        <h2>Status</h2>
-        <ul class="status">
-          <li><a class="available" href="#">Available</a></li>
-          <li><a class="available-on-demand" href="#">Available (On Demand)</a></li>
-          <li><a class="on-break" href="#">On Break</a></li>
-          <li><a class="logged-out" href="#">Logged Out</a></li>
-        </ul>
+            <h2>Status</h2>
+            <ul class="status">
+              <li><a class="available" href="#">Available</a></li>
+              <li><a class="available-on-demand" href="#">Available (On Demand)</a></li>
+              <li><a class="on-break" href="#">On Break</a></li>
+              <li><a class="logged-out" href="#">Logged Out</a></li>
+            </ul>
 
-        <h2>State</h2>
-        <ul class="state">
-          <li><a class="Waiting" href="#">Ready</a></li>
-          <li><a class="Idle" href="#">Wrap Up</a></li>
-        </ul>
+            <h2>State</h2>
+            <ul class="state">
+              <li><a class="Waiting" href="#">Ready</a></li>
+              <li><a class="Idle" href="#">Wrap Up</a></li>
+            </ul>
 
-        <button class="calltap ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" role="button" aria-disabled="false">
-          <span class="ui-button-text">Tap</span>
-        </button>
+            <button class="calltap ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" role="button" aria-disabled="false">
+              <span class="ui-button-text">Tap</span>
+            </button>
+          </div>
+
+          <div class="tab-content tab-status-log">
+            <h2>Status Log</h2>
+            <table class="tab-container">
+              <thead>
+                <th>Status</th>
+                <th>Time</th>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div class="tab-content tab-state-log">
+            <h2>State Log</h2>
+            <table class="tab-container">
+              <thead>
+                <th>State</th>
+                <th>Time</th>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div class="tab-content tab-call-history">
+            <h2>Call History</h2>
+          </div>
+
+          <div class="tab-content tab-dispositions">
+            <h2>Dispositions</h2>
+          </div>
+        </div>
       </div>
     </div>
 

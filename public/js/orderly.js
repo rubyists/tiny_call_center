@@ -423,6 +423,7 @@
         autoOpen: true,
         title: "" + this.extension + " " + this.username,
         modal: false,
+        width: 800,
         open: __bind(function(event, ui) {
           var call, uuid, _ref;
           this.syncDialog();
@@ -431,6 +432,18 @@
             call = _ref[uuid];
             call.renderInDialog();
           }
+          $('.dialog-tabs .tab-title', this.dialog).each(__bind(function(i, t) {
+            return $(t).attr('href', "#dialog-tab-" + this.name + "-" + i);
+          }, this));
+          $('.dialog-tabs .tab-content', this.dialog).each(__bind(function(i, t) {
+            return $(t).attr('id', "dialog-tab-" + this.name + "-" + i);
+          }, this));
+          $('.dialog-tabs', this.dialog).tabs({
+            idPrefix: "dialog-tab-" + this.name,
+            show: __bind(function(showEvent, showUi) {
+              return this.handleShowTab(showEvent, showUi);
+            }, this)
+          });
           $('.calltap', this.dialog).click(__bind(function(event) {
             this.calltap();
             return false;
@@ -464,6 +477,47 @@
           return this.dialog.remove();
         }, this)
       });
+    };
+    Agent.prototype.handleShowTab = function(event, ui) {
+      var href, tab;
+      href = $(ui.tab).attr('href');
+      tab = $(href);
+      if (tab.hasClass('tab-status-log')) {
+        store.ws.say({
+          method: 'agent_status_history',
+          agent: this.name
+        });
+      }
+      if (tab.hasClass('tab-state-log')) {
+        return store.ws.say({
+          method: 'agent_state_history',
+          agent: this.name
+        });
+      }
+    };
+    Agent.prototype.got_agent_status_history = function(msg) {
+      var created_at, row, _i, _len, _ref, _results;
+      $('.tab-status-log tbody', this.dialog).html('');
+      _ref = msg.history;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        row = _ref[_i];
+        created_at = new Date(Date.parse(row.created_at));
+        _results.push($('.tab-status-log tbody', this.dialog).append($('<tr>').html("<td>" + row.new_status + "</td><td>" + created_at + "</td>")));
+      }
+      return _results;
+    };
+    Agent.prototype.got_agent_state_history = function(msg) {
+      var created_at, row, _i, _len, _ref, _results;
+      $('.tab-state-log tbody', this.dialog).html('');
+      _ref = msg.history;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        row = _ref[_i];
+        created_at = new Date(Date.parse(row.created_at));
+        _results.push($('.tab-state-log tbody', this.dialog).append($('<tr>').html("<td>" + row.new_state + "</td><td>" + created_at + "</td>")));
+      }
+      return _results;
     };
     Agent.prototype.syncDialog = function() {
       this.syncDialogStatus();

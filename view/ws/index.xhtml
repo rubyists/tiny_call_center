@@ -1,14 +1,18 @@
 <div id="ws">
   <ul id="status">
-    <li><a href="#" id="available">Available</a></li>
-    <li><a href="#" id="on_break">On Break</a></li>
-    <li><a href="#" id="logged_out">Logged Out</a></li>
+    <li><button class="change-status green" id="available">Available</button></li>
+    <li><button class="change-status yellow" id="on_break">On Break</button></li>
+    <li><button class="change-status red" id="logged_out">Logged Out</button></li>
   </ul>
 
   <ul id="state">
-    <li><a class="state" href="#" id="Waiting">Ready</a></li>
-    <li><div class="state" id="In_a_queue_call">In a queue call</div></li>
-    <li><a class="state" href="#" id="Idle">Wrap Up</a></li>
+    <li><button class="change-state green" id="Waiting">Ready</button></li>
+    <li><button class="change-state yellow" id="In_a_queue_call">In a queue call</button></li>
+    <li><button class="change-state red" id="Idle">Wrap Up</button></li>
+  </ul>
+
+  <ul id="callme">
+    <li><button class="callme red">Call Me</button></li>
   </ul>
 
   <div id="call-template" class="call">

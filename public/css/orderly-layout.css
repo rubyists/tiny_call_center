@@ -125,6 +125,11 @@ nav li {
   border: 1px solid #f00;
 }
 
+.tab-status-log table, .tab-state-log table {
+  width: 100%;
+  text-align: right;
+}
+
 #agents .agent.status-available {
   -webkit-transition: 500ms;
   -moz-transition: 500ms;
