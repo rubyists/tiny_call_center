@@ -112,11 +112,11 @@ nav li {
   display: block;
 }
 
-.call .uuid, .call .channel {
+.call .uuid, .call .channel, .call .calltap-uuid {
   display: none;
 }
 
-.agent-dialog .call .uuid {
+.agent-dialog .call .calltap-uuid {
   display: inline;
   float: right;
 }

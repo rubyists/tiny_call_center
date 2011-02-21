@@ -133,7 +133,7 @@ class Call
     $('.cid-name', @dom).text(@remoteLeg.cid_name)
     $('.destination', @dom).text(formatPhoneNumber(@remoteLeg.destination))
     $('.queue-name', @dom).text(@localLeg.queue)
-    $('.uuid', @dom).attr('href', "##{@localLeg.uuid}")
+    $('.uuid', @dom).text(@localLeg.uuid)
     $('.channel', @dom).text(@localLeg.channel)
     @dialogDOM = @dom.clone(true)
 
@@ -343,8 +343,11 @@ class Agent
         $('.calltap', @dialog).click (event) =>
           @calltap()
           false
-        $('.calls .uuid img', @dialog).click (event) =>
-          @calls[$(event.target).attr('href')[1..]].calltap()
+        $('.calls .calltap-uuid', @dialog).click (event) =>
+          call = $(event.target).closest('.call')
+          uuid = $('.uuid', call).text()
+          realCall = @calls[uuid]
+          realCall.calltap()
           false
         $('.status a', @dialog).click (event) =>
           store.ws.say(

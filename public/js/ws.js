@@ -274,8 +274,12 @@
   };
   agentWantsCallTransfer = function(clickEvent) {
     var call_div, uuid;
-    call_div = $(event.target).closest('.call');
+    call_div = $(clickEvent.target).closest('.call');
     uuid = $('.uuid', call_div).text();
+    $('#transfer-cancel').click(__bind(function(cancelEvent) {
+      $('#transfer').hide();
+      return false;
+    }, this));
     $('#transfer').submit(__bind(function(submitEvent) {
       store.send({
         method: 'transfer',

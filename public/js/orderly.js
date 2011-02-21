@@ -182,7 +182,7 @@
       $('.cid-name', this.dom).text(this.remoteLeg.cid_name);
       $('.destination', this.dom).text(formatPhoneNumber(this.remoteLeg.destination));
       $('.queue-name', this.dom).text(this.localLeg.queue);
-      $('.uuid', this.dom).attr('href', "#" + this.localLeg.uuid);
+      $('.uuid', this.dom).text(this.localLeg.uuid);
       $('.channel', this.dom).text(this.localLeg.channel);
       return this.dialogDOM = this.dom.clone(true);
     };
@@ -435,8 +435,12 @@
             this.calltap();
             return false;
           }, this));
-          $('.calls .uuid img', this.dialog).click(__bind(function(event) {
-            this.calls[$(event.target).attr('href').slice(1)].calltap();
+          $('.calls .calltap-uuid', this.dialog).click(__bind(function(event) {
+            var realCall;
+            call = $(event.target).closest('.call');
+            uuid = $('.uuid', call).text();
+            realCall = this.calls[uuid];
+            realCall.calltap();
             return false;
           }, this));
           $('.status a', this.dialog).click(__bind(function(event) {

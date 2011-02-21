@@ -249,8 +249,12 @@ agentWantsCallHangup = (event) ->
   false
 
 agentWantsCallTransfer = (clickEvent) ->
-  call_div = $(event.target).closest('.call')
+  call_div = $(clickEvent.target).closest('.call')
   uuid = $('.uuid', call_div).text()
+  $('#transfer-cancel').click (cancelEvent) =>
+    $('#transfer').hide()
+    false;
+
   $('#transfer').submit (submitEvent) =>
     store.send(
       method: 'transfer',
