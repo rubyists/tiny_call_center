@@ -570,6 +570,8 @@
           order = (function() {
             switch (s) {
               case 'Available':
+                return 0.7;
+              case 'Available (On Demand)':
                 return 0.8;
               case 'On Break':
                 return 0.9;
