@@ -96,10 +96,14 @@ module TinyCallCenter
       servers = {}
       registrars = agents.map {|agent| agent.contact.split("@")[1] }.uniq
       registrars.each do |r|
-        fsock = FSR::CommandSocket.new server: r
-        servers[r] = fsock.channels(true).run
-        fsock.socket.close
-        fsock = nil
+        begin
+          fsock = FSR::CommandSocket.new server: r
+          servers[r] = fsock.channels(true).run
+          fsock.socket.close
+          fsock = nil
+        rescue Errno::ECONNREFUSED => e
+          FSR::Log.error "Registration Server #{r} not found"
+        end
       end
 
       utimes = %w[last_bridge_start last_offered_call last_bridge_end last_status_change]
