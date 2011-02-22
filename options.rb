@@ -14,6 +14,11 @@ module TinyCallCenter
         URI(ENV["TCC_WebSocketAgentURI"] || 'ws://127.0.0.1:8080/websocket')
     end
 
+    sub :mod_callcenter do
+      o 'Mod_callcenter postgres database uri', :db,
+        ENV["TCC_ModCallcenterDB"] || 'postgres://callcenter:PASSWORD@localhost/callcenter'
+    end
+
     o "FreeSWITCH Command Server", :command_server,
       ENV["TCC_Server"] || '127.0.0.1'
 

@@ -6,11 +6,13 @@ require_relative '../lib/tiny_call_center'
 require_relative '../lib/tiny_call_center/db'
 
 DB ||= TinyCallCenter.db unless Object.const_defined?("DB")
+puts "Callcenter DB:"
+p TinyCallCenter.options.mod_callcenter.db
 module FSCallCenter
   @db ||= nil
 
   def self.db
-    @db ||= Sequel.connect("postgres://callcenter@localhost/callcenter")
+    @db ||= Sequel.connect(TinyCallCenter.options.mod_callcenter.db)
   end
 
   def self.db=(other)
