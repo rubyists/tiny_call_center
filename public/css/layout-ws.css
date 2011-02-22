@@ -52,33 +52,31 @@ body {
 .call .uuid { display: none; }
 
 #status {
-  position: absolute;
-  top: 0.2em;
-  left: 0.2em;
-  width: 15%;
+  float: left;
+  margin: 0.1em;
+  width: 6em;
 }
 
 #state {
-  position: absolute;
-  top: 0.2em;
-  left: 16%;
-  width: 17%;
+  float: left;
+  margin: 0.1em;
+  width: 7em;
 }
 
-#callme {
-  position: absolute;
-  top: 0.2em;
-  right: 0.2em;
+#control {
+  float: right;
+  margin: 0.2em;
 }
 
 button {
+  color: #fff;
   display: inline-block;
   width: 100%;
   outline: none;
   cursor: pointer;
   text-align: center;
   text-decoration: none;
-  padding: .5em 1em .55em;
+  padding: 0.2em;
   text-shadow: 0 1px 1px rgba(0,0,0,.3);
   -webkit-border-radius: .5em;
   -moz-border-radius: .5em;
@@ -88,10 +86,18 @@ button {
   box-shadow: 0 1px 2px rgba(0,0,0,.2);
 }
 
+button:hover {
+  color: #000;
+}
+
+button.active {
+  color: #000;
+}
+
 .green {
-  background: #8AE777;
-  background: -webkit-gradient(linear, left top, left bottom, from(#8AE777), to(#1E8608));
-  background: -moz-linear-gradient(top,  #8AE777,  #1E8608);
+  background: #032505;
+  background: -webkit-gradient(linear, left top, left bottom, from(#032505), to(#549C59));
+  background: -moz-linear-gradient(top,  #032505,  #549C59);
 }
 
 .green:hover {
@@ -107,9 +113,9 @@ button {
 }
 
 .yellow {
-  background: #FBDF81;
-  background: -webkit-gradient(linear, left top, left bottom, from(#FBDF81), to(#A17E09));
-  background: -moz-linear-gradient(top,  #FBDF81,  #A17E09);
+  background: #A4933C;
+  background: -webkit-gradient(linear, left top, left bottom, from(#2F2804), to(#A4933C));
+  background: -moz-linear-gradient(top,  #2F2804,  #A4933C);
 }
 
 .yellow:hover {
@@ -125,9 +131,9 @@ button {
 }
 
 .red {
-  background: #F77F8A;
-  background: -webkit-gradient(linear, left top, left bottom, from(#F77F8A), to(#9B0917));
-  background: -moz-linear-gradient(top,  #F77F8A,  #9B0917);
+  background: #2F0504;
+  background: -webkit-gradient(linear, left top, left bottom, from(#2F0504), to(#A43F3C));
+  background: -moz-linear-gradient(top,  #2F0504,  #A43F3C);
 }
 
 .red:hover {
