@@ -208,24 +208,27 @@ module TinyCallCenter
 
     def got_agent_status_history(msg)
       FSR::Log.info "Sending status history of #{msg['agent']}"
-      reply tiny_action: 'agent_status_history',
-            cc_agent: msg['agent'],
-            history: TCC::StatusLog.filter{|r|
-              (r.agent == msg['agent']) &
-              (r.created_at > (Date.today - 1)) &
-              (r.created_at < (Date.today + 1))
-            }.select(:new_status, :created_at).map(&:values)
+
+      reply(
+        tiny_action: 'agent_status_history',
+        cc_agent: msg['agent'],
+        history: TCC::StatusLog.filter{
+          {:agent => msg["agent"]} &
+          (created_at > (Date.today - 1)) &
+          (created_at < (Date.today + 1))
+        }.select(:new_status, :created_at).order_by(:created_at).map(&:values))
     end
 
     def got_agent_state_history(msg)
       FSR::Log.info "Sending state history of #{msg['agent']}"
-      reply tiny_action: 'agent_state_history',
-            cc_agent: msg['agent'],
-            history: TCC::StatusLog.filter{|r|
-              (r.agent == msg['agent']) &
-              (r.created_at > (Date.today - 1)) &
-              (r.created_at < (Date.today + 1))
-            }.select(:new_state, :created_at).map(&:values)
+      reply(
+        tiny_action: 'agent_state_history',
+        cc_agent: msg['agent'],
+        history: TCC::StateLog.filter{
+          {:agent => msg["agent"]} &
+          (created_at > (Date.today - 1)) &
+          (created_at < (Date.today + 1))
+        }.select(:new_state, :created_at).order_by(:created_at).map(&:values))
     end
   end
 end
