@@ -213,7 +213,6 @@ onClose = ->
 onError = (event) ->
   showError(event.data)
 
-
 agentWantsStatusChange = (a) ->
   curStatus = $('.change-status[class=active]').text()
   store.send(
@@ -265,6 +264,9 @@ agentWantsCallTransfer = (clickEvent) ->
   $('#transfer').show()
   false
 
+agentWantsToLogout = (clickEvent) ->
+  window.location.pathname = "/accounts/logout"
+
 setupWs = ->
   store.ws = new WebSocket(store.server)
 
@@ -304,6 +306,7 @@ $ ->
   $('.call .hangup').live 'click', agentWantsCallHangup
   $('.call .transfer').live 'click', agentWantsCallTransfer
   $('.callme').live 'click', agentWantsToBeCalled
+  $('.logout').live 'click', agentWantsToLogout
 
   setTimeout ->
     $(window).resize (event) ->
