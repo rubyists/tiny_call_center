@@ -90,6 +90,7 @@ module TinyCallCenter
       contact = agent["contact"] || find_contact(extension, timeout)
       cmd = fsr.call_center(:agent).add(name, type)
       if cmd.run
+        ::Innate::Log.info "Added Agent #{name}: #{cmd.last_response}"
         cmd = fsr.call_center(:agent).set(name, :contact, contact)
         unless cmd.run
           flash[:errors] << "Could not set a contact string! #{cmd.last_response}"

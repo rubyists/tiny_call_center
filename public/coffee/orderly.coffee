@@ -79,6 +79,7 @@ class Socket
 
 class Controller
   dispatch: (msg) ->
+    p msg
     if method = msg.method
       @["got_#{method}"].apply(this, msg.args)
     else if action = msg.tiny_action
@@ -534,3 +535,4 @@ $ ->
   )
 
   store.ws = new Socket(new Controller())
+  window.tcc_store = store # makes debugging sooo much easier :)
