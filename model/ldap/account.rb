@@ -3,7 +3,7 @@ require_relative '../manager'
 
 module TinyCallCenter
   class Account
-    attr_reader :user
+    attr_reader :user, :uid
 
     def self.authenticate(creds)
       name, pass = creds.values_at("name", "pass")
@@ -124,7 +124,7 @@ module TinyCallCenter
 
     def manager
       @_manager ||= (
-        TinyCallCenter::Manager.find(username: attributes["uid"]) ||
+        TinyCallCenter::Manager.find(username: uid) ||
         TinyCallCenter::Manager.find(username: "#{first_name.downcase.capitalize}#{last_name.downcase.capitalize}")
       )
     end

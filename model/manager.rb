@@ -9,12 +9,14 @@ module TinyCallCenter
     # as created by /^(1234)$/.to_s type notation, cid and cid_to are expected to
     # be strings
     def authorized_to_listen?(cid, cid_to)
-      ins = Regexp.new self.include
-      exs = self.exclude ? Regexp.new(self.exclude) : nil
-      if exs
-        ((cid =~ ins) || (cid_to =~ ins)) && !((cid_to =~ exs) or (cid =~ exs))
+      includes = Regexp.new(include)
+      excludes = Regexp.new(exclude) if exclude
+
+      if excludes
+        (cid =~ includes || cid_to =~ includes) &&
+       !(cid =~ excludes || cid_to =~ excludes)
       else
-        (cid =~ ins) or (cid_to =~ ins)
+        cid =~ includes || cid_to =~ includes
       end
     end
   end
