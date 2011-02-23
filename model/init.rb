@@ -8,15 +8,30 @@ require_relative '../lib/tiny_call_center/db'
 DB ||= TinyCallCenter.db unless Object.const_defined?("DB")
 puts "Callcenter DB:"
 p TinyCallCenter.options.mod_callcenter.db
-module FSCallCenter
-  @db ||= nil
 
-  def self.db
-    @db ||= Sequel.connect(TinyCallCenter.options.mod_callcenter.db)
+module TinyCallCenter
+  module FSCallCenter
+    @db ||= nil
+
+    def self.db
+      @db ||= Sequel.connect(TinyCallCenter.options.mod_callcenter.db)
+    end
+
+    def self.db=(other)
+      @db = other
+    end
   end
 
-  def self.db=(other)
-    @db = other
+  module TinyCdr
+    @db ||= nil
+
+    def self.db
+      @db ||= Sequel.connect(TinyCallCenter.options.tiny_cdr.db)
+    end
+
+    def self.db=(other)
+      @db = other
+    end
   end
 end
 
@@ -32,3 +47,4 @@ require_relative "disposition"
 require_relative "call_record"
 require_relative 'status_log'
 require_relative 'state_log'
+require_relative 'tiny_cdr_call' if TinyCallCenter.options.tiny_cdr.db

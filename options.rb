@@ -19,6 +19,13 @@ module TinyCallCenter
         ENV["TCC_ModCallcenterDB"] || 'postgres://callcenter:PASSWORD@localhost/callcenter'
     end
 
+    sub :tiny_cdr do
+      o 'TinyCdr postgres database uri', :db,
+        ENV["TCC_TinyCdrDB"]
+      o 'TinyCdr couch db uri', :couch_uri,
+        ENV["TCC_TinyCdrCouchURI"]
+    end
+
     o "FreeSWITCH Command Server", :command_server,
       ENV["TCC_Server"] || '127.0.0.1'
 
