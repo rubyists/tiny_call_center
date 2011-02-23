@@ -119,6 +119,7 @@ class Call
     @askDisposition()
 
   askDisposition: ->
+    return # Disable Dispositions Until We Allow It To Be Optional
     if @local_leg.cid_number == "8675309" || @local_leg.destination == "19999"
       @sel.remove()
       return

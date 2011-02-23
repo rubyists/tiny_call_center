@@ -119,6 +119,7 @@
       return this.askDisposition();
     };
     Call.prototype.askDisposition = function() {
+      return;
       if (this.local_leg.cid_number === "8675309" || this.local_leg.destination === "19999") {
         this.sel.remove();
         return;
