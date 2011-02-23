@@ -3,7 +3,7 @@
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   p = function() {
     var _ref;
-    return (_ref = window.console) != null ? typeof _ref.debug == "function" ? _ref.debug(arguments) : void 0 : void 0;
+    return (_ref = window.console) != null ? typeof _ref.debug === "function" ? _ref.debug(arguments) : void 0 : void 0;
   };
   store = {
     agents: {},
@@ -64,14 +64,20 @@
     }
     Socket.prototype.connect = function() {
       this.ws = new WebSocket(store.server);
-      this.ws.onopen = __bind(function() {
-        if (this.reconnectInterval) {
-          clearInterval(this.reconnectInterval);
+      return this.reconnector = setInterval(__bind(function() {
+        if (!this.connected) {
+          this.ws = new WebSocket(store.server);
+          return this.prepareWs();
         }
-        return this.say({
+      }, this), 1000);
+    };
+    Socket.prototype.prepareWs = function() {
+      this.ws.onopen = __bind(function() {
+        this.say({
           method: 'subscribe',
           agent: store.agent
         });
+        return this.connected = true;
       }, this);
       this.ws.onmessage = __bind(function(message) {
         var data;
@@ -80,13 +86,7 @@
       }, this);
       this.ws.onclose = __bind(function() {
         p("Closing WebSocket");
-        if (this.reconnectInterval) {
-          return;
-        }
-        return this.reconnectInterval = setInterval(__bind(function() {
-          p("Reconnect");
-          return this.connect();
-        }, this), 1000);
+        return this.connected = false;
       }, this);
       return this.ws.onerror = __bind(function(error) {
         return p("WebSocket Error:", error);
@@ -101,6 +101,7 @@
     function Controller() {}
     Controller.prototype.dispatch = function(msg) {
       var action, method;
+      p(msg);
       if (method = msg.method) {
         return this["got_" + method].apply(this, msg.args);
       } else if (action = msg.tiny_action) {
@@ -172,14 +173,16 @@
       this.renderInAgent();
       this.renderInDialog();
       this.setTimer(new Date(Date.parse(msg.call_created)));
-      this.agent.calls[this.uuid] = this;
+      this.agent.addCall(this);
     }
     Call.prototype.createDOM = function() {
       this.dom = store.protoCall.clone();
       this.dom.attr('id', '');
       this.dom.attr('class', "" + this.klass + " call");
       $('.cid-number', this.dom).text(formatPhoneNumber(this.remoteLeg.cid_number));
-      $('.cid-name', this.dom).text(this.remoteLeg.cid_name);
+      if (this.remoteLeg.cid_name !== 'unknown') {
+        $('.cid-name', this.dom).text(this.remoteLeg.cid_name);
+      }
       $('.destination', this.dom).text(formatPhoneNumber(this.remoteLeg.destination));
       $('.queue-name', this.dom).text(this.localLeg.queue);
       $('.uuid', this.dom).text(this.localLeg.uuid);
@@ -199,8 +202,9 @@
     };
     Call.prototype.hangup = function(msg) {
       this.agent.startingTime = new Date(Date.now());
-      delete this.agent.calls[this.uuid];
+      this.agent.removeCall(this);
       clearInterval(this.timer);
+      $('.more-calls', this.agent.dom).text('');
       this.dom.slideUp("normal", function() {
         return $(this).remove();
       });
@@ -231,6 +235,7 @@
     function Agent(name) {
       this.name = name;
       this.calls = {};
+      this.callCount = 0;
       this.createDOM();
       store.agents[this.name] = this;
     }
@@ -249,7 +254,7 @@
       }, this), 1000);
     };
     Agent.prototype.fillFromAgent = function(d) {
-      var msg;
+      var call, msg, _i, _len, _ref, _results;
       this.setName(d.name);
       this.setState(d.state);
       this.setStatus(d.status);
@@ -275,25 +280,29 @@
       if (this.last_call_time) {
         this.setTimer(this.last_call_time);
       }
-      if (d.call_created) {
+      _ref = d.calls;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        call = _ref[_i];
         msg = {
-          call_created: d.call_created,
+          call_created: call.call_created,
           left: {
-            cid_number: d.caller_cid_num,
-            cid_name: d.caller_cid_name,
-            destination: d.caller_dest_num,
-            channel: d.contact,
-            uuid: d.uuid
+            cid_number: call.caller_cid_num,
+            cid_name: call.caller_cid_name,
+            destination: call.caller_dest_num,
+            channel: call.contact,
+            uuid: call.uuid
           },
           right: {
-            cid_number: d.callee_cid_num,
-            cid_name: d.callee_cid_name,
-            channel: d.contact,
-            uuid: d.uuid
+            cid_number: call.callee_cid_num,
+            cid_name: call.callee_cid_name,
+            channel: call.contact,
+            uuid: call.uuid
           }
         };
-        return this.got_call_start(msg);
+        _results.push(this.got_call_start(msg));
       }
+      return _results;
     };
     Agent.prototype.fillFromTier = function(d) {
       this.setName(d.agent);
@@ -302,12 +311,26 @@
       this.position = d.position;
       return this.setQueue(d.queue);
     };
+    Agent.prototype.addCall = function(call) {
+      this.calls[call.uuid] = call;
+      this.callCount += 1;
+      if (this.callCount > 1) {
+        return $('.more-calls', this.dom).text('+');
+      }
+    };
+    Agent.prototype.removeCall = function(call) {
+      delete this.calls[call.uuid];
+      this.callCount -= 1;
+      if (this.callCount < 2) {
+        return $('.more-calls', this.dom).text('');
+      }
+    };
     Agent.prototype.got_call_start = function(msg) {
       var extMatch, left, leftMatch, right, rightMatch, _ref, _ref2, _ref3, _ref4, _ref5;
       extMatch = /(?:^|\/)(?:sip:)?(\d+)[@-]/;
       _ref = [msg.left, msg.right], left = _ref[0], right = _ref[1];
-      leftMatch = (_ref2 = left.channel) != null ? typeof _ref2.match == "function" ? (_ref3 = _ref2.match(extMatch)) != null ? _ref3[1] : void 0 : void 0 : void 0;
-      rightMatch = (_ref4 = right.channel) != null ? typeof _ref4.match == "function" ? (_ref5 = _ref4.match(extMatch)) != null ? _ref5[1] : void 0 : void 0 : void 0;
+      leftMatch = (_ref2 = left.channel) != null ? typeof _ref2.match === "function" ? (_ref3 = _ref2.match(extMatch)) != null ? _ref3[1] : void 0 : void 0 : void 0;
+      rightMatch = (_ref4 = right.channel) != null ? typeof _ref4.match === "function" ? (_ref5 = _ref4.match(extMatch)) != null ? _ref5[1] : void 0 : void 0 : void 0;
       if (this.extension === leftMatch) {
         return this.makeCall(left, right, msg);
       } else if (this.extension === rightMatch) {
@@ -335,7 +358,7 @@
         if (/unique|uuid/.test(key)) {
           if (call = this.calls[value]) {
             call.hangup(msg);
-            return;
+            return void 0;
           }
         }
       }
@@ -423,7 +446,8 @@
         autoOpen: true,
         title: "" + this.extension + " " + this.username,
         modal: false,
-        width: 800,
+        width: 600,
+        height: 300,
         open: __bind(function(event, ui) {
           var call, uuid, _ref;
           this.syncDialog();
@@ -483,14 +507,18 @@
       href = $(ui.tab).attr('href');
       tab = $(href);
       if (tab.hasClass('tab-status-log')) {
-        store.ws.say({
+        return store.ws.say({
           method: 'agent_status_history',
           agent: this.name
         });
-      }
-      if (tab.hasClass('tab-state-log')) {
+      } else if (tab.hasClass('tab-state-log')) {
         return store.ws.say({
           method: 'agent_state_history',
+          agent: this.name
+        });
+      } else if (tab.hasClass('tab-call-log')) {
+        return store.ws.say({
+          method: 'agent_call_history',
           agent: this.name
         });
       }
@@ -516,6 +544,29 @@
         row = _ref[_i];
         created_at = new Date(Date.parse(row.created_at));
         _results.push($('.tab-state-log tbody', this.dialog).append($('<tr>').html("<td>" + row.new_state + "</td><td>" + created_at + "</td>")));
+      }
+      return _results;
+    };
+    Agent.prototype.got_agent_call_history = function(msg) {
+      var row, start, tr, _i, _len, _ref, _results;
+      $('.tab-call-log tbody', this.dialog).html('');
+      _ref = msg.history;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        row = _ref[_i];
+        tr = $('<tr>', {
+          "class": 'couch-link',
+          couchid: row.couch_id
+        });
+        start = new Date(Date.parse(row.start_time));
+        tr.append($('<td>').text(start.toLocaleTimeString()));
+        tr.append($('<td>').text(formatPhoneNumber(row.caller_id_number)));
+        tr.append($('<td>').text(formatPhoneNumber(row.caller_id_name)));
+        tr.append($('<td>').text(formatPhoneNumber(row.destination_number)));
+        tr.append($('<td>').text(row.context));
+        tr.append($('<td>').text(row.duration));
+        tr.append($('<td>').text(row.billsec));
+        _results.push($('.tab-call-log tbody', this.dialog).append(tr));
       }
       return _results;
     };
@@ -608,6 +659,13 @@
       agent.doubleClicked();
       return false;
     }, this));
+    $('.couch-link').live('dblclick', __bind(function(event) {
+      var couchid, tr, uri;
+      tr = $(event.target).closest('tr');
+      couchid = tr.attr('couchid');
+      uri = "http://kyle:5984/_utils/document.html?tiny_cdr/" + couchid;
+      return window.open(uri, "Futon");
+    }, this));
     $('#agents').isotope({
       itemSelector: '.agent',
       layoutMode: 'fitRows',
@@ -644,6 +702,7 @@
       },
       sortBy: 'status'
     });
-    return store.ws = new Socket(new Controller());
+    store.ws = new Socket(new Controller());
+    return window.tcc_store = store;
   });
 }).call(this);

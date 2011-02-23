@@ -49,9 +49,16 @@ class Socket
 
   connect: () ->
     @ws = new WebSocket(store.server)
+    @reconnector = setInterval =>
+      unless @connected
+        @ws = new WebSocket(store.server)
+        @prepareWs()
+    , 1000
+
+  prepareWs: ->
     @ws.onopen = =>
-      clearInterval(@reconnectInterval) if @reconnectInterval
       @say(method: 'subscribe', agent: store.agent)
+      @connected = true
 
     @ws.onmessage = (message) =>
       data = JSON.parse(message.data)
@@ -60,11 +67,7 @@ class Socket
 
     @ws.onclose = =>
       p "Closing WebSocket"
-      return if @reconnectInterval
-      @reconnectInterval = setInterval =>
-        p "Reconnect"
-        @connect()
-      , 1000
+      @connected = false
 
     @ws.onerror = (error) =>
       p "WebSocket Error:", error
@@ -123,14 +126,14 @@ class Call
     @renderInAgent()
     @renderInDialog()
     @setTimer(new Date(Date.parse(msg.call_created)))
-    @agent.calls[@uuid] = this
+    @agent.addCall(this)
 
   createDOM: ->
     @dom = store.protoCall.clone()
     @dom.attr('id', '')
     @dom.attr('class', "#{@klass} call")
     $('.cid-number', @dom).text(formatPhoneNumber(@remoteLeg.cid_number))
-    $('.cid-name', @dom).text(@remoteLeg.cid_name)
+    $('.cid-name', @dom).text(@remoteLeg.cid_name) unless @remoteLeg.cid_name == 'unknown'
     $('.destination', @dom).text(formatPhoneNumber(@remoteLeg.destination))
     $('.queue-name', @dom).text(@localLeg.queue)
     $('.uuid', @dom).text(@localLeg.uuid)
@@ -145,8 +148,9 @@ class Call
 
   hangup: (msg) ->
     @agent.startingTime = new Date(Date.now())
-    delete @agent.calls[@uuid]
+    @agent.removeCall(this)
     clearInterval(@timer)
+    $('.more-calls', @agent.dom).text('')
     @dom.slideUp("normal", -> $(this).remove())
     @dialogDOM.remove()
 
@@ -170,6 +174,7 @@ class Call
 class Agent
   constructor: (@name) ->
     @calls = {}
+    @callCount = 0
     @createDOM()
     store.agents[@name] = this
 
@@ -217,21 +222,21 @@ class Agent
     if @last_call_time
       @setTimer(@last_call_time)
 
-    if d.call_created
+    for call in d.calls
       msg = {
-        call_created: d.call_created,
+        call_created: call.call_created,
         left: {
-          cid_number: d.caller_cid_num,
-          cid_name: d.caller_cid_name,
-          destination: d.caller_dest_num,
-          channel: d.contact
-          uuid: d.uuid,
+          cid_number: call.caller_cid_num,
+          cid_name: call.caller_cid_name,
+          destination: call.caller_dest_num,
+          channel: call.contact
+          uuid: call.uuid,
         },
         right: {
-          cid_number: d.callee_cid_num,
-          cid_name: d.callee_cid_name,
-          channel: d.contact,
-          uuid: d.uuid,
+          cid_number: call.callee_cid_num,
+          cid_name: call.callee_cid_name,
+          channel: call.contact,
+          uuid: call.uuid,
         }
       }
 
@@ -243,6 +248,16 @@ class Agent
     @level = d.level
     @position = d.position
     @setQueue(d.queue)
+
+  addCall: (call) ->
+    @calls[call.uuid] = call
+    @callCount += 1
+    $('.more-calls', @dom).text('+') if @callCount > 1
+
+  removeCall: (call) ->
+    delete @calls[call.uuid]
+    @callCount -= 1
+    $('.more-calls', @dom).text('') if @callCount < 2
 
   got_call_start: (msg) ->
     extMatch = /(?:^|\/)(?:sip:)?(\d+)[@-]/

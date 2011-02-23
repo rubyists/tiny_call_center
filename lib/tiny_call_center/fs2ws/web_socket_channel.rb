@@ -114,7 +114,7 @@ module TinyCallCenter
         agent_calls = servers[agent_server]
 
         agent_hash = agent.to_hash
-        agent_hash.merge!(agent_status(agent_ext, agent_calls))
+        agent_hash.merge!(calls: agent_status(agent_ext, agent_calls))
         agent_hash.merge!(extension: agent_ext, username: agent_username)
 
         if cr = CallRecord.last(agent.name)

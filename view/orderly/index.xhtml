@@ -46,13 +46,14 @@
       <div id="proto-call" class="call">
         <span class="cid-name"></span>
         <span class="cid-number"></span>
-        <span class="uuid"></span>
-        <a class="calltap-uuid" href="#"><img src="/images/ear.png" /></a>
-        <span class="answered"></span>
+        <span class="arrow">&harr;</span>
         <span class="destination"></span>
         <span class="time-of-call-start"></span>
+        <span class="answered"></span>
         <span class="queue-name"></span>
         <span class="channel"></span>
+        <span class="uuid"></span>
+        <a class="calltap-uuid" href="#"><img src="/images/ear.png" /></a>
       </div>
 
       <div id="proto-agent" class="agent">
@@ -63,6 +64,7 @@
         <span class="time-since-status-change"></span>
         <span class="queue"></span>
         <span class="calls"></span>
+        <span class="more-calls"></span>
       </div>
 
       <div id="agents">
@@ -76,7 +78,6 @@
             <li><a href="#" class="tab-title">Status Log</a></li>
             <li><a href="#" class="tab-title">State Log</a></li>
             <li><a href="#" class="tab-title">Call History</a></li>
-            <li><a href="#" class="tab-title">Dispositions</a></li>
           </ul>
 
           <div class="tab-content tab-overview">
@@ -104,7 +105,7 @@
           </div>
 
           <div class="tab-content tab-status-log">
-            <h2>Status Log</h2>
+            <h2>Todays Status Log</h2>
             <table class="tab-container">
               <thead>
                 <th>Status</th>
@@ -115,7 +116,7 @@
           </div>
 
           <div class="tab-content tab-state-log">
-            <h2>State Log</h2>
+            <h2>Todays State Log</h2>
             <table class="tab-container">
               <thead>
                 <th>State</th>
@@ -125,12 +126,20 @@
             </table>
           </div>
 
-          <div class="tab-content tab-call-history">
-            <h2>Call History</h2>
-          </div>
-
-          <div class="tab-content tab-dispositions">
-            <h2>Dispositions</h2>
+          <div class="tab-content tab-call-log">
+            <h2>Todays Call History</h2>
+            <table class="tab-container">
+              <thead>
+                <th>Time</th>
+                <th>CID #</th>
+                <th>CID Name</th>
+                <th>To</th>
+                <th>Context</th>
+                <th>Dur</th>
+                <th>Bill</th>
+              </thead>
+              <tbody></tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -139,7 +148,7 @@
     <footer>
       <span id="agent_name">#{h @agent}</span>
       <span id="server">#{h @server}</span>
-      <div id="copyright">Live CallCenter &copy; by The Rubyists LLC. 2010</div>
+      <div id="copyright">Live CallCenter &copy; by The Rubyists LLC. 2010-2011</div>
     </footer>
   </body>
 </html>

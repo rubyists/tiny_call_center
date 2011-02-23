@@ -96,8 +96,22 @@ nav li {
   right: 0.5em;
 }
 
+.agent .more-calls {
+  display: block;
+  color: #f00;
+  font-weight: bold;
+}
+
 .agent .calls {
   display: block;
+}
+
+.agent .calls .call:first-of-type {
+  display: block;
+}
+
+.agent .calls .call {
+  display: none;
 }
 
 .calls .call {
@@ -198,4 +212,8 @@ footer {
   padding-top: 2em;
   clear: both;
   text-align: center;
+}
+
+.ui-dialog {
+  font-size: 0.8em;
 }
