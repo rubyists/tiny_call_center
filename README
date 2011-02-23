@@ -1,0 +1,25 @@
+Applications which allow monitoring of FreeSWITCH, plus management and administration
+of FreeSWITCH's mod_callcenter queue routing.
+
+Features:
+
+ * Agent Ribbon - for agents to see current calls, transfer them, set themselves
+   Ready/Wrap-Up and Available/On-Break/Logged Out in mod_callcenter
+
+ * Real-Time Manager View - for managers to see what their agents are doing, as well
+   as change agents' status/state and eavesdrop calls
+
+ * Mod_Callcenter Admin - For adding agents to mod_callcenter, and manipulating Tiers
+
+On The Way:
+  
+ * Report Interface
+
+ * TinyCdr Integration
+
+ * TinyDialer predective/interactive dialing
+
+ * FXC - Full FreeSWITCH configuration framework
+
+
+See Also: https://github.com/rubyists/tiny_call_center/wiki
