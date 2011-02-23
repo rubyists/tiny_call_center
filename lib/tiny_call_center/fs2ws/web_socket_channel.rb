@@ -136,10 +136,17 @@ module TinyCallCenter
     end
 
     def can_view?(message)
-      return false unless agent
+      unless agent
+        FSR::Log.warn "<<< can_view? failure >>>"
+        FSR::Log.warn "No agent found in #{message}"
+        return false
+      end
 
       self.user ||= Account.from_call_center_name(agent)
-      return false unless user && user.extension
+      unless user && user.extension
+        FSR::Log.warn "<<< can_view? failure >>>"
+        FSR::Log.warn "'user': (#{user}) or 'user.extension': (#{user.extension}) is nil"
+      end
 
       if cc = message[:cc_agent]
         extension = Account.extension cc
@@ -151,7 +158,7 @@ module TinyCallCenter
       numbers = possible_numbers(message)
       unless numbers.size > 1
         FSR::Log.warn "%p Asking for access to crazysauce: %p" % [agent, message]
-        return true
+        return false
       end
 
       FSR::Log.debug "%p asking for access to %p" % [agent, numbers]
@@ -165,7 +172,7 @@ module TinyCallCenter
       extension, name, tapper, uuid, phoneNumber = msg.values_at('extension', 'name', 'tapper', 'uuid', 'phoneNumber')
       if manager = Account.from_call_center_name(tapper)
         return false unless manager.manager?
-        return false unless agent = Account.from_full_name(name)
+        return false unless agent = Account.from_call_center_name(name)
         if manager.manager.authorized_to_listen?(extension, phoneNumber)
           eavesdrop(uuid, agent, manager)
         end
@@ -185,6 +192,7 @@ module TinyCallCenter
     end
 
     def eavesdrop(uuid, agent, tapper)
+      FSR::Log.info("Requestion Tap of #{agent} by #{tapper} -> #{uuid}")
       return false unless agent.registration_server
       FSR::Log.info("Tapping #{agent.full_name} at #{agent.registration_server}: #{uuid}")
       if (sock = FSR::CommandSocket.new(:server => agent.registration_server) rescue nil)
