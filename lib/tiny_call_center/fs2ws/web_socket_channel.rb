@@ -137,15 +137,16 @@ module TinyCallCenter
 
     def can_view?(message)
       unless agent
-        FSR::Log.warn "<<< can_view? failure >>>"
-        FSR::Log.warn "No agent found in #{message}"
+        FSR::Log.debug "<<< can_view? failure >>>"
+        FSR::Log.debug "No agent found. Message: #{message}"
         return false
       end
 
       self.user ||= Account.from_call_center_name(agent)
       unless user && user.extension
-        FSR::Log.warn "<<< can_view? failure >>>"
-        FSR::Log.warn "'user': (#{user}) or 'user.extension': (#{user.extension}) is nil"
+        FSR::Log.debug "<<< can_view? failure >>>"
+        FSR::Log.debug "'user': (#{user}) or 'user.extension': (#{user.extension}) is nil"
+        return false
       end
 
       if cc = message[:cc_agent]
