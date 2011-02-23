@@ -351,7 +351,8 @@ class Agent
       autoOpen: true,
       title: "#{@extension} #{@username}",
       modal: false,
-      width: 800,
+      width: 600,
+      height: 300,
       open: (event, ui) =>
         @syncDialog()
         for uuid, call of @calls
@@ -399,15 +400,11 @@ class Agent
     tab = $(href)
 
     if tab.hasClass('tab-status-log')
-      store.ws.say(
-        method: 'agent_status_history',
-        agent: @name
-      )
-    if tab.hasClass('tab-state-log')
-      store.ws.say(
-        method: 'agent_state_history',
-        agent: @name
-      )
+      store.ws.say(method: 'agent_status_history', agent: @name)
+    else if tab.hasClass('tab-state-log')
+      store.ws.say(method: 'agent_state_history', agent: @name)
+    else if tab.hasClass('tab-call-log')
+      store.ws.say(method: 'agent_call_history', agent: @name)
 
   got_agent_status_history: (msg) ->
     $('.tab-status-log tbody', @dialog).html('')
@@ -422,6 +419,20 @@ class Agent
       created_at = new Date(Date.parse(row.created_at))
       $('.tab-state-log tbody', @dialog).append(
         $('<tr>').html("<td>#{row.new_state}</td><td>#{created_at}</td>"))
+
+  got_agent_call_history: (msg) ->
+    $('.tab-call-log tbody', @dialog).html('')
+    for row in msg.history
+      tr = $('<tr>', class: 'couch-link', couchid: row.couch_id)
+      start = new Date(Date.parse(row.start_time))
+      tr.append($('<td>').text(start.toLocaleTimeString()))
+      tr.append($('<td>').text(formatPhoneNumber(row.caller_id_number)))
+      tr.append($('<td>').text(formatPhoneNumber(row.caller_id_name)))
+      tr.append($('<td>').text(formatPhoneNumber(row.destination_number)))
+      tr.append($('<td>').text(row.context))
+      tr.append($('<td>').text(row.duration))
+      tr.append($('<td>').text(row.billsec))
+      $('.tab-call-log tbody', @dialog).append(tr)
 
   syncDialog: ->
     @syncDialogStatus()
@@ -485,6 +496,12 @@ $ ->
     agent = store.agents[agent_id]
     agent.doubleClicked()
     false
+
+  $('.couch-link').live 'dblclick', (event) =>
+    tr = $(event.target).closest('tr')
+    couchid = tr.attr('couchid')
+    uri = "http://kyle:5984/_utils/document.html?tiny_cdr/#{couchid}"
+    window.open(uri, "Futon")
 
   $('#agents').isotope(
     itemSelector: '.agent',

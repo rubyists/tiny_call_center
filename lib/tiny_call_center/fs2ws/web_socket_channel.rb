@@ -201,6 +201,33 @@ module TinyCallCenter
     end
 
     def got_agent_call_history(msg)
+      # If we have tiny_cdr available, use it for call history,
+      # otherwise use CallRecord
+      FSR::Log.info "Sending call history of #{msg['agent']}"
+      FSR::Log.info "tiny_cdr: #{TCC.options.tiny_cdr.db}"
+
+      calls = if TCC.options.tiny_cdr.db
+        extension = TCC::Account.extension(msg["agent"])
+        TCC::TinyCdr::Call.filter{
+          ({:username => extension} | {:destination_number => extension}) &
+          (start_stamp > Date.today) &
+          (start_stamp < (Date.today + 1))
+        }.order_by(:start_stamp.desc).map{|row|
+          row.values.merge(start_time: row.start_stamp.rfc2822)
+        }
+      else
+        TCC::CallRecord.filter{
+          {:agent => msg["agent"]} &
+          (created_at > Date.today) &
+          (created_at < (Date.today + 1))
+        }.order_by(:created_at.desc).map(&:values)
+      end
+
+      reply(
+        tiny_action: 'agent_call_history',
+        cc_agent: msg['agent'],
+        history: calls
+      )
     end
 
     def got_agent_disposition_history(msg)
@@ -214,9 +241,9 @@ module TinyCallCenter
         cc_agent: msg['agent'],
         history: TCC::StatusLog.filter{
           {:agent => msg["agent"]} &
-          (created_at > (Date.today - 1)) &
+          (created_at > Date.today) &
           (created_at < (Date.today + 1))
-        }.select(:new_status, :created_at).order_by(:created_at).map(&:values))
+        }.select(:new_status, :created_at).order_by(:created_at.desc).map(&:values))
     end
 
     def got_agent_state_history(msg)
@@ -226,9 +253,20 @@ module TinyCallCenter
         cc_agent: msg['agent'],
         history: TCC::StateLog.filter{
           {:agent => msg["agent"]} &
-          (created_at > (Date.today - 1)) &
+          (created_at > Date.today) &
           (created_at < (Date.today + 1))
-        }.select(:new_state, :created_at).order_by(:created_at).map(&:values))
+        }.select(:new_state, :created_at).order_by(:created_at.desc).map{|row|
+          v = row.values
+
+          case v[:new_state]
+          when 'Waiting'
+            v[:new_state] = 'Ready'
+          when 'Idle'
+            v[:new_state] = 'Wrap-up'
+          end
+
+          v
+        })
     end
   end
 end
