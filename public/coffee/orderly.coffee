@@ -529,7 +529,7 @@ $ ->
         parseFloat("" + order + extension)
       idle: (e) ->
         [min, sec] = e.find('.time-since-status-change').text().split(':')
-        (parseInt(min, 10) * 60) + parseInt(sec, 10)
+        (((parseInt(min, 10) * 60) + parseInt(sec, 10)) * -1)
     },
     sortBy: 'status',
   )

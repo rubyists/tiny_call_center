@@ -126,7 +126,15 @@ module TinyCallCenter
         if cr = CallRecord.last(agent.name)
           cr_at = cr.created_at
         end
+        if TinyCallCenter.options.tiny_cdr.db
+          tiny_call = TCC::TinyCdr::Call.filter{
+            ({:username => agent_ext} | {:destination_number => agent_ext}) &
+            (start_stamp > Date.today)
+          }.order_by(:start_stamp.desc).first
+          tc_at = tiny_call.start_stamp if tiny_call
+        end
         last_call_time = [
+          tc_at,
           cr_at,
           Time.at(agent_hash['last_bridge_end'].to_i),
           Date.today.to_time + (8 * 60 * 60), # 08:00

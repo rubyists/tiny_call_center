@@ -697,7 +697,7 @@
         idle: function(e) {
           var min, sec, _ref;
           _ref = e.find('.time-since-status-change').text().split(':'), min = _ref[0], sec = _ref[1];
-          return (parseInt(min, 10) * 60) + parseInt(sec, 10);
+          return ((parseInt(min, 10) * 60) + parseInt(sec, 10)) * -1;
         }
       },
       sortBy: 'status'
