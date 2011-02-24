@@ -528,6 +528,7 @@ $ ->
         extension = e.find('.extension').text()
         parseFloat("" + order + extension)
       idle: (e) ->
+        #$('#agents').isotope('updateSortData', $('#content'))
         [min, sec] = e.find('.time-since-status-change').text().split(':')
         (((parseInt(min, 10) * 60) + parseInt(sec, 10)) * -1)
     },
