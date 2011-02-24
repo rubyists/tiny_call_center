@@ -14,13 +14,19 @@ module TinyCallCenter
 
     def on_open
       self.channel_id = Channel.subscribe{|message|
-        reply(message) if can_view?(message)
+        if can_view?(message)
+          FSR::Log.devel "<< Relaying #{message} to channel for #{agent} >>"
+          reply(message)
+        else
+          FSR::Log.devel "<< Relaying failed in can_view for (#{agent}) to channel >>"
+          FSR::Log.devel "<< ${message}) >>"
+        end
       }
     end
 
     def on_close
       Channel.unsubscribe(channel_id)
-      FSR::Log.debug "Unsubscribed listener: #{agent}"
+      FSR::Log.notice "Unsubscribed listener: #{agent}"
     end
 
     def on_message(json)
@@ -46,11 +52,11 @@ module TinyCallCenter
 
     def got_subscribe(msg)
       self.agent = msg['agent']
-      FSR::Log.info "Subscribing listener: #{self.agent}"
+      FSR::Log.notice "Subscribing listener: #{self.agent}"
 
       # everything regarding perms in Account
       self.user = Account.from_call_center_name(agent)
-      FSR::Log.info "User #{user} subscribed"
+      FSR::Log.notice "User #{user} subscribed"
 
       give_agent_listing
       give_queues
@@ -86,10 +92,10 @@ module TinyCallCenter
       agents = agent_listing
       if user.manager?
         agents.select! {|agent| user.can_view?(agent.extension) }
-        FSR::Log.info "#{user} can view #{agents.size} agents"
+        FSR::Log.devel "#{user} can view #{agents.size} agents"
       else
         # if somehow an agent got here, just show them themselves
-        FSR::Log.info "User #{user} not a manager, showing just self"
+        FSR::Log.warn "User #{user} not a manager, showing just self"
         agents.select! {|agent| self.agent == agent.name }
       end
 
@@ -137,15 +143,15 @@ module TinyCallCenter
 
     def can_view?(message)
       unless agent
-        FSR::Log.debug "<<< can_view? failure >>>"
-        FSR::Log.debug "No agent found. Message: #{message}"
+        FSR::Log.devel "<<< can_view? failure >>>"
+        FSR::Log.devel "No agent found. Message: #{message}"
         return false
       end
 
       self.user ||= Account.from_call_center_name(agent)
       unless user && user.extension
-        FSR::Log.debug "<<< can_view? failure >>>"
-        FSR::Log.debug "'user': (#{user}) or 'user.extension': (#{user.extension}) is nil"
+        FSR::Log.devel "<<< can_view? failure >>>"
+        FSR::Log.devel "'user': (#{user}) or 'user.extension': (#{user.extension}) is nil"
         return false
       end
 
@@ -162,10 +168,10 @@ module TinyCallCenter
         return false
       end
 
-      FSR::Log.debug "%p asking for access to %p" % [agent, numbers]
+      FSR::Log.devel "%p asking for access to %p" % [user, numbers]
       return true if numbers.detect{|number| number.size == 4 && user.can_view?(number) }
 
-      FSR::Log.debug "%p denied access to %p" % [agent, numbers]
+      FSR::Log.devel "%p denied access to %p" % [user, numbers]
       false
     end
 
@@ -193,9 +199,9 @@ module TinyCallCenter
     end
 
     def eavesdrop(uuid, agent, tapper)
-      FSR::Log.info("Requestion Tap of #{agent} by #{tapper} -> #{uuid}")
+      FSR::Log.notice("Requestion Tap of #{agent} by #{tapper} -> #{uuid}")
       return false unless agent.registration_server
-      FSR::Log.info("Tapping #{agent.full_name} at #{agent.registration_server}: #{uuid}")
+      FSR::Log.notice("Tapping #{agent.full_name} at #{agent.registration_server}: #{uuid}")
       if (sock = FSR::CommandSocket.new(:server => agent.registration_server) rescue nil)
         if eavesdrop_extension = tapper.manager.eavesdrop_extension
           cmd = sock.originate(:target => eavesdrop_extension, :endpoint => "&eavesdrop(#{uuid})")
@@ -204,7 +210,7 @@ module TinyCallCenter
         else
           cmd = sock.originate(:target => "sofia/internal/#{tapper.extension}@#{tapper.registration_server}", :endpoint => "&eavesdrop(#{uuid})")
         end
-        FSR::Log.info("Tap Command %p" % cmd.raw)
+        FSR::Log.devel("Tap Command %p" % cmd.raw)
         cmd.run
       end
     end
@@ -212,8 +218,8 @@ module TinyCallCenter
     def got_agent_call_history(msg)
       # If we have tiny_cdr available, use it for call history,
       # otherwise use CallRecord
-      FSR::Log.info "Sending call history of #{msg['agent']}"
-      FSR::Log.info "tiny_cdr: #{TCC.options.tiny_cdr.db}"
+      FSR::Log.debug "Sending call history of #{msg['agent']}"
+      FSR::Log.debug "tiny_cdr: #{TCC.options.tiny_cdr.db}"
 
       calls = if TCC.options.tiny_cdr.db
         extension = TCC::Account.extension(msg["agent"])
@@ -243,7 +249,7 @@ module TinyCallCenter
     end
 
     def got_agent_status_history(msg)
-      FSR::Log.info "Sending status history of #{msg['agent']}"
+      FSR::Log.debug "Sending status history of #{msg['agent']}"
 
       reply(
         tiny_action: 'agent_status_history',
@@ -256,7 +262,7 @@ module TinyCallCenter
     end
 
     def got_agent_state_history(msg)
-      FSR::Log.info "Sending state history of #{msg['agent']}"
+      FSR::Log.debug "Sending state history of #{msg['agent']}"
       reply(
         tiny_action: 'agent_state_history',
         cc_agent: msg['agent'],

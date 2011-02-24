@@ -8,12 +8,15 @@ require 'csv'
 require 'time'
 
 require 'em-websocket'
+require 'log4r'
+require 'log4r/configurator'
+Log4r::Configurator.custom_levels :DEBUG, :DEVEL, :INFO, :NOTICE, :WARN, :ERROR, :CRIT
 require 'fsr'
 require "fsr/listener/inbound"
 require "fsr/command_socket"
-require 'log4r/outputter/syslogoutputter'
-FSR::Log.outputters = Log4r::SyslogOutputter.new("FS2WS")
-FSR::Log.level = Log4r::DEBUG
+#require 'log4r/outputter/syslogoutputter'
+#FSR::Log.outputters = Log4r::SyslogOutputter.new("FS2WS")
+FSR::Log.level = Log4r::INFO
 FSR.load_all_commands
 
 require_relative '../model/init'
@@ -26,6 +29,7 @@ require_relative '../lib/tiny_call_center/fs2ws/queue_reporter'
 require_relative '../lib/tiny_call_center/fs2ws/web_socket_channel'
 require_relative '../lib/tiny_call_center/fs2ws/web_socket_reporter'
 
+$stdout.sync = true # Sync stdout for better logging
 
 EM.epoll?
 # Need to make all of these env vars
@@ -34,19 +38,19 @@ port = TinyCallCenter.options.fs_port.to_i
 auth = TinyCallCenter.options.fs_auth
 EM.run do
   TinyCallCenter.options.registration_servers.each do |monitor_server|
-    FSR::Log.debug "Connecting to #{monitor_server}"
+    FSR::Log.notice "Connecting to #{monitor_server}"
     EventMachine.connect(monitor_server, port, TinyCallCenter::Monitor, host: monitor_server, port: port, auth: auth, output_format: 'plain')
   end
 
   EventMachine.connect(command_socket_server, port, TinyCallCenter::QueueReporter, host: command_socket_server, port: port, auth: auth, output_format: 'plain') do |reporter|
-    FSR::Log.debug "Connecting to #{command_socket_server}:#{port}"
+    FSR::Log.notice "Connecting to #{command_socket_server}:#{port}"
     EventMachine.start_server('0.0.0.0', 8080, EventMachine::WebSocket::Connection, {}) do |websocket|
-      FSR::Log.debug "Starting WebSocket Reporter: #{websocket}"
+      FSR::Log.notice "Starting WebSocket Reporter: #{websocket}"
       TinyCallCenter::WebSocketReporter.new(reporter, websocket, command_socket_server)
     end
 
     EventMachine.start_server('0.0.0.0', 8081, EventMachine::WebSocket::Connection, {}) do |websocket|
-      FSR::Log.debug "Starting WebSocket Channel: #{websocket}"
+      FSR::Log.notice "Starting WebSocket Channel: #{websocket}"
       TinyCallCenter::WebSocketChannel.new(reporter, websocket, command_socket_server)
     end
   end

@@ -6,8 +6,6 @@ require_relative '../lib/tiny_call_center'
 require_relative '../lib/tiny_call_center/db'
 
 DB ||= TinyCallCenter.db unless Object.const_defined?("DB")
-puts "Callcenter DB:"
-p TinyCallCenter.options.mod_callcenter.db
 
 module TinyCallCenter
   module FSCallCenter

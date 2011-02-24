@@ -45,7 +45,7 @@ module TinyCallCenter
     end
 
     def subscribe
-      FSR::Log.info "Subscribe agent: #{agent}@#{registration_server}"
+      FSR::Log.notice "Subscribe agent: #{agent}@#{registration_server}"
 
       subscribed = SubscribedAgents[extension] ||= []
       subscribed << self
@@ -62,10 +62,10 @@ module TinyCallCenter
     end
 
     def got_callme(msg)
-      FSR::Log.debug "Check whether we should call #{agent}, off_hook is #{TCC.options.off_hook}"
+      FSR::Log.info "Check whether we should call #{agent}, off_hook is #{TCC.options.off_hook}"
       return unless TCC.options.off_hook
 
-      FSR::Log.info "Calling #{agent}@#{registration_server}"
+      FSR::Log.notice "Calling #{agent}@#{registration_server}"
 
       command_server = TCC.options.command_server
       sock = FSR::CommandSocket.new(:server => command_server)
@@ -124,7 +124,7 @@ module TinyCallCenter
 
     # TODO
     def got_disposition(msg)
-      FSR::Log.info "Got Disposition: #{msg}"
+      FSR::Log.notice "Got Disposition: #{msg}"
       disposition = msg.values_at('disposition')
       disp = TinyCallCenter::Disposition.find(code: msg.fetch("code"))
       unless disp
@@ -175,18 +175,18 @@ module TinyCallCenter
     end
 
     def got_transfer(msg)
-      FSR::Log.debug "Transfer: #{msg}"
+      FSR::Log.info "Transfer: #{msg}"
       uuid, dest = msg.values_at('uuid', 'dest')
       command_server = TCC.options.command_server
       sock = FSR::CommandSocket.new(:server => command_server)
-      FSR::Log.debug sock.sched_transfer(uuid: uuid, to: dest).run
+      FSR::Log.info sock.sched_transfer(uuid: uuid, to: dest).run
     end
 
     def on_close
       subscribed = SubscribedAgents[extension]
       subscribed.delete(self)
       SubscribedAgents.delete(extension) if subscribed.empty? # slight race here.
-      FSR::Log.debug "Unsubscribed agent: #{agent}"
+      FSR::Log.notice "Unsubscribed agent: #{agent}"
     end
   end
 end

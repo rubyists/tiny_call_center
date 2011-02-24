@@ -23,7 +23,7 @@ module TinyCallCenter
 
       found_calls = founds.map { |found|
         if found.dest && found.dest == extension && found.cid_num == extension
-          FSR::Log.info "<<< Found Dest >>>\n" + found.inspect
+          FSR::Log.debug "<<< Found Dest >>>\n" + found.inspect
           # got a Transfer here
           h = {
             caller_cid_num:     found.cid_num,
@@ -33,7 +33,7 @@ module TinyCallCenter
             uuid:               found.uuid,
             call_created:       Time.at(found.created_epoch.to_i).rfc2822,
           }
-          FSR::Log.info "<<< Channel Hash >>>\n" + h.inspect
+          FSR::Log.debug "<<< Channel Hash >>>\n" + h.inspect
           h
         elsif found.dest
           # got an FSR::Channel here
@@ -47,7 +47,7 @@ module TinyCallCenter
           }
         else
           # Assume an FSR::Call here
-          FSR::Log.info "<<< FSR::Call >>>\n" + found.inspect
+          FSR::Log.debug "<<< FSR::Call >>>\n" + found.inspect
           {
             caller_cid_num:     found.caller_cid_num,
             caller_cid_name:    found.caller_cid_name,
