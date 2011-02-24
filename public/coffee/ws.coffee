@@ -117,11 +117,11 @@ class Call
     clearInterval(@answeredInterval)
     delete store.calls[@uuid]
     @askDisposition()
+    @sel.remove()
 
   askDisposition: ->
     return # Disable Dispositions Until We Allow It To Be Optional
     if @local_leg.cid_number == "8675309" || @local_leg.destination == "19999"
-      @sel.remove()
       return
 
     $('#disposition button').one 'click', (event) =>
@@ -133,7 +133,6 @@ class Call
         left: @local_leg,
         right: @remote_leg,
       )
-      @sel.remove()
       $('#disposition').hide()
       return false
     $('#disposition').show()
@@ -265,6 +264,24 @@ agentWantsCallTransfer = (clickEvent) ->
   $('#transfer').show()
   false
 
+agentWantsCallStart = (clickEvent) ->
+  call_div = $(clickEvent.target).closest('.call')
+  uuid = $('.uuid', call_div).text()
+  $('#originate-cancel').click (cancelEvent) =>
+    $('#originate').hide()
+    false;
+
+  $('#originate').submit (submitEvent) =>
+    store.send(
+      method: 'originate',
+      uuid: uuid,
+      dest: $('#originate-dest').val(),
+    )
+    $('#originate').hide()
+    false
+  $('#originate').show()
+  false
+
 agentWantsToLogout = (clickEvent) ->
   window.location.pathname = "/accounts/logout"
 
@@ -285,6 +302,7 @@ $ ->
 
   $('#disposition').hide()
   $('#transfer').hide()
+  $('#originate').hide()
 
   $(document).keydown (event) ->
     keyCode = event.keyCode
@@ -306,6 +324,7 @@ $ ->
   $('.change-state').live 'click', agentWantsStateChange
   $('.call .hangup').live 'click', agentWantsCallHangup
   $('.call .transfer').live 'click', agentWantsCallTransfer
+  $('.call .originate').live 'click', agentWantsCallStart
   $('.callme').live 'click', agentWantsToBeCalled
   $('.logout').live 'click', agentWantsToLogout
 

@@ -18,8 +18,10 @@
 
   <div id="call-template" class="call">
     <div class="call-control">
-      <a href="#" class="hangup">&#x2715;</a>
-      <a href="#" class="transfer">&#x27f9;</a>
+      <a href="#" title="Hang up" class="hangup">&#x2715;</a>
+      <a href="#" title="Originate new call" class="originate">&#x260f;</a>
+      <a href="#" title="Transfer" class="transfer">&#x27f9;</a>
+      <a href="#" title="Dialpad" class="dtmf">&#x266f;</a>
     </div>
     <div class="call-data">
       <div class="cid-name"></div>
@@ -47,11 +49,19 @@
     </ul>
   </form>
 
+  <form id="originate">
+    <fieldset>
+      <input id="originate-dest" type="phone" placeholder="Number To Call" />
+      <input type="submit" value="Call" />
+      <input id="originate-cancel" type="button" value="Cancel" />
+    </fieldset>
+  </form>
+
   <form id="transfer">
     <fieldset>
-      <input id="transfer-dest" type="phone" placeholder="Transfer to">
-      <input type="submit" value="Initiate Transfer">
-      <input id="transfer-cancel" type="button" value="Cancel">
+      <input id="transfer-dest" type="phone" placeholder="Transfer to" />
+      <input type="submit" value="Initiate Transfer" />
+      <input id="transfer-cancel" type="button" value="Cancel" />
     </fieldset>
   </form>
 

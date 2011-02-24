@@ -1,5 +1,5 @@
 (function() {
-  var Call, agentStateChange, agentStatusChange, agentWantsCallHangup, agentWantsCallTransfer, agentWantsStateChange, agentWantsStatusChange, agentWantsToBeCalled, agentWantsToLogout, currentState, currentStatus, divmod, formatInterval, formatPhoneNumber, keyCodes, onClose, onError, onMessage, onOpen, p, setupWs, showError, store;
+  var Call, agentStateChange, agentStatusChange, agentWantsCallHangup, agentWantsCallStart, agentWantsCallTransfer, agentWantsStateChange, agentWantsStatusChange, agentWantsToBeCalled, agentWantsToLogout, currentState, currentStatus, divmod, formatInterval, formatPhoneNumber, keyCodes, onClose, onError, onMessage, onOpen, p, setupWs, showError, store;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   store = {
     calls: {},
@@ -116,12 +116,12 @@
     Call.prototype.talkingEnd = function() {
       clearInterval(this.answeredInterval);
       delete store.calls[this.uuid];
-      return this.askDisposition();
+      this.askDisposition();
+      return this.sel.remove();
     };
     Call.prototype.askDisposition = function() {
       return;
       if (this.local_leg.cid_number === "8675309" || this.local_leg.destination === "19999") {
-        this.sel.remove();
         return;
       }
       $('#disposition button').one('click', __bind(function(event) {
@@ -134,7 +134,6 @@
           left: this.local_leg,
           right: this.remote_leg
         });
-        this.sel.remove();
         $('#disposition').hide();
         return false;
       }, this));
@@ -296,6 +295,26 @@
     $('#transfer').show();
     return false;
   };
+  agentWantsCallStart = function(clickEvent) {
+    var call_div, uuid;
+    call_div = $(clickEvent.target).closest('.call');
+    uuid = $('.uuid', call_div).text();
+    $('#originate-cancel').click(__bind(function(cancelEvent) {
+      $('#originate').hide();
+      return false;
+    }, this));
+    $('#originate').submit(__bind(function(submitEvent) {
+      store.send({
+        method: 'originate',
+        uuid: uuid,
+        dest: $('#originate-dest').val()
+      });
+      $('#originate').hide();
+      return false;
+    }, this));
+    $('#originate').show();
+    return false;
+  };
   agentWantsToLogout = function(clickEvent) {
     return window.location.pathname = "/accounts/logout";
   };
@@ -317,6 +336,7 @@
     store.call_template = $('#call-template').detach();
     $('#disposition').hide();
     $('#transfer').hide();
+    $('#originate').hide();
     $(document).keydown(function(event) {
       var bubble, keyCode;
       keyCode = event.keyCode;
@@ -344,6 +364,7 @@
     $('.change-state').live('click', agentWantsStateChange);
     $('.call .hangup').live('click', agentWantsCallHangup);
     $('.call .transfer').live('click', agentWantsCallTransfer);
+    $('.call .originate').live('click', agentWantsCallStart);
     $('.callme').live('click', agentWantsToBeCalled);
     $('.logout').live('click', agentWantsToLogout);
     setTimeout(function() {
