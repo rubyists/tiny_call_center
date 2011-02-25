@@ -299,7 +299,8 @@ agentWantsOriginate = (clickEvent) ->
 agentOriginates = (submitEvent) ->
   store.send(
     method: 'originate',
-    dest: $('#orginate-dest').val(),
+    dest: $('#originate-dest').val(),
+    agent: store.agent_name,
   )
   $('#originate').hide()
   false

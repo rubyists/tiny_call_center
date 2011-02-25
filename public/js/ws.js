@@ -359,7 +359,8 @@
   agentOriginates = function(submitEvent) {
     store.send({
       method: 'originate',
-      dest: $('#orginate-dest').val()
+      dest: $('#originate-dest').val(),
+      agent: store.agent_name
     });
     $('#originate').hide();
     return false;
