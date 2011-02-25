@@ -1,6 +1,7 @@
+require "tiny_call_center/utils/fsr"
 module TinyCallCenter
   class WebSocketReporter < Struct.new(:reporter, :socket, :command_socket_server, :agent, :extension, :registration_server)
-    include WebSocketUtils
+    include WebSocketUtils, TCC::Utils::FSR
     SubscribedAgents = {}
 
     def initialize(reporter, socket, command_socket_server)
@@ -24,7 +25,7 @@ module TinyCallCenter
 
       method = "got_#{msg['method']}"
       if respond_to?(method)
-        EM.defer{ 
+        EM.defer{
           begin
             __send__(method, msg)
           rescue => e
@@ -190,55 +191,11 @@ module TinyCallCenter
     end
 
     def got_originate(msg)
-      raise "got msg #{msg}"
       agent, dest = msg.values_at('agent', 'dest')
-      Log.info "Originate: to: #{dest} from: #{agent}"
+      Log.info "<< Originate: to: #{dest} from: #{agent} >>"
       account = Account.from_call_center_name(agent)
-      command_server = TCC.options.command_server
-      proxy_server   = TCC.options.proxy_server_fmt
-      sock = FSR::CommandSocket.new(:server => command_server)
-      origination = if dest.size < 10
-        dest_server = Account.registration_server(dest)
-        if account.registration_server == command_server
-          if dest_server == command_server
-            sock.originate(
-              target: "user/#{dest}",
-              endpoint: "#{account.extension} XML default"
-            )
-          else
-            sock.originate(
-              target: "sofia/internal/#{dest}@#{dest_server}",
-              endpoint: "#{account.extension} XML default"
-            )
-          end
-        else
-          if dest_server == command_server
-            sock.originate(
-              target: "user/#{dest}",
-              endpoint: "&bridge(sofia/internal/#{account.extension}@#{account.registration_server})"
-            )
-          else
-            sock.originate(
-              target: "sofia/internal/#{dest}@#{dest_server}",
-              endpoint: "&bridge(sofia/internal/#{account.extension}@#{account.registration_server})"
-            )
-          end
-        end
-      else
-        if account.registration_server == command_server
-          sock.originate(
-            target: (proxy_server % dest),
-            endpoint: "#{agent.extension} XML default"
-          )
-        else
-          sock.originate(
-            target: (proxy_server % dest),
-            endpoint: "&bridge(sofia/internal/#{account.extension}@#{account.registration_server})"
-          )
-        end
-      end
-      Log.info "<< Origination: #{origination.raw} >>"
-      Log.info origination.run
+      call = originate(agent, dest)
+      Log.info "<< #{[call.raw, call.run].inspect} >>"
     end
 
     def got_dtmf(msg)
