@@ -16,7 +16,7 @@ module TinyCallCenter
 
     sub :mod_callcenter do
       o 'Mod_callcenter postgres database uri', :db,
-        ENV["TCC_ModCallcenterDB"] || 'postgres://callcenter:PASSWORD@localhost/callcenter'
+        ENV["TCC_ModCallcenterDB"] # example: 'postgres://callcenter:PASSWORD@localhost/callcenter'
     end
 
     sub :tiny_cdr do

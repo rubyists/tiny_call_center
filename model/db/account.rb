@@ -46,7 +46,7 @@ module TinyCallCenter
     end
 
     def self.from_call_center_name(agent)
-      find username: username(agent)
+      from_extension extension(agent)
     end
 
     def self.from_full_name(name)
