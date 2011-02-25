@@ -1,5 +1,5 @@
 (function() {
-  var Call, agentStateChange, agentStatusChange, agentWantsCallHangup, agentWantsCallStart, agentWantsCallTransfer, agentWantsStateChange, agentWantsStatusChange, agentWantsToBeCalled, agentWantsToLogout, currentState, currentStatus, divmod, formatInterval, formatPhoneNumber, keyCodes, onClose, onError, onMessage, onOpen, p, setupWs, showError, store;
+  var Call, agentStateChange, agentStatusChange, agentWantsCallHangup, agentWantsCallStart, agentWantsCallTransfer, agentWantsStateChange, agentWantsStatusChange, agentWantsToBeCalled, agentWantsToLogout, currentState, currentStatus, divmod, dtmfMap, formatInterval, formatPhoneNumber, key, keyCodes, num, onClose, onError, onMessage, onOpen, originalDTMF, p, setupWs, showError, store;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   store = {
     calls: {},
@@ -21,6 +21,49 @@
     F11: 122,
     F12: 123
   };
+  originalDTMF = {
+    0: 0,
+    1: 1,
+    2: 2,
+    3: 3,
+    4: 4,
+    5: 5,
+    6: 6,
+    7: 7,
+    8: 8,
+    9: 9,
+    a: 2,
+    b: 2,
+    c: 2,
+    d: 3,
+    e: 3,
+    f: 3,
+    g: 4,
+    h: 4,
+    i: 4,
+    j: 5,
+    k: 5,
+    l: 5,
+    m: 6,
+    n: 6,
+    o: 6,
+    p: 7,
+    q: 7,
+    r: 7,
+    s: 7,
+    t: 8,
+    u: 8,
+    v: 8,
+    w: 9,
+    x: 9,
+    y: 9,
+    z: 9
+  };
+  dtmfMap = [];
+  for (key in originalDTMF) {
+    num = originalDTMF[key];
+    dtmfMap[key.charCodeAt(0)] = num;
+  }
   p = function() {
     var _ref;
     return (_ref = window.console) != null ? typeof _ref.debug === "function" ? _ref.debug(arguments) : void 0 : void 0;
@@ -360,6 +403,26 @@
       return bubble;
     });
     $('#disposition').focus();
+    $('input[type=dtmf]').live('keypress', function(event) {
+      var call, digit, uuid;
+      digit = dtmfMap[event.keyCode];
+      if (digit != null) {
+        call = $(event.target).closest('.call');
+        uuid = $('.uuid', call).text();
+        return store.send({
+          method: 'dtmf',
+          uuid: uuid,
+          digit: digit
+        });
+      }
+    });
+    $('input[type=dtmf]').hide();
+    $('.call .dtmf').click(function(event) {
+      var call, input;
+      call = $(event.target).closest('.call');
+      input = $('input[type=dtmf]', call);
+      return input.show().focus();
+    });
     $('.change-status').live('click', agentWantsStatusChange);
     $('.change-state').live('click', agentWantsStateChange);
     $('.call .hangup').live('click', agentWantsCallHangup);

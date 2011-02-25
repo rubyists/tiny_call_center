@@ -19,6 +19,26 @@ keyCodes = {
   F12: 123,
 }
 
+originalDTMF = {
+  0: 0,
+  1: 1, 2: 2, 3: 3,
+  4: 4, 5: 5, 6: 6,
+  7: 7, 8: 8, 9: 9,
+
+  a: 2, b: 2, c: 2,
+  d: 3, e: 3, f: 3,
+  g: 4, h: 4, i: 4,
+  j: 5, k: 5, l: 5,
+  m: 6, n: 6, o: 6,
+  p: 7, q: 7, r: 7, s: 7,
+  t: 8, u: 8, v: 8,
+  w: 9, x: 9, y: 9, z: 9
+}
+
+dtmfMap = []
+for key, num of originalDTMF
+  dtmfMap[key.charCodeAt(0)] = num
+
 p = ->
   window.console?.debug?(arguments)
 
@@ -319,6 +339,19 @@ $ ->
     return bubble
 
   $('#disposition').focus()
+
+  $('input[type=dtmf]').live 'keypress', (event) ->
+    digit = dtmfMap[event.keyCode]
+    if digit?
+      call = $(event.target).closest('.call')
+      uuid = $('.uuid', call).text()
+      store.send(method: 'dtmf', uuid: uuid, digit: digit)
+  $('input[type=dtmf]').hide()
+  $('.call .dtmf').click (event) ->
+    call = $(event.target).closest('.call')
+    input = $('input[type=dtmf]', call)
+    input.show().focus()
+
 
   $('.change-status').live 'click', agentWantsStatusChange
   $('.change-state').live 'click', agentWantsStateChange
