@@ -193,9 +193,7 @@ module TinyCallCenter
     def got_originate(msg)
       agent, dest = msg.values_at('agent', 'dest')
       Log.info "<< Originate: to: #{dest} from: #{agent} >>"
-      account = Account.from_call_center_name(agent)
-      call = originate(agent, dest)
-      Log.info "<< #{[call.raw, call.run].inspect} >>"
+      Log.info "<< #{originate(agent, dest).inspect} >>"
     end
 
     def got_dtmf(msg)
