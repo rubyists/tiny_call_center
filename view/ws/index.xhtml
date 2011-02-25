@@ -13,24 +13,25 @@
 
   <ul id="control">
     <li><button class="callme red">Call Me</button></li>
+    <li><button class="originate green">Make Call</button></li>
     <li><button class="logout red">Logout</button></li>
   </ul>
 
   <div id="call-template" class="call">
     <div class="call-control">
-      <a href="#" title="Hang up" class="hangup">&#x2715;</a>
-      <a href="#" title="Originate new call" class="originate">&#x260f;</a>
       <a href="#" title="Transfer" class="transfer">&#x27f9;</a>
       <a href="#" title="Dialpad" class="dtmf">&#x266f;</a>
+      <a href="#" title="Hang up" class="hangup">&#x2715;</a>
     </div>
     <div class="call-data">
-      <div class="cid-name"></div>
-      <div class="cid-number"></div>
-      <div class="destination"></div>
-      <div class="answered"></div>
-      <div class="queue-name"></div>
-      <div class="channel"></div>
-      <div class="uuid"></div>
+      <span class="cid-name"></span>
+      <span class="cid-number"></span>
+      <span class="arrow">&harr;</span>
+      <span class="destination"></span>
+      <span class="answered"></span>
+      <span class="queue-name"></span>
+      <span class="channel"></span>
+      <span class="uuid"></span>
     </div>
     <input type="dtmf" class="input-dtmf" />
   </div>

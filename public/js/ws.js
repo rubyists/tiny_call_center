@@ -1,5 +1,5 @@
 (function() {
-  var Call, agentStateChange, agentStatusChange, agentWantsCallHangup, agentWantsCallStart, agentWantsCallTransfer, agentWantsDTMF, agentWantsStateChange, agentWantsStatusChange, agentWantsToBeCalled, agentWantsToLogout, currentState, currentStatus, divmod, dtmfMap, formatInterval, formatPhoneNumber, key, keyCodes, num, onClose, onError, onMessage, onOpen, originalDTMF, p, setupWs, showError, store;
+  var Call, agentCancelsOriginate, agentOriginates, agentStateChange, agentStatusChange, agentWantsCallHangup, agentWantsCallTransfer, agentWantsDTMF, agentWantsOriginate, agentWantsStateChange, agentWantsStatusChange, agentWantsToBeCalled, agentWantsToLogout, currentState, currentStatus, divmod, dtmfMap, formatInterval, formatPhoneNumber, key, keyCodes, num, onClose, onError, onMessage, onOpen, originalDTMF, p, setupWs, showError, store;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   store = {
     calls: {},
@@ -351,24 +351,21 @@
     $('#transfer').show();
     return false;
   };
-  agentWantsCallStart = function(clickEvent) {
-    var call_div, uuid;
-    call_div = $(clickEvent.target).closest('.call');
-    uuid = $('.uuid', call_div).text();
-    $('#originate-cancel').click(__bind(function(cancelEvent) {
-      $('#originate').hide();
-      return false;
-    }, this));
-    $('#originate').submit(__bind(function(submitEvent) {
-      store.send({
-        method: 'originate',
-        uuid: uuid,
-        dest: $('#originate-dest').val()
-      });
-      $('#originate').hide();
-      return false;
-    }, this));
+  agentWantsOriginate = function(clickEvent) {
     $('#originate').show();
+    $('#originate-dest').focus();
+    return false;
+  };
+  agentOriginates = function(submitEvent) {
+    store.send({
+      method: 'originate',
+      dest: $('#orginate-dest').val()
+    });
+    $('#originate').hide();
+    return false;
+  };
+  agentCancelsOriginate = function(clickEvent) {
+    $('#originate').hide();
     return false;
   };
   agentWantsDTMF = function(clickEvent) {
@@ -421,15 +418,16 @@
       });
       return bubble;
     });
-    $('#disposition').focus();
     $('.change-status').live('click', agentWantsStatusChange);
     $('.change-state').live('click', agentWantsStateChange);
     $('.call .hangup').live('click', agentWantsCallHangup);
     $('.call .transfer').live('click', agentWantsCallTransfer);
-    $('.call .originate').live('click', agentWantsCallStart);
     $('.call .dtmf').live('click', agentWantsDTMF);
-    $('.callme').live('click', agentWantsToBeCalled);
-    $('.logout').live('click', agentWantsToLogout);
+    $('.callme').click(agentWantsToBeCalled);
+    $('.logout').click(agentWantsToLogout);
+    $('.originate').click(agentWantsOriginate);
+    $('#originate').submit(agentOriginates);
+    $('#originate-cancel').click(agentCancelsOriginate);
     setTimeout(function() {
       return $(window).resize(function(event) {
         localStorage.setItem('agent.bar.width', top.outerWidth);

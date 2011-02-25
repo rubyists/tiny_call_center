@@ -291,22 +291,21 @@ agentWantsCallTransfer = (clickEvent) ->
   $('#transfer').show()
   false
 
-agentWantsCallStart = (clickEvent) ->
-  call_div = $(clickEvent.target).closest('.call')
-  uuid = $('.uuid', call_div).text()
-  $('#originate-cancel').click (cancelEvent) =>
-    $('#originate').hide()
-    false;
-
-  $('#originate').submit (submitEvent) =>
-    store.send(
-      method: 'originate',
-      uuid: uuid,
-      dest: $('#originate-dest').val(),
-    )
-    $('#originate').hide()
-    false
+agentWantsOriginate = (clickEvent) ->
   $('#originate').show()
+  $('#originate-dest').focus()
+  false
+
+agentOriginates = (submitEvent) ->
+  store.send(
+    method: 'originate',
+    dest: $('#orginate-dest').val(),
+  )
+  $('#originate').hide()
+  false
+
+agentCancelsOriginate = (clickEvent) ->
+  $('#originate').hide()
   false
 
 agentWantsDTMF = (clickEvent) ->
@@ -351,16 +350,17 @@ $ ->
         jbutton.click()
     return bubble
 
-  $('#disposition').focus()
-
   $('.change-status').live 'click', agentWantsStatusChange
   $('.change-state').live 'click', agentWantsStateChange
   $('.call .hangup').live 'click', agentWantsCallHangup
   $('.call .transfer').live 'click', agentWantsCallTransfer
-  $('.call .originate').live 'click', agentWantsCallStart
   $('.call .dtmf').live 'click', agentWantsDTMF
-  $('.callme').live 'click', agentWantsToBeCalled
-  $('.logout').live 'click', agentWantsToLogout
+  $('.callme').click agentWantsToBeCalled
+  $('.logout').click agentWantsToLogout
+
+  $('.originate').click agentWantsOriginate
+  $('#originate').submit agentOriginates
+  $('#originate-cancel').click agentCancelsOriginate
 
   setTimeout ->
     $(window).resize (event) ->
