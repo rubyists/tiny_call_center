@@ -21,10 +21,9 @@ require_relative '../lib/tiny_call_center/fs2ws/monitor'
 require_relative '../lib/tiny_call_center/fs2ws/queue_reporter'
 require_relative '../lib/tiny_call_center/fs2ws/web_socket_channel'
 require_relative '../lib/tiny_call_center/fs2ws/web_socket_reporter'
+TCC::Log.level = Log4r::INFO
 
 $stdout.sync = true
-TCC::Log.level = Log4r::DEVEL
-
 EM.epoll?
 # Need to make all of these env vars
 command_socket_server = TinyCallCenter.options.command_server

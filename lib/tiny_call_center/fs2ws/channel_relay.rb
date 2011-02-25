@@ -1,7 +1,7 @@
 module TinyCallCenter
   module ChannelRelay
     def relay(content)
-      # FSR::Log.debug "Channel << %p" % [content]
+      # Log.debug "Channel << %p" % [content]
       WebSocketChannel::Channel << content
     end
 
@@ -14,9 +14,9 @@ module TinyCallCenter
     def relay_agent(message)
       possible = possible_numbers(message)
       if message[:tiny_action] == 'call_start'
-        FSR::Log.info "<<< Call Start Channel Search >>>"
+        Log.devel "<<< Call Start Channel Search >>>"
         left_chan, right_chan = message[:left][:channel], message[:right][:channel]
-        FSR::Log.info [possible, left_chan, right_chan]
+        Log.devel [possible, left_chan, right_chan]
         possible.select! { |num|
           left_chan =~ ext_match(num) || right_chan =~ ext_match(num)
         }
@@ -26,11 +26,11 @@ module TinyCallCenter
       agent_lists.each do |agent_list|
         next unless agent = agent_list.last
         if agent.respond_to?(:on_fs_event)
-          FSR::Log.debug "Relay found for #{agent.agent}"
+          Log.debug "Relay found for #{agent.agent}"
           relay message.merge(cc_agent: agent.agent)
           agent.on_fs_event(message)
         else # agent is (supposed to be) a string, only relay to channel
-          FSR::Log.debug "No relay found for #{agent}"
+          Log.debug "No relay found for #{agent}"
           relay message.merge(cc_agent: agent)
         end
       end
@@ -51,7 +51,7 @@ module TinyCallCenter
         message[:other_leg_rdnis],
       ].grep(/^\d{4}$/).uniq
 
-      FSR::Log.debug "Possible Numbers: %p" % [possible]
+      Log.debug "Possible Numbers: %p" % [possible]
 
       possible
     end
