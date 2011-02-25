@@ -43,6 +43,8 @@ else
 end
 require_relative "disposition"
 require_relative "call_record"
-require_relative 'status_log'
-require_relative 'state_log'
+if TinyCallCenter.options.mod_callcenter.db
+  require_relative 'status_log'
+  require_relative 'state_log'
+end
 require_relative 'tiny_cdr_call' if TinyCallCenter.options.tiny_cdr.db
