@@ -19,10 +19,13 @@ module TinyCallCenter
                   end
         endpoint = "#{account.extension} XML default"
         sock = fsr_socket(account.registration_server)
-        opts = {origination_caller_id_number: account.extension,
-                origination_caller_id_name: "'#{account.full_name}'"}
+        opts = {
+          origination_caller_id_number: account.extension,
+          tcc_action: 'originate',
+          origination_caller_id_name: "'#{account.full_name}'"
+        }
         orig = if to.size < 10
-          to_server = Account.registration_server(dest)
+          to_server = Account.registration_server(to)
           if to_server == account.registration_server
              sock.originate(target: "user/#{to}", target_options: opts, endpoint: endpoint)
           else
