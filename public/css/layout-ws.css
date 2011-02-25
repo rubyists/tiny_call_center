@@ -5,7 +5,7 @@ body {
 
 #calls {
   position: absolute;
-  left: 33%;
+  left: 15em
 }
 
 .call {
@@ -49,6 +49,10 @@ body {
 .call .call-data {
   display: block;
   padding: 0.5em;
+}
+
+.call .input-dtmf {
+  display: none;
 }
 
 .call .cid-name { font-weight: bold; }

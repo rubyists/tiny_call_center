@@ -92,6 +92,13 @@ class Call
     @dom.uuid.text(@remote_leg.uuid)
     @dom.channel.text(@local_leg.channel)
 
+    $('.input-dtmf', @sel).keypress (keyEvent) ->
+      digit = dtmfMap[keyEvent.keyCode]
+      if digit?
+        store.send(method: 'dtmf', uuid: @uuid, digit: digit)
+      else
+        false
+
   'bridge-agent-start': (msg) ->
     @dom.cidName.text(msg.cc_caller_cid_name)
     @dom.cidNumber.text(formatPhoneNumber(msg.cc_caller_cid_number))
@@ -302,6 +309,12 @@ agentWantsCallStart = (clickEvent) ->
   $('#originate').show()
   false
 
+agentWantsDTMF = (clickEvent) ->
+  call_div = $(clickEvent.target).closest('.call')
+  uuid = $('.uuid', call_div).text()
+
+  $('.input-dtmf', call_div).toggle().focus()
+
 agentWantsToLogout = (clickEvent) ->
   window.location.pathname = "/accounts/logout"
 
@@ -340,24 +353,12 @@ $ ->
 
   $('#disposition').focus()
 
-  $('input[type=dtmf]').live 'keypress', (event) ->
-    digit = dtmfMap[event.keyCode]
-    if digit?
-      call = $(event.target).closest('.call')
-      uuid = $('.uuid', call).text()
-      store.send(method: 'dtmf', uuid: uuid, digit: digit)
-  $('input[type=dtmf]').hide()
-  $('.call .dtmf').click (event) ->
-    call = $(event.target).closest('.call')
-    input = $('input[type=dtmf]', call)
-    input.show().focus()
-
-
   $('.change-status').live 'click', agentWantsStatusChange
   $('.change-state').live 'click', agentWantsStateChange
   $('.call .hangup').live 'click', agentWantsCallHangup
   $('.call .transfer').live 'click', agentWantsCallTransfer
   $('.call .originate').live 'click', agentWantsCallStart
+  $('.call .dtmf').live 'click', agentWantsDTMF
   $('.callme').live 'click', agentWantsToBeCalled
   $('.logout').live 'click', agentWantsToLogout
 

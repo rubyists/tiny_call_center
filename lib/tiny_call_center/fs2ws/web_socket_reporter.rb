@@ -182,8 +182,16 @@ module TinyCallCenter
       FSR::Log.info sock.sched_transfer(uuid: uuid, to: dest).run
     end
 
+    def got_dtmf(msg)
+      FSR::Log.info "DTMF: #{msg}"
+      uuid, digit = msg.values_at('uuid', 'digit')
+      command_server = TCC.options.command_server
+      sock = FSR::CommandSocket.new(:server => command_server)
+      FSR::Log.info sock.uuid_send_dtmf(uuid: uuid, dtmf: digit).run
+    end
+
     def on_close
-      subscribed = SubscribedAgents[extension]
+      return unless subscribed = SubscribedAgents[extension]
       subscribed.delete(self)
       SubscribedAgents.delete(extension) if subscribed.empty? # slight race here.
       FSR::Log.notice "Unsubscribed agent: #{agent}"
