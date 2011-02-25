@@ -26,6 +26,9 @@ module TinyCallCenter
         ENV["TCC_TinyCdrCouchURI"]
     end
 
+    o "SIP Proxy Server Format String", :proxy_server_fmt,
+      ENV["TCC_ProxyServerFormatString"] || 'sofia/gateway/default/%s'
+
     o "FreeSWITCH Command Server", :command_server,
       ENV["TCC_Server"] || '127.0.0.1'
 
