@@ -19,15 +19,17 @@ module TinyCallCenter
                   end
         endpoint = "#{account.extension} XML default"
         sock = fsr_socket(account.registration_server)
+        opts = {origination_caller_id_number: account.extension,
+                origination_caller_id_name: "'#{account.full_name}'"}
         orig = if to.size < 10
           to_server = Account.registration_server(dest)
           if to_server == account.registration_server
-             sock.originate(target: "user/#{to}", endpoint: endpoint)
+             sock.originate(target: "user/#{to}", target_options: opts, endpoint: endpoint)
           else
-            sock.originate(target: "sofia/internal/#{to}@#{to_server}", endpoint: endpoint)
+            sock.originate(target: "sofia/internal/#{to}@#{to_server}", target_options: opts, endpoint: endpoint)
           end
         else
-          sock.originate(target: proxy_uri(to), endpoint: endpoint)
+          sock.originate(target: proxy_uri(to), target_options: opts, endpoint: endpoint)
         end
         res = [orig.raw, orig.run]
         sock.socket.close
