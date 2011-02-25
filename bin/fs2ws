@@ -8,19 +8,12 @@ require 'csv'
 require 'time'
 
 require 'em-websocket'
-require 'log4r'
-require 'log4r/configurator'
-Log4r::Configurator.custom_levels :DEBUG, :DEVEL, :INFO, :NOTICE, :WARN, :ERROR, :CRIT
-require 'fsr'
-require "fsr/listener/inbound"
-require "fsr/command_socket"
-#require 'log4r/outputter/syslogoutputter'
-#FSR::Log.outputters = Log4r::SyslogOutputter.new("FS2WS")
-FSR::Log.level = Log4r::INFO
-FSR.load_all_commands
-
 require_relative '../model/init'
 require_relative '../options'
+
+require "fsr/listener/inbound"
+require "fsr/command_socket"
+FSR.load_all_commands
 
 require_relative '../lib/tiny_call_center/fs2ws/channel_relay'
 require_relative '../lib/tiny_call_center/fs2ws/web_socket_utils'
@@ -29,7 +22,8 @@ require_relative '../lib/tiny_call_center/fs2ws/queue_reporter'
 require_relative '../lib/tiny_call_center/fs2ws/web_socket_channel'
 require_relative '../lib/tiny_call_center/fs2ws/web_socket_reporter'
 
-$stdout.sync = true # Sync stdout for better logging
+$stdout.sync = true
+TCC::Log.level = Log4r::DEVEL
 
 EM.epoll?
 # Need to make all of these env vars
