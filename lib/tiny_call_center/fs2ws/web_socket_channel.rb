@@ -127,10 +127,7 @@ module TinyCallCenter
           cr_at = cr.created_at
         end
         if TCC.options.tiny_cdr.db
-          tiny_call = TCC::TinyCdr::Call.filter{
-            ({:username => agent_ext} | {:destination_number => agent_ext}) &
-            (start_stamp > Date.today)
-          }.order_by(:start_stamp.desc).first
+          tiny_call = TCC::TinyCdr::Call.last(agent_ext)
           tc_at = tiny_call.start_stamp if tiny_call
         end
         last_call_time = [
@@ -231,17 +228,11 @@ module TinyCallCenter
 
       calls = if TCC.options.tiny_cdr.db
         extension = TCC::Account.extension(msg["agent"])
-        TCC::TinyCdr::Call.filter{
-          ({:username => extension} | {:destination_number => extension}) &
-          (start_stamp > Date.today) &
-          (start_stamp < (Date.today + 1))
-        }.order_by(:start_stamp.desc).map{|row|
+        TCC::TinyCdr::Call.history(extension).map{|row|
           row.values.merge(start_time: row.start_stamp.rfc2822)
         }
       else
-        TCC::CallRecord.filter{
-          {:agent => msg["agent"]} & (created_at > Date.today)
-        }.order_by(:created_at.desc).map(&:values)
+        TCC::CallRecord.agent_history(msg["agent"])
       end
 
       reply(
@@ -259,7 +250,7 @@ module TinyCallCenter
       reply(
         tiny_action: 'agent_status_history',
         cc_agent: msg['agent'],
-        history: TCC.options.mod_callcenter.db ? TCC::StatusLog.agent_history(msg["agent"]) : []
+        history: TCC.options.mod_callcenter.db ? TCC::StatusLog.agent_history_a(msg["agent"]) : []
       )
     end
 
@@ -268,7 +259,7 @@ module TinyCallCenter
       reply(
         tiny_action: 'agent_state_history',
         cc_agent: msg['agent'],
-        history: TCC.options.mod_callcenter.db ? TCC::StateLog.agent_history(msg["agent"]) : []
+        history: TCC.options.mod_callcenter.db ? TCC::StateLog.agent_history_a(msg["agent"]) : []
       )
     end
   end

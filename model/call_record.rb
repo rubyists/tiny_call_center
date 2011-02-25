@@ -8,6 +8,12 @@ module TinyCallCenter
       CallRecord.filter(agent: username).order(:created_at.desc).limit(1).first
     end
 
+    def self.agent_history(agent, from = Date.today, to = nil)
+      ds = filter{{:agent => agent} & (created_at > from)}
+      ds = filter{(created_at < to)} if to
+      ds.order_by(:created_at.desc).map(&:values)
+    end
+
     def validate
       self[:created_at] = DateTime.now unless self[:created_at]
     end
