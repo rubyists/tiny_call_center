@@ -66,7 +66,7 @@
   }
   p = function() {
     var _ref;
-    return (_ref = window.console) != null ? typeof _ref.debug === "function" ? _ref.debug(arguments) : void 0 : void 0;
+    return (_ref = window.console) != null ? typeof _ref.debug == "function" ? _ref.debug(arguments) : void 0 : void 0;
   };
   showError = function(msg) {
     return $('#error').text(msg);
@@ -231,17 +231,17 @@
             return p("Created Call", call);
           }
         };
-        if (store.agent_ext === ((_ref = msg.left.channel) != null ? typeof _ref.match === "function" ? (_ref2 = _ref.match(extMatch)) != null ? _ref2[1] : void 0 : void 0 : void 0)) {
+        if (store.agent_ext === ((_ref = msg.left.channel) != null ? typeof _ref.match == "function" ? (_ref2 = _ref.match(extMatch)) != null ? _ref2[1] : void 0 : void 0 : void 0)) {
           makeCall(msg.left, msg.right, msg);
-        } else if (store.agent_ext === ((_ref3 = msg.right.channel) != null ? typeof _ref3.match === "function" ? (_ref4 = _ref3.match(extMatch)) != null ? _ref4[1] : void 0 : void 0 : void 0)) {
+        } else if (store.agent_ext === ((_ref3 = msg.right.channel) != null ? typeof _ref3.match == "function" ? (_ref4 = _ref3.match(extMatch)) != null ? _ref4[1] : void 0 : void 0 : void 0)) {
           makeCall(msg.right, msg.left, msg);
-        } else if (msg.right.destination === ((_ref5 = msg.right.channel) != null ? typeof _ref5.match === "function" ? (_ref6 = _ref5.match(extMatch)) != null ? _ref6[1] : void 0 : void 0 : void 0)) {
+        } else if (msg.right.destination === ((_ref5 = msg.right.channel) != null ? typeof _ref5.match == "function" ? (_ref6 = _ref5.match(extMatch)) != null ? _ref6[1] : void 0 : void 0 : void 0)) {
           makeCall(msg.right, msg.left, msg);
-        } else if (msg.left.destination === ((_ref7 = msg.left.channel) != null ? typeof _ref7.match === "function" ? (_ref8 = _ref7.match(extMatch)) != null ? _ref8[1] : void 0 : void 0 : void 0)) {
+        } else if (msg.left.destination === ((_ref7 = msg.left.channel) != null ? typeof _ref7.match == "function" ? (_ref8 = _ref7.match(extMatch)) != null ? _ref8[1] : void 0 : void 0 : void 0)) {
           makeCall(msg.left, msg.right, msg);
-        } else if (msg.left.cid_number === ((_ref9 = msg.left.channel) != null ? typeof _ref9.match === "function" ? (_ref10 = _ref9.match(extMatch)) != null ? _ref10[1] : void 0 : void 0 : void 0)) {
+        } else if (msg.left.cid_number === ((_ref9 = msg.left.channel) != null ? typeof _ref9.match == "function" ? (_ref10 = _ref9.match(extMatch)) != null ? _ref10[1] : void 0 : void 0 : void 0)) {
           makeCall(msg.left, msg.right, msg);
-        } else if (msg.right.cid_number === ((_ref11 = msg.right.channel) != null ? typeof _ref11.match === "function" ? (_ref12 = _ref11.match(extMatch)) != null ? _ref12[1] : void 0 : void 0 : void 0)) {
+        } else if (msg.right.cid_number === ((_ref11 = msg.right.channel) != null ? typeof _ref11.match == "function" ? (_ref12 = _ref11.match(extMatch)) != null ? _ref12[1] : void 0 : void 0 : void 0)) {
           makeCall(msg.right, msg.left, msg);
         }
         break;
@@ -250,10 +250,10 @@
           value = msg[key];
           if (/unique|uuid/.test(key)) {
             if (call = store.calls[value]) {
-              if (typeof call[_name = msg.tiny_action] === "function") {
+              if (typeof call[_name = msg.tiny_action] == "function") {
                 call[_name](msg);
               }
-              return void 0;
+              return;
             }
           }
         }
@@ -390,10 +390,10 @@
         keyName = jbutton.attr('accesskey');
         buttonKeyCode = keyCodes[keyName];
         if (keyCode === buttonKeyCode) {
-          if (typeof event.stopPropagation === "function") {
+          if (typeof event.stopPropagation == "function") {
             event.stopPropagation();
           }
-          if (typeof event.preventDefault === "function") {
+          if (typeof event.preventDefault == "function") {
             event.preventDefault();
           }
           bubble = false;
