@@ -262,11 +262,11 @@ module TinyCallCenter
       reply(
         tiny_action: 'agent_status_history',
         cc_agent: msg['agent'],
-        history: TCC::StatusLog.filter{
+        history: TCC.options.mod_callcenter.db ? TCC::StatusLog.filter{
           {:agent => msg["agent"]} &
           (created_at > Date.today) &
           (created_at < (Date.today + 1))
-        }.select(:new_status, :created_at).order_by(:created_at.desc).map(&:values))
+        }.select(:new_status, :created_at).order_by(:created_at.desc).map(&:values) : [])
     end
 
     def got_agent_state_history(msg)
@@ -274,7 +274,7 @@ module TinyCallCenter
       reply(
         tiny_action: 'agent_state_history',
         cc_agent: msg['agent'],
-        history: TCC::StateLog.filter{
+        history: TCC.options.mod_callcenter.db ? TCC::StateLog.filter{
           {:agent => msg["agent"]} &
           (created_at > Date.today) &
           (created_at < (Date.today + 1))
@@ -289,7 +289,7 @@ module TinyCallCenter
           end
 
           v
-        })
+        } : [])
     end
   end
 end
