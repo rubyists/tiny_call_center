@@ -1,5 +1,5 @@
 (function() {
-  var Call, agentStateChange, agentStatusChange, agentWantsCallHangup, agentWantsCallStart, agentWantsCallTransfer, agentWantsStateChange, agentWantsStatusChange, agentWantsToBeCalled, agentWantsToLogout, currentState, currentStatus, divmod, dtmfMap, formatInterval, formatPhoneNumber, key, keyCodes, num, onClose, onError, onMessage, onOpen, originalDTMF, p, setupWs, showError, store;
+  var Call, agentStateChange, agentStatusChange, agentWantsCallHangup, agentWantsCallStart, agentWantsCallTransfer, agentWantsDTMF, agentWantsStateChange, agentWantsStatusChange, agentWantsToBeCalled, agentWantsToLogout, currentState, currentStatus, divmod, dtmfMap, formatInterval, formatPhoneNumber, key, keyCodes, num, onClose, onError, onMessage, onOpen, originalDTMF, p, setupWs, showError, store;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   store = {
     calls: {},
@@ -120,7 +120,20 @@
       this.dom.destination.text(formatPhoneNumber(this.remote_leg.destination));
       this.dom.queueName.text(this.local_leg.queue);
       this.dom.uuid.text(this.remote_leg.uuid);
-      return this.dom.channel.text(this.local_leg.channel);
+      this.dom.channel.text(this.local_leg.channel);
+      return $('.input-dtmf', this.sel).keypress(function(keyEvent) {
+        var digit;
+        digit = dtmfMap[keyEvent.keyCode];
+        if (digit != null) {
+          return store.send({
+            method: 'dtmf',
+            uuid: this.uuid,
+            digit: digit
+          });
+        } else {
+          return false;
+        }
+      });
     };
     Call.prototype['bridge-agent-start'] = function(msg) {
       this.dom.cidName.text(msg.cc_caller_cid_name);
@@ -358,6 +371,12 @@
     $('#originate').show();
     return false;
   };
+  agentWantsDTMF = function(clickEvent) {
+    var call_div, uuid;
+    call_div = $(clickEvent.target).closest('.call');
+    uuid = $('.uuid', call_div).text();
+    return $('.input-dtmf', call_div).toggle().focus();
+  };
   agentWantsToLogout = function(clickEvent) {
     return window.location.pathname = "/accounts/logout";
   };
@@ -403,31 +422,12 @@
       return bubble;
     });
     $('#disposition').focus();
-    $('input[type=dtmf]').live('keypress', function(event) {
-      var call, digit, uuid;
-      digit = dtmfMap[event.keyCode];
-      if (digit != null) {
-        call = $(event.target).closest('.call');
-        uuid = $('.uuid', call).text();
-        return store.send({
-          method: 'dtmf',
-          uuid: uuid,
-          digit: digit
-        });
-      }
-    });
-    $('input[type=dtmf]').hide();
-    $('.call .dtmf').click(function(event) {
-      var call, input;
-      call = $(event.target).closest('.call');
-      input = $('input[type=dtmf]', call);
-      return input.show().focus();
-    });
     $('.change-status').live('click', agentWantsStatusChange);
     $('.change-state').live('click', agentWantsStateChange);
     $('.call .hangup').live('click', agentWantsCallHangup);
     $('.call .transfer').live('click', agentWantsCallTransfer);
     $('.call .originate').live('click', agentWantsCallStart);
+    $('.call .dtmf').live('click', agentWantsDTMF);
     $('.callme').live('click', agentWantsToBeCalled);
     $('.logout').live('click', agentWantsToLogout);
     setTimeout(function() {
