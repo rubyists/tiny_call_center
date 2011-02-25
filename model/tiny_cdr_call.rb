@@ -4,14 +4,16 @@ module TinyCallCenter
       set_dataset TinyCdr.db[:calls]
 
       def self.last(extension)
-        history(extension).first
+        history(extension).limit(1).first
       end
 
       def self.history(extension, from = Date.today, to = nil)
         ds = filter{
           ({:username => extension} | {:destination_number => extension}) &
           (start_stamp > from)
-        }.order_by(:start_stamp.desc)
+        }
+        ds = ds.filter{(start_stamp < to)} if to
+        ds.order_by(:start_stamp.desc)
       end
 
       def destination
