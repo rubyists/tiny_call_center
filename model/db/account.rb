@@ -25,12 +25,17 @@ module TinyCallCenter
 
     def self.registration_server(extension)
       user = from_extension(extension)
-      user.registration_server
+      if user
+        user.registration_server
+      else
+        Log.warn "User not found for #{extension}, using #{proxy = TCC.options.internal_proxy}"
+        proxy
+      end
     rescue => error
-      Innate::Log.error "Could not find user, defaulting reg server to 127.0.0.1"
+      Innate::Log.error "Unknown problem, defaulting reg server to 127.0.0.1"
       Innate::Log.error error
       Innate::Log.error error.backtrace.join("\n\t")
-      false
+      '127.0.0.1'
     end
 
     def self.username(agent)

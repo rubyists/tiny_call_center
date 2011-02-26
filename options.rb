@@ -4,6 +4,12 @@ module TinyCallCenter
   include Innate::Optioned
 
   options.dsl do
+    o "SIP External Proxy Server Format String (To make calls to PSTN)", :proxy_server_fmt,
+      ENV["TCC_ProxyServerFormatString"] || 'sofia/gateway/default/%s'
+
+    o "SIP Internal Proxy Server IP (available via sofia/internal/)", :internal_proxy,
+      ENV["TCC_InternalProxy"] || '127.0.0.1'
+
     sub :listener do
       o "WebSocket server URI for listeners", :server,
         URI(ENV["TCC_WebSocketListenerURI"] || 'ws://127.0.0.1:8081/websocket')
@@ -25,9 +31,6 @@ module TinyCallCenter
       o 'TinyCdr couch db uri', :couch_uri,
         ENV["TCC_TinyCdrCouchURI"]
     end
-
-    o "SIP Proxy Server Format String", :proxy_server_fmt,
-      ENV["TCC_ProxyServerFormatString"] || 'sofia/gateway/default/%s'
 
     o "FreeSWITCH Command Server", :command_server,
       ENV["TCC_Server"] || '127.0.0.1'
