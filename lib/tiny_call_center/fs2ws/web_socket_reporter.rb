@@ -180,9 +180,19 @@ module TinyCallCenter
     def got_hangup(msg)
       Log.debug "Hanging up: #{msg}"
       uuid, cause = msg.values_at('uuid', 'cause')
-      command_server = TCC.options.command_server
-      sock = FSR::CommandSocket.new(:server => command_server)
-      Log.debug sock.sched_hangup(uuid: uuid, cause: cause).run
+      account = Account.from_call_center_name(agent)
+      sock = FSR::CommandSocket.new(:server => account.registration_server)
+      cmd = sock.sched_hangup(uuid: uuid, cause: cause)
+      Log.debug "<< Hangup #{cmd.raw}>>"
+      res = cmd.run
+      if res['body'] && res['body'] == '+OK'
+        Log.debug "<< #{res} >>"
+      else
+        sock = FSR::CommandSocket.new(:server => TCC.options.command_server)
+        cmd = sock.sched_hangup(uuid: uuid, cause: cause)
+        Log.devel "<< Queue Server Hangup #{cmd.raw}>>"
+        Log.devel "<< #{cmd.run}>>"
+      end
     end
 
     def got_transfer(msg)
