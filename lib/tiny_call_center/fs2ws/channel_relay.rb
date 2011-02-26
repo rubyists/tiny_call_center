@@ -15,16 +15,14 @@ module TinyCallCenter
       possible = possible_numbers(message)
       if message[:tiny_action] == 'call_start'
         Log.debug "<<< Call Start Channel Search >>>"
-        left_chan, left_dest = message[:left].values_at(:channel, :destination)
-        right_chan, right_dest = message[:right].values_at(:channel, :destination)
-        Log.debug [possible, left_chan, left_dest, '<->', right_chan, right_dest]
-        possible.select! { |num|
-          [left_dest, right_dest].include?(num) ||
-            left_chan =~ ext_match(num) ||
-            right_chan =~ ext_match(num)
-        }
+        l, r = message[:left], message[:right]
+        Log.debug [possible, l, '<->', r]
+        if l[:cid_number] == l[:cid_name] && possible.include?(l[:cid_number])
+          message[:left], message[:right] = message[:right], message[:left]
+        else
+          possible.select! { |num| l[:channel] =~ ext_match(num) || r[:channel] =~ ext_match(num) }
+        end
       end
-      possible << Account.extension(message[:cc_agent]) if message[:cc_agent]
       Log.debug "<<< Possibles: #{possible} >>>"
       agent_lists = WebSocketReporter::SubscribedAgents.values_at(*possible).compact
       Log.debug "<<< Agent Lists: #{agent_lists} >>>"
