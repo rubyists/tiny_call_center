@@ -12,6 +12,7 @@ module TinyCallCenter
       end
 
       def originate(from, to)
+        Log.devel "<< Originate #{from} => #{to} >>"
         account = if from.respond_to?(:registration_server)
                     from
                   else
@@ -19,6 +20,7 @@ module TinyCallCenter
                   end
         endpoint = "#{account.extension} XML default"
         sock = fsr_socket(account.registration_server)
+        Log.devel "<< Originate #{from} => #{to} @ #{account.registration_server} >>"
         opts = {
           origination_caller_id_number: account.extension,
           tcc_action: 'originate',
