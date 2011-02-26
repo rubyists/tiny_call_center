@@ -12,7 +12,9 @@
   </ul>
 
   <ul id="control">
-    <li><button class="callme red">Call Me</button></li>
+    <?r if TinyCallCenter.options.off_hook ?>
+      <li><button class="callme red">Call Me</button></li>
+    <?r end ?>
     <li><button class="originate green">Make Call</button></li>
     <li><button class="logout red">Logout</button></li>
   </ul>
