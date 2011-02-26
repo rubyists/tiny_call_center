@@ -23,6 +23,8 @@ module TinyCallCenter
         Log.devel "<< Originate #{from} => #{to} @ #{account.registration_server} >>"
         opts = {
           origination_caller_id_number: account.extension,
+          sip_callee_id_number: to,
+          caller_id_number: to,
           tcc_action: 'originate',
           origination_caller_id_name: "'#{account.full_name}'"
         }
