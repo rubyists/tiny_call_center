@@ -205,8 +205,8 @@ module TinyCallCenter
 
     def got_originate(msg)
       agent, dest = msg.values_at('agent', 'dest')
-      Log.info "<< Originate: to: #{dest} from: #{agent} >>"
-      Log.info "<< #{originate(agent, dest).inspect} >>"
+      Log.debug "<< Originate: to: #{dest} from: #{agent} >>"
+      Log.debug "<< #{originate(agent, dest).inspect} >>"
     end
 
     def got_dtmf(msg)

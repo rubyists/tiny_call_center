@@ -4,12 +4,8 @@ require_relative "options"
 
 require TinyCallCenter::ROOT/"model/init"
 
-require "fsr"
-require "fsr/command_socket"
-FSR::Cmd.load_command('call_center')
-require 'log4r/outputter/syslogoutputter'
-FSR::Log.outputters = Log4r::SyslogOutputter.new "TCC_Innate"
-
+require "tiny_call_center/utils/fsr"
+TCC::Log.level = Log4r.const_get(TCC.options.log_level)
 require_relative 'node/main'
 require_relative 'node/queues'
 require_relative 'node/agents'

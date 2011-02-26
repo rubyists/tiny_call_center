@@ -4,6 +4,17 @@ module TinyCallCenter
 
     def before_session
       add_event(:CUSTOM, "callcenter::info", &method(:callcenter_info))
+      @responses = []
+    end
+
+    def last_response
+      @responses.last
+    end
+
+    def handle_request(headers, content)
+      FSR::Log.devel "<<< Callcenter Response : #{[headers, content].inspect} >>>"
+      @responses = @responses[-20, 20] if @responses.size > 40
+      @responses << [headers, content]
     end
 
     def callcenter_info(event)

@@ -11,9 +11,9 @@ require 'em-websocket'
 require_relative '../model/init'
 require_relative '../options'
 
+require "tiny_call_center/utils/fsr"
 require "fsr/listener/inbound"
-require "fsr/command_socket"
-FSR.load_all_commands
+TCC::Log.level = Log4r.const_get(TCC.options.log_level)
 
 require_relative '../lib/tiny_call_center/fs2ws/channel_relay'
 require_relative '../lib/tiny_call_center/fs2ws/web_socket_utils'
@@ -21,7 +21,6 @@ require_relative '../lib/tiny_call_center/fs2ws/monitor'
 require_relative '../lib/tiny_call_center/fs2ws/queue_reporter'
 require_relative '../lib/tiny_call_center/fs2ws/web_socket_channel'
 require_relative '../lib/tiny_call_center/fs2ws/web_socket_reporter'
-TCC::Log.level = Log4r.const_get(TCC.options.log_level)
 
 $stdout.sync = true
 EM.epoll?
