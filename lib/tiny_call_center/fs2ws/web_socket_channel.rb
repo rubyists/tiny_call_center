@@ -192,7 +192,19 @@ module TinyCallCenter
     end
 
     def got_calltap(msg)
-      agent, tapper = msg.values_at('agent', 'tapper').map { |a| Account.new(Account.username a) }
+      agent, tapper = msg.values_at('agent', 'tapper').map { |a| 
+        if Account.respond_to? :find
+          # If your Account backend responds to #find, we expect
+          # that you define a #username function to get the username from
+          # 1234-First_Last
+          Account.find(username: Account.username(a)) 
+        else
+          # If your Account model doesn't respond to #find, we expect
+          # #new to take a username
+          Account.new(Account.username a) 
+        end
+      }
+
       return false unless agent.exists? and tapper.exists?
       return false unless tapper.manager?
       if (sock = FSR::CommandSocket.new(:server => agent.registration_server) rescue nil)
