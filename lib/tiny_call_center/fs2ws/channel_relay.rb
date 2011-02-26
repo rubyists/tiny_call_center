@@ -14,9 +14,9 @@ module TinyCallCenter
     def relay_agent(message)
       possible = possible_numbers(message)
       if message[:tiny_action] == 'call_start'
-        Log.devel "<<< Call Start Channel Search >>>"
+        Log.debug "<<< Call Start Channel Search >>>"
         left_chan, right_chan = message[:left][:channel], message[:right][:channel]
-        Log.devel [possible, left_chan, right_chan]
+        Log.debug [possible, left_chan, right_chan]
         possible.select! { |num|
           left_chan =~ ext_match(num) || right_chan =~ ext_match(num)
         }

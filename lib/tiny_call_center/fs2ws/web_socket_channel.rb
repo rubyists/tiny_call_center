@@ -15,11 +15,11 @@ module TinyCallCenter
     def on_open
       self.channel_id = Channel.subscribe{|message|
         if can_view?(message)
-          Log.devel "<< Relaying #{message} to channel for #{agent} >>"
+          Log.debug "<< Relaying #{message} to channel for #{agent} >>"
           reply(message)
         else
-          Log.devel "<< Relaying failed in can_view for (#{agent}) to channel >>"
-          Log.devel "<< #{message}) >>"
+          Log.debug "<< Relaying failed in can_view for (#{agent}) to channel >>"
+          Log.debug "<< #{message}) >>"
         end
       }
     end
@@ -92,7 +92,7 @@ module TinyCallCenter
       agents = agent_listing
       if user.manager?
         agents.select! {|agent| user.can_view?(agent.extension) }
-        Log.devel "#{user} can view #{agents.size} agents"
+        Log.debug "#{user} can view #{agents.size} agents"
       else
         # if somehow an agent got here, just show them themselves
         Log.warn "User #{user} not a manager, showing just self"
@@ -148,15 +148,15 @@ module TinyCallCenter
 
     def can_view?(message)
       unless agent
-        Log.devel "<<< can_view? failure >>>"
-        Log.devel "No agent found. Message: #{message}"
+        Log.debug "<<< can_view? failure >>>"
+        Log.debug "No agent found. Message: #{message}"
         return false
       end
 
       self.user ||= Account.from_call_center_name(agent)
       unless user && user.extension
-        Log.devel "<<< can_view? failure >>>"
-        Log.devel "'user': (#{user}) or 'user.extension': (#{user.extension}) is nil"
+        Log.debug "<<< can_view? failure >>>"
+        Log.debug "'user': (#{user}) or 'user.extension': (#{user.extension}) is nil"
         return false
       end
 
@@ -169,14 +169,14 @@ module TinyCallCenter
 
       numbers = possible_numbers(message)
       unless numbers.size > 1
-        Log.devel "%p Asking for access to crazysauce: %p" % [agent, message]
+        Log.debug "%p Asking for access to crazysauce: %p" % [agent, message]
         return false
       end
 
-      Log.devel "%p asking for access to %p" % [user, numbers]
+      Log.debug "%p asking for access to %p" % [user, numbers]
       return true if numbers.detect{|number| number.size == 4 && user.can_view?(number) }
 
-      Log.devel "%p denied access to %p" % [user, numbers]
+      Log.debug "%p denied access to %p" % [user, numbers]
       false
     end
 
@@ -215,7 +215,7 @@ module TinyCallCenter
         else
           cmd = sock.originate(:target => "sofia/internal/#{tapper.extension}@#{tapper.registration_server}", :endpoint => "&eavesdrop(#{uuid})")
         end
-        Log.devel("Tap Command %p" % cmd.raw)
+        Log.debug("Tap Command %p" % cmd.raw)
         cmd.run
       end
     end
