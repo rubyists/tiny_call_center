@@ -1,0 +1,138 @@
+<nav id="nav-search">
+  <select id="prev-search"></select>
+  <input type="search" id="search" placeholder="Search anything" />
+  <button id="save-search">Keep</button>
+</nav>
+
+<nav id="nav-main">
+  <h3>Queues</h3>
+  <ul id="nav-queues"></ul>
+
+  <ul id="nav-show-all">
+    <li><a href="#" id="show-all-agents">Show All</a></li>
+  </ul>
+
+  <ul id="nav-sections">
+    <li>#{TCC::Tiers.a('Tiers', :/)}</li>
+    <li>#{TCC::Agents.a('Agents', :/)}</li>
+  </ul>
+</nav>
+
+<nav id="nav-sort">
+  <ul>
+    <li><h3>Sort</h3></li>
+    <li><a href="#" class="sorter" id="sort-username">Name</a></li>
+    <li><a href="#" class="sorter" id="sort-extension">Extension</a></li>
+    <li><a href="#" class="sorter" id="sort-status">Status</a></li>
+    <li><a href="#" class="sorter" id="sort-idle">Idle Time</a></li>
+  </ul>
+</nav>
+
+<div id="content">
+  <div id="proto-call" class="call">
+    <span class="cid-name"></span>
+    <span class="cid-number"></span>
+    <span class="arrow">&harr;</span>
+    <span class="destination"></span>
+    <span class="time-of-call-start"></span>
+    <span class="answered"></span>
+    <span class="queue-name"></span>
+    <span class="channel"></span>
+    <span class="uuid"></span>
+    <a class="calltap-uuid" href="#"><img src="/images/ear.png" /></a>
+  </div>
+
+  <div id="proto-agent" class="agent">
+    <span class="extension"></span>
+    <span class="username"></span>
+    <span class="state"></span>
+    <span class="status"></span>
+    <span class="time-since-status-change"></span>
+    <span class="queue"></span>
+    <span class="calls"></span>
+    <span class="more-calls"></span>
+  </div>
+
+  <div id="agents">
+  </div>
+
+  <div id='proto-agent-dialog' class="agent-dialog">
+    <span class="agent-name"></span>
+    <div class="dialog-tabs">
+      <ul>
+        <li><a href="#" class="tab-title">Overview</a></li>
+        <li><a href="#" class="tab-title">Status Log</a></li>
+        <li><a href="#" class="tab-title">State Log</a></li>
+        <li><a href="#" class="tab-title">Call History</a></li>
+      </ul>
+
+      <div class="tab-content tab-overview">
+        <h2>Calls</h2>
+        <ul class="calls">
+        </ul>
+
+        <h2>Status</h2>
+        <ul class="status">
+          <li><a class="available" href="#">Available</a></li>
+          <li><a class="available-on-demand" href="#">Available (On Demand)</a></li>
+          <li><a class="on-break" href="#">On Break</a></li>
+          <li><a class="logged-out" href="#">Logged Out</a></li>
+        </ul>
+
+        <h2>State</h2>
+        <ul class="state">
+          <li><a class="Waiting" href="#">Ready</a></li>
+          <li><a class="Idle" href="#">Wrap Up</a></li>
+        </ul>
+
+        <button class="calltap ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" role="button" aria-disabled="false">
+          <span class="ui-button-text">Tap</span>
+        </button>
+      </div>
+
+      <div class="tab-content tab-status-log">
+        <h2>Todays Status Log</h2>
+        <table class="tab-container">
+          <thead>
+            <th>Status</th>
+            <th>Time</th>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="tab-content tab-state-log">
+        <h2>Todays State Log</h2>
+        <table class="tab-container">
+          <thead>
+            <th>State</th>
+            <th>Time</th>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="tab-content tab-call-log">
+        <h2>Todays Call History</h2>
+        <table class="tab-container">
+          <thead>
+            <th>Time</th>
+            <th>CID #</th>
+            <th>CID Name</th>
+            <th>To</th>
+            <th>Context</th>
+            <th>Dur</th>
+            <th>Bill</th>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span id="agent_name">#{h @agent}</span>
+  <span id="server">#{h @server}</span>
+  <div id="copyright">Live CallCenter &copy; by The Rubyists LLC. 2010-2011</div>
+</footer>

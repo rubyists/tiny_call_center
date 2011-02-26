@@ -12,39 +12,27 @@
       <form action="/agents/set/#{agent.name}" method="post" class="row #{agent.status.downcase.scan(/\w+/)*'-'}">
         <div class="name">#{TCC::Account.full_name(agent.name)}</div>
         <div class="extension">#{agent.extension}</div>
-        <select name="status">
-          <?r TCC::Agents::STATUSES.each do |option| ?>
-          <option value="#{option}" #{option == agent.status ? 'selected="selected"' : ''}>#{option}</option>
-          <?r end ?>
-        </select>
+        <div class="status">
+          <select name="status">
+            <?r TCC::Agents::STATUSES.each do |option| ?>
+              <option value="#{option}" #{option == agent.status ? 'selected="selected"' : ''}>#{option}</option>
+            <?r end ?>
+          </select>
+        </div>
         <div class="state">#{agent.state}</div>
-        <input type="submit" class="button" name="submit" value="Update" />
-        <input type="submit" class="button" name="submit" value="Delete" />
-        <a href="/agents/edit/#{agent.name}">Edit </a>
+        <div class="action">
+          <input type="submit" class="button" name="submit" value="Update" />
+          <input type="submit" class="button" name="submit" value="Delete" />
+        </div>
+        <a class="meta" href="/agents/edit/#{agent.name}">Edit </a>
       </form>
     <?r end ?>
   </div>
 </div>
-<script>
-  var directions = {};
-  function sorter(trigger, sortOn){
-    trigger.click(function(){
-      var direction = directions[sortOn] === 'asc' ? 'desc' : 'asc';
-      directions[sortOn] = direction;
-      $('#agents .table').sort({
-        sortOn: sortOn,
-        direction: direction,
-        sortType: 'string',
-      });
-      $('#agents .table').prepend($('#agents .table .head'));
-      $('#agents .table .head > *').removeClass('asc');
-      $('#agents .table .head > *').removeClass('desc');
-      trigger.addClass(direction);
-    });
-  }
 
-  sorter($('#agents .table .head .name'), '.name');
-  sorter($('#agents .table .head .extension'), '.extension');
-  sorter($('#agents .table .head .status'), 'select[name=status] option:selected');
-  sorter($('#agents .table .head .state'), '.state');
+<script>
+  sorter($('#agents .table .head .name'), '.name', 'string');
+  sorter($('#agents .table .head .extension'), '.extension', 'number');
+  sorter($('#agents .table .head .status'), 'select[name=status] option:selected', 'string');
+  sorter($('#agents .table .head .state'), '.state', 'string');
 </script>

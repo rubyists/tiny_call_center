@@ -5,7 +5,13 @@
 module TinyCallCenter
   class Queues
     Innate.node "/queues", self
-    helper :fsr
+    helper :user, :fsr
+    layout :default
+    trait :user_model => TinyCallCenter::Account
+
+    before_all do
+      redirect TCC::Accounts.r(:login) unless logged_in?
+    end
 
     def index(queue_name = nil)
       @queues ||= fsr.call_center(:queue).list(queue_name).run

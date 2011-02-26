@@ -1,44 +1,21 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8"/>
-    <title>Tiny Call Center</title>
-
-    <link rel="stylesheet" href="/css/main-layout.css" type="text/css" media="screen" />
-
-    <script type="text/javascript" src="/js/jquery-1.4.3.min.js"></script>
-    <script type="text/javascript">
-      TinyCallCenterOpenRibbon = function(){
-        window.open(
-            '/ws/index',
-            'CallCenter',
-            'locationbar=no,navigator=no,status=no,menubar=no,location=no,toolbar=no,personalbar=no,resizable=yes,height=250'
-        );
-      };
-      <?r unless user.manager? ?>
-        $(TinyCallCenterOpenRibbon);
-      <?r end ?>
-    </script>
-  </head>
-  <body>
-    <h1>Tiny Call Center</h1>
-    <nav>
-      <ul>
+<div id="startpage">
+  <h1>Tiny Call Center</h1>
+  <nav>
+    <ul>
+      <li>
+        #{TCC::Ribbon.a('Ribbon', :/)}
+      </li>
+      <?r if user.manager? ?>
         <li>
-          <a href="#" onClick="javascript:TinyCallCenterOpenRibbon();">Ribbon</a>
+          #{TinyCallCenter::Tiers.a('Call Center View', :/)}
         </li>
-        <?r if user.manager? ?>
-          <li>
-            #{TinyCallCenter::Tiers.a('Call Center View', :/)}
-          </li>
-          <li>
-            #{TinyCallCenter::Orderly.a('Real Time View', :/)}
-          </li>
-          <li>
-            #{TinyCallCenter::Accounts.a('Logout', :logout)}
-          </li>
-        <?r end ?>
-      </ul>
-    </nav>
-  </body>
-</html>
+        <li>
+          #{TinyCallCenter::Live.a('Real Time View', :/)}
+        </li>
+      <?r end ?>
+      <li>
+        #{TinyCallCenter::Accounts.a('Logout', :logout)}
+      </li>
+    </ul>
+  </nav>
+</div>

@@ -9,7 +9,7 @@
         <div class="name">Name</div>
         <div class="state">State</div>
         <div class="status">Status</div>
-        <div class="tier">Tier</div>
+        <div class="level">Tier</div>
         <div class="position">Position</div>
         <div class="action">Action</div>
       </div>
@@ -80,3 +80,12 @@
     <?r end ?>
   </div>
 </div>
+
+<script>
+  sorter($('.table .head .name'), '.name', 'string');
+  sorter($('.table .head .extension'), '.extension', 'number');
+  sorter($('.table .head .status'), 'select[name=status] option:selected', 'string');
+  sorter($('.table .head .state'), '.state', 'string');
+  sorter($('.table .head .level'), 'select[name=level] option:selected', 'number');
+  sorter($('.table .head .position'), 'select[name=position] option:selected', 'number');
+</script>

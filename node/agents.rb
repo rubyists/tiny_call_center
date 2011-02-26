@@ -7,12 +7,17 @@ module TinyCallCenter
   class Agents
     Innate.node "/agents", self
     layout :default
-    helper :flash, :fsr
+    helper :user, :flash, :fsr
+    trait :user_model => TinyCallCenter::Account
 
     trait :agents => nil
     trait :queues => nil
     TYPES = ['callback', 'uuid-standby']
     STATUSES = ['Available', 'Logged Out', 'Available (On Demand)', 'On Break']
+
+    before_all do
+      redirect TCC::Accounts.r(:login) unless logged_in?
+    end
 
     def index
       @title = "Agents"
@@ -53,10 +58,11 @@ module TinyCallCenter
     end
 
     def edit(agent)
-      @agent = fsr.call_center(:agent).list.run.select {|x| x.name == agent}.first
+      p fsr.call_center(:agent).list.run
+      @agent = fsr.call_center(:agent).list.run.find{|x| x.name == agent}
       @extension = Account.extension(@agent.name)
       @agent_name = Account.name(@agent.name)
-      render_view(:edit)
+      @title = "Edit #{@agent_name}"
     end
 
     def add

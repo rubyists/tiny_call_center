@@ -69,6 +69,7 @@ nav li {
 }
 
 #agents .agent {
+  color: #000;
   height: 6em;
   width: 15em;
   float: left;

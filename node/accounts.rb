@@ -7,7 +7,7 @@ module TinyCallCenter
     Innate.node "/accounts", self
     helper :user
     trait :user_model => TinyCallCenter::Account
-    layout :accounts
+    layout :main
 
     def login
       return unless request.post?

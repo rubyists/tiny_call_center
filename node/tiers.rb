@@ -6,7 +6,8 @@ module TinyCallCenter
   class Tiers
     Innate.node "/tiers", self
     layout :default
-    helper :flash, :fsr
+    helper :user, :flash, :fsr
+    trait :user_model => TinyCallCenter::Account
 
     trait :tiers => nil
     trait :agents => nil
@@ -14,6 +15,10 @@ module TinyCallCenter
     STATES = ['No Answer', 'Ready', 'Offering', 'Active Inbound', 'Standby']
     POSITIONS = '1'..'9'
     LEVELS = '1'..'9'
+
+    before_all do
+      redirect TCC::Accounts.r(:login) unless logged_in?
+    end
 
     def index(queue = nil)
       if queue.nil?
@@ -41,7 +46,7 @@ module TinyCallCenter
     end
 
     def mass_set(queue, agents = [], field_values = {})
-      
+
     end
 
     def set_status

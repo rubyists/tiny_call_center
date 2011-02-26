@@ -1,10 +1,9 @@
-<script>
-  $(function(){ $("#input-name").focus(); });
-</script>
-<form method="post" action="#{r :login}">
-  <label for="input-name">Name</label>
-  <input type="text" name="name" id="input-name" />
-  <label for="input-pass">Password</label>
-  <input type="password" name="pass" id="input-pass" />
-  <input type="submit" value="Log In" />
-</form>
+<div id="accounts-login">
+  <form method="post" action="#{r :login}">
+    <label for="input-name">Name</label>
+    <input type="text" name="name" id="input-name" autofocus placeholder="Name" />
+    <label for="input-pass">Password</label>
+    <input type="password" name="pass" id="input-pass" placeholder="Password" />
+    <input type="submit" value="Log In" />
+  </form>
+</div>

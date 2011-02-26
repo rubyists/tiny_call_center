@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Tiny Call Center</title>
+    <link rel="stylesheet" href="/css/common.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="/css/main.css" type="text/css" media="screen" />
+    <script type="text/javascript" src="/js/jquery-1.5.1.min.js"></script>
+    <script type="text/javascript">
+      var link = $('a:contains("Ribbon")')
+
+      TinyCallCenterOpenRibbon = function(){
+        window.open(
+          link.attr('href'),
+          'Ribbon',
+          'locationbar=no,navigator=no,status=no,menubar=no,location=no,toolbar=no,personalbar=no,resizable=yes'
+        )
+      }
+
+      $(function(){
+        link.click(function(event){
+          TinyCallCenterOpenRibbon()
+          return false
+        })
+
+        <?r if @popup && !user.manager? ?>
+          TinyCallCenterOpenRibbon()
+        <?r end ?>
+      })
+    </script>
+  </head>
+  <body>
+    #@content
+  </body>
+</html>

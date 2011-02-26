@@ -1,0 +1,147 @@
+#startpage {
+  font-size: 1.5em;
+}
+
+#startpage h1 {
+  position: absolute;
+  top: 50%;
+  margin-top: -1em;
+  width: 100%;
+  text-align: center;
+  color: #666;
+}
+
+#startpage a {
+  color: #aff;
+  text-decoration: none;
+}
+
+#startpage a:hover {
+  text-decoration: underline;
+}
+
+#startpage nav {
+  width: 100%;
+  text-align: center;
+}
+
+#startpage nav ul {
+  list-style :none;
+  margin: 0;
+  padding: 0;
+}
+
+#startpage nav ul li {
+  display: inline;
+  line-height: 3em;
+  margin: 1em;
+  padding: 0;
+}
+
+header {
+  background: #444;
+}
+
+header h1 {
+  margin: 0;
+  padding: 0.5em;
+  font-size: 1.5em;
+}
+
+header nav {
+  background: #333;
+  line-height: 2em;
+  padding: 1em;
+}
+
+header ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+header li {
+  display: inline;
+  margin-left: 0.5em;
+}
+
+header a {
+  color: #fff;
+}
+
+#copyright {
+  line-height: 3em;
+  text-align: center;
+  color: #aaa;
+  background: #444;
+  margin-top: 2em;
+}
+
+.table {
+  display: table;
+  margin: auto;
+  width: 90%;
+}
+
+.table .head {
+  color: #00f;
+  background: #aff;
+  text-align: center;
+}
+
+.table .row {
+  color: #000;
+  display: table-row;
+}
+
+.table .row > * {
+  display: table-cell;
+  text-align: center;
+  border: 1px solid #333;
+}
+
+.available {           background: #afa; }
+.ready {               background: #efe; }
+.available-on-demand { background: #faf; }
+.on-break {            background: #ff6; }
+.unknown {             background: #eee; }
+.standby {             background: #fa9; }
+.logged-out {          background: #f66; }
+
+#agents_new {
+  width: 44em;
+  padding: 1em;
+  margin: 1em auto;
+  background: #444;
+}
+
+#agents_new .row {
+  color: #fff;
+  padding: 0.5em;
+}
+
+#agents_new .row > * {
+  text-align: left;
+}
+
+#agents_new .table {
+  width: 42em;
+}
+
+.tiers {
+  margin: auto;
+  width: 90%;
+}
+
+.tiers .table {
+  width: 100%;
+}
+
+.tiers h2 a {
+  color: #fff;
+}
+
+.tiers .add {
+  background: #444;
+  padding: 0.5em;
+}

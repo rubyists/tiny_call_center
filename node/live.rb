@@ -1,7 +1,8 @@
 module TinyCallCenter
-  class Orderly
-    Innate.node "/orderly", self
+  class Live
+    Innate.node "/live", self
     helper :user, :fsr
+    layout :live
     trait :user_model => TinyCallCenter::Account
 
     def index
