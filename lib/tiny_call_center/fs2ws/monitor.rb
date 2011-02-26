@@ -23,7 +23,7 @@ module TinyCallCenter
 
     def channel_originate(event)
       content, uuid = event.content, event.content[:unique_id]
-      FSR::Log.debug "Call Origniated: %s => %s (%s) (%s)" % [
+      Log.debug "Call Origniated: %s => %s (%s) (%s)" % [
         content[:caller_caller_id_number],
         content[:caller_destination_number],
         uuid,
@@ -31,8 +31,8 @@ module TinyCallCenter
       ]
 
       msg = cleanup(content)
-      FSR::Log.debug "<<< Channel Originate >>>"
-      FSR::Log.debug msg
+      Log.debug "<<< Channel Originate >>>"
+      Log.debug msg
 
       return if try_pure_originate(msg)
 
@@ -75,7 +75,7 @@ module TinyCallCenter
     def channel_answer(event)
       content = event.content
 
-      FSR::Log.debug "Call answered: %s <%s> => %s (%s)" % [
+      Log.debug "Call answered: %s <%s> => %s (%s)" % [
         content[:caller_caller_id_number],
         content[:caller_caller_id_name],
         content[:caller_destination_number],
@@ -83,8 +83,8 @@ module TinyCallCenter
       ]
 
       msg = cleanup(content)
-      FSR::Log.debug "<<< Channel Answer >>>"
-      FSR::Log.debug msg
+      Log.debug "<<< Channel Answer >>>"
+      Log.debug msg
 
       return if try_pure_channel_answer(msg)
 
@@ -129,13 +129,13 @@ module TinyCallCenter
     def channel_hangup(event)
       msg = event.content
 
-      FSR::Log.debug "Call hungup: %s <%s> => %s (%s)" % msg.values_at(
+      Log.debug "Call hungup: %s <%s> => %s (%s)" % msg.values_at(
         :caller_caller_id_number, :caller_caller_id_name,
         :caller_destination_number, :unique_id,
       )
 
-      FSR::Log.debug "<<< Channel Hangup >>>"
-      FSR::Log.debug msg
+      Log.debug "<<< Channel Hangup >>>"
+      Log.debug msg
 
       relay_agent prepare_channel_hangup(msg)
     end
@@ -169,7 +169,7 @@ module TinyCallCenter
         }
       }
 
-      FSR::Log.debug "Dispatching call %p" % [msg]
+      Log.debug "Dispatching call %p" % [msg]
       relay_agent msg
     end
 
