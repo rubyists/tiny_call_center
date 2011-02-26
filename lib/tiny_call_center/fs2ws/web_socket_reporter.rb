@@ -73,23 +73,26 @@ module TinyCallCenter
       Log.info "Check whether we should call #{agent}, off_hook is #{TCC.options.off_hook}"
       return unless TCC.options.off_hook
 
-      Log.notice "Calling #{agent}@#{registration_server}"
+      Log.notice "<< Calling #{agent}@#{registration_server} >>"
 
       command_server = TCC.options.command_server
       sock = FSR::CommandSocket.new(:server => command_server)
       FSR.load_all_commands
 
-      if registration_server == command_server
+      orig = if registration_server == command_server
         sock.originate(
-          target: "{tcc_agent=#{agent}}user/#{extension}",
+          target: "user/#{extension}",
+          target_options: {tcc_agent: agent},
           endpoint: "&transfer(19999)"
-        ).run
+        )
       else
         sock.originate(
-          target: "{tcc_agent=#{agent}}sofia/internal/#{extension}@#{registration_server}",
+          target: "sofia/internal/#{extension}@#{registration_server}",
+          target_options: {tcc_agent: agent},
           endpoint: "&transfer(19999)"
-        ).run
+        )
       end
+      Log.info "<< #{[orig.raw, orig.run].inspect} >>"
     end
 
     def give_initial_status
