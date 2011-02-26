@@ -48,5 +48,8 @@ module TinyCallCenter
       ENV["TCC_DB"] || "sqlite://%s" % File.expand_path("../db/call_center.db", __FILE__)
 
     o "Accounts Backend", :backend, ENV["TCC_Backend"]
+
+    o "Log Level (DEBUG, DEVEL, INFO, NOTICE, ERROR, CRIT)", :log_level,
+      ENV["TCC_LogLevel"] || "INFO"
   end
 end
