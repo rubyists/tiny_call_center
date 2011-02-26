@@ -65,6 +65,7 @@ module TinyCallCenter
     end
 
     def update_state
+      return unless TCC.options.off_hook
       Log.debug "Set State of #{agent} to Idle"
       reporter.callcenter!{|cc| cc.set(agent, :state, 'Idle') }
     end
