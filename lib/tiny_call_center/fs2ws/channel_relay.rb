@@ -18,6 +18,7 @@ module TinyCallCenter
         l, r = message[:left], message[:right]
         Log.debug [possible, l, '<->', r]
         if l[:cid_number] == l[:cid_name] && possible.include?(l[:cid_number])
+          Log.debug "<< Flipping sides of message, we originated this >>"
           message[:left], message[:right] = message[:right], message[:left]
         else
           possible.select! { |num| l[:channel] =~ ext_match(num) || r[:channel] =~ ext_match(num) }
