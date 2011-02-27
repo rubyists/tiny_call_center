@@ -10,9 +10,11 @@ module TinyCallCenter
     layout :main
 
     def login
+      Log.info "Attempt login with backend: %p" % [TCC.options.backend]
       return unless request.post?
       user_login(request.subset(:name, :pass))
-      redirect "/"
+      Log.info "Login successful: #{logged_in?}"
+      redirect Main.r('/')
     end
 
     def logout
