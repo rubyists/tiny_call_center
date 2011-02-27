@@ -1,5 +1,5 @@
 (function() {
-  var Call, agentCancelsOriginate, agentOriginates, agentStateChange, agentStatusChange, agentWantsCallHangup, agentWantsCallTransfer, agentWantsDTMF, agentWantsOriginate, agentWantsStateChange, agentWantsStatusChange, agentWantsToBeCalled, agentWantsToLogout, currentState, currentStatus, divmod, dtmfMap, formatInterval, formatPhoneNumber, key, keyCodes, num, onClose, onError, onMessage, onOpen, originalDTMF, p, setupWs, showError, store;
+  var Call, agentCancelsOriginate, agentOriginates, agentStateChange, agentStatusChange, agentWantsCallHangup, agentWantsCallTransfer, agentWantsDTMF, agentWantsOriginate, agentWantsStateChange, agentWantsStatusChange, agentWantsToBeCalled, agentWantsToLogout, currentState, currentStatus, divmod, formatInterval, formatPhoneNumber, keyCodes, onClose, onError, onMessage, onOpen, p, setupWs, showError, store;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   store = {
     calls: {},
@@ -21,49 +21,6 @@
     F11: 122,
     F12: 123
   };
-  originalDTMF = {
-    0: 0,
-    1: 1,
-    2: 2,
-    3: 3,
-    4: 4,
-    5: 5,
-    6: 6,
-    7: 7,
-    8: 8,
-    9: 9,
-    a: 2,
-    b: 2,
-    c: 2,
-    d: 3,
-    e: 3,
-    f: 3,
-    g: 4,
-    h: 4,
-    i: 4,
-    j: 5,
-    k: 5,
-    l: 5,
-    m: 6,
-    n: 6,
-    o: 6,
-    p: 7,
-    q: 7,
-    r: 7,
-    s: 7,
-    t: 8,
-    u: 8,
-    v: 8,
-    w: 9,
-    x: 9,
-    y: 9,
-    z: 9
-  };
-  dtmfMap = [];
-  for (key in originalDTMF) {
-    num = originalDTMF[key];
-    dtmfMap[key.charCodeAt(0)] = num;
-  }
   p = function() {
     var _ref;
     return (_ref = window.console) != null ? typeof _ref.debug == "function" ? _ref.debug(arguments) : void 0 : void 0;
@@ -121,18 +78,18 @@
       this.dom.queueName.text(this.local_leg.queue);
       this.dom.uuid.text(this.remote_leg.uuid);
       this.dom.channel.text(this.local_leg.channel);
-      return $('.input-dtmf', this.sel).keypress(function(keyEvent) {
-        var digit;
-        digit = dtmfMap[keyEvent.keyCode];
-        if (digit != null) {
-          return store.send({
-            method: 'dtmf',
-            uuid: this.uuid,
-            digit: digit
-          });
-        } else {
-          return false;
-        }
+      return $('.dtmf-form', this.sel).submit(function(event) {
+        var input, val;
+        input = $('.dtmf-input', $(event.target));
+        val = input.val();
+        store.send({
+          method: 'dtmf',
+          uuid: this.uuid,
+          digit: val,
+          dtmf: val
+        });
+        input.val('');
+        return false;
       });
     };
     Call.prototype['bridge-agent-start'] = function(msg) {
@@ -373,7 +330,10 @@
     var call_div, uuid;
     call_div = $(clickEvent.target).closest('.call');
     uuid = $('.uuid', call_div).text();
-    return $('.input-dtmf', call_div).toggle().focus();
+    $('.dtmf-form', call_div).toggle(function() {
+      return $('.dtmf-input', call_div).focus();
+    });
+    return false;
   };
   agentWantsToLogout = function(clickEvent) {
     return window.location.pathname = "/accounts/logout";
