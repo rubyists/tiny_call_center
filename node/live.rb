@@ -11,6 +11,7 @@ module TinyCallCenter
 
       @agent = user.agent
       @server = TinyCallCenter.options.listener.server if request.local_net?
+      @couch_uri = TinyCallCenter.options.tiny_cdr.couch_uri
       @title = @agent
     end
   end
