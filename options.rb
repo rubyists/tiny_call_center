@@ -47,7 +47,7 @@ module TinyCallCenter
     o "Agents Off-Hook instead of On-Hook", :off_hook,
       ENV["TCC_OffHook"] || false
 
-    o "Sqlite Database File", :db,
+    o "Sequel Database URI (adapter://user:pass@host/database)", :db,
       ENV["TCC_DB"] || "sqlite://%s" % File.expand_path("../db/call_center.db", __FILE__)
 
     o "Accounts Backend", :backend, ENV["TCC_Backend"]
