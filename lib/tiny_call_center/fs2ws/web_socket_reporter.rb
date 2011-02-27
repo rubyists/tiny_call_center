@@ -212,10 +212,10 @@ module TinyCallCenter
 
     def got_dtmf(msg)
       Log.info "DTMF: #{msg}"
-      uuid, digit = msg.values_at('uuid', 'digit')
+      uuid, dtmf = msg.values_at('uuid', 'dtmf')
       command_server = TCC.options.command_server
       sock = FSR::CommandSocket.new(:server => command_server)
-      Log.info sock.uuid_send_dtmf(uuid: uuid, dtmf: digit).run
+      Log.info sock.uuid_send_dtmf(uuid: uuid, dtmf: dtmf).run
     end
 
     def on_close

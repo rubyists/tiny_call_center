@@ -54,7 +54,7 @@ body {
   padding: 0.5em;
 }
 
-.call .input-dtmf {
+.call .dtmf-form {
   display: none;
 }
 

@@ -19,26 +19,6 @@ keyCodes = {
   F12: 123,
 }
 
-originalDTMF = {
-  0: 0,
-  1: 1, 2: 2, 3: 3,
-  4: 4, 5: 5, 6: 6,
-  7: 7, 8: 8, 9: 9,
-
-  a: 2, b: 2, c: 2,
-  d: 3, e: 3, f: 3,
-  g: 4, h: 4, i: 4,
-  j: 5, k: 5, l: 5,
-  m: 6, n: 6, o: 6,
-  p: 7, q: 7, r: 7, s: 7,
-  t: 8, u: 8, v: 8,
-  w: 9, x: 9, y: 9, z: 9
-}
-
-dtmfMap = []
-for key, num of originalDTMF
-  dtmfMap[key.charCodeAt(0)] = num
-
 p = ->
   window.console?.debug?(arguments)
 
@@ -92,12 +72,12 @@ class Call
     @dom.uuid.text(@remote_leg.uuid)
     @dom.channel.text(@local_leg.channel)
 
-    $('.input-dtmf', @sel).keypress (keyEvent) ->
-      digit = dtmfMap[keyEvent.keyCode]
-      if digit?
-        store.send(method: 'dtmf', uuid: @uuid, digit: digit)
-      else
-        false
+    $('.dtmf-form', @sel).submit (event) ->
+      input = $('.dtmf-input', $(event.target))
+      val = input.val()
+      store.send(method: 'dtmf', uuid: @uuid, digit: val, dtmf: val)
+      input.val('')
+      false
 
   'bridge-agent-start': (msg) ->
     @dom.cidName.text(msg.cc_caller_cid_name)
@@ -313,7 +293,9 @@ agentWantsDTMF = (clickEvent) ->
   call_div = $(clickEvent.target).closest('.call')
   uuid = $('.uuid', call_div).text()
 
-  $('.input-dtmf', call_div).toggle().focus()
+  $('.dtmf-form', call_div).toggle ->
+    $('.dtmf-input', call_div).focus()
+  false
 
 agentWantsToLogout = (clickEvent) ->
   window.location.pathname = "/accounts/logout"
