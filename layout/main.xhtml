@@ -7,17 +7,17 @@
     <link rel="stylesheet" href="/css/main.css" type="text/css" media="screen" />
     <script type="text/javascript" src="/js/jquery-1.5.1.min.js"></script>
     <script type="text/javascript">
-      var link = $('a:contains("Ribbon")')
-
-      TinyCallCenterOpenRibbon = function(){
-        window.open(
-          link.attr('href'),
-          'Ribbon',
-          'locationbar=no,navigator=no,status=no,menubar=no,location=no,toolbar=no,personalbar=no,resizable=yes'
-        )
-      }
-
       $(function(){
+        var link = $('a:contains("Ribbon")')
+
+        var TinyCallCenterOpenRibbon = function(){
+          window.open(
+            link.attr('href'),
+            'Ribbon',
+            'locationbar=no,navigator=no,status=no,menubar=no,location=no,toolbar=no,personalbar=no,resizable=yes'
+          )
+        }
+
         link.click(function(event){
           TinyCallCenterOpenRibbon()
           return false
