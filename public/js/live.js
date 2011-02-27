@@ -660,10 +660,14 @@
       return false;
     }, this));
     $('.couch-link').live('dblclick', __bind(function(event) {
-      var couchid, tr, uri;
+      var couchid, tr, uri, uri_match;
+      uri_match = /^(https?:\/\/[^:]+:\d+\/)(\w+)/;
+      if (!$('#couch_uri').text().match(uri_match)) {
+        return;
+      }
       tr = $(event.target).closest('tr');
       couchid = tr.attr('couchid');
-      uri = $('#couch_uri').text().replace(/(https?:\/\/[^:]+:\d+\/)(\w+)/, '$1_utils/document.html?$2/') + couchid;
+      uri = $('#couch_uri').text().replace(uri_match, '$1_utils/document.html?$2/') + couchid;
       return window.open(uri, "Futon");
     }, this));
     $('#agents').isotope({
