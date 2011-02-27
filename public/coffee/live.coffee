@@ -501,7 +501,7 @@ $ ->
   $('.couch-link').live 'dblclick', (event) =>
     tr = $(event.target).closest('tr')
     couchid = tr.attr('couchid')
-    uri = $('#couch_uri').text().replace(/(http:\/\/[^:]+:\d+\/)(\w+)/, '$1_utils/document.html?$2/') + couchid
+    uri = $('#couch_uri').text().replace(/(https?:\/\/[^:]+:\d+\/)(\w+)/, '$1_utils/document.html?$2/') + couchid
     window.open(uri, "Futon")
 
   $('#agents').isotope(
