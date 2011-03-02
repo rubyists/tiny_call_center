@@ -4,7 +4,7 @@ if [ -w /var/log ];then
   [ -d /var/log/$service ] || mkdir -p /var/log/$service
   [ -L ./main ] || [ -d ./main ] || ln -s /var/log/$service ./main
   [ -L ./current ] || ln -s main/current
+  exec svlogd -t ./main
 else
-  ln -s ./ main
+  exec svlogd -t ./
 fi
-exec svlogd -t ./main
