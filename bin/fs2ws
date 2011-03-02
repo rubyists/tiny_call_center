@@ -29,8 +29,8 @@ EM.epoll?
 command_socket_server = TinyCallCenter.options.command_server
 port = TinyCallCenter.options.fs_port.to_i
 auth = TinyCallCenter.options.fs_auth
-agent_ws = URI.parse(TinyCallCenter.options.ribbon.server)
-live_ws = URI.parse(TinyCallCenter.options.listener.server)
+agent_ws = TinyCallCenter.options.ribbon.server
+live_ws = TinyCallCenter.options.listener.server
 EM.run do
   TinyCallCenter.options.registration_servers.each do |monitor_server|
     FSR::Log.notice "Connecting to #{monitor_server}"
