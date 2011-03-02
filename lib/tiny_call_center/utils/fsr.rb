@@ -33,7 +33,11 @@ module TinyCallCenter
           if to_server == account.registration_server
              sock.originate(target: "user/#{to}", target_options: opts, endpoint: endpoint)
           else
-            sock.originate(target: "sofia/internal/#{to}@#{to_server}", target_options: opts, endpoint: endpoint)
+            if to_server == '127.0.0.1'
+              sock.originate(target: "loopback/#{to}/default/XML", target_options: opts, endpoint: endpoint)
+            else
+              sock.originate(target: "sofia/internal/#{to}@#{to_server}", target_options: opts, endpoint: endpoint)
+            end
           end
         else
           sock.originate(target: proxy_uri(to), target_options: opts, endpoint: endpoint)
