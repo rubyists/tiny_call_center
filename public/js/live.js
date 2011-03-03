@@ -447,7 +447,7 @@
         title: "" + this.extension + " " + this.username,
         modal: false,
         width: 600,
-        height: 300,
+        height: 400,
         open: __bind(function(event, ui) {
           var call, uuid, _ref;
           this.syncDialog();

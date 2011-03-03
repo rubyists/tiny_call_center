@@ -353,7 +353,7 @@ class Agent
       title: "#{@extension} #{@username}",
       modal: false,
       width: 600,
-      height: 300,
+      height: 400,
       open: (event, ui) =>
         @syncDialog()
         for uuid, call of @calls
