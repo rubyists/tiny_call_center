@@ -184,10 +184,10 @@ module TinyCallCenter
       account = Account.from_call_center_name(agent)
       sock = FSR::CommandSocket.new(:server => account.registration_server)
       cmd = sock.sched_hangup(uuid: uuid, cause: cause)
-      Log.debug "<< Hangup #{cmd.raw}>>"
+      Log.devel "<< Hangup #{cmd.raw} >>"
       res = cmd.run
       if res['body'] && res['body'] == '+OK'
-        Log.debug "<< #{res} >>"
+        Log.devel "<< #{res} >>"
       else
         sock = FSR::CommandSocket.new(:server => TCC.options.command_server)
         cmd = sock.sched_hangup(uuid: uuid, cause: cause)
@@ -199,9 +199,19 @@ module TinyCallCenter
     def got_transfer(msg)
       Log.info "Transfer: #{msg}"
       uuid, dest = msg.values_at('uuid', 'dest')
-      command_server = TCC.options.command_server
-      sock = FSR::CommandSocket.new(:server => command_server)
-      Log.info sock.sched_transfer(uuid: uuid, to: dest).run
+      account = Account.from_call_center_name(agent)
+      sock = FSR::CommandSocket.new(:server => account.registration_server)
+      cmd = sock.sched_transfer(uuid: uuid, to: dest)
+      Log.devel "<< Transfer #{cmd.raw} >>"
+      res = cmd.run
+      if res['body'] && res['body'] == '+OK'
+        Log.devel "<< #{res} >>"
+      else
+        sock = FSR::CommandSocket.new(:server => TCC.options.command_server)
+        cmd = sock.sched_transfer(uuid: uuid, to: dest)
+        Log.devel "<< Queue Server Transfer #{cmd.raw} >>"
+        Log.devel "<< #{cmd.run} >>"
+      end
     end
 
     def got_originate(msg)

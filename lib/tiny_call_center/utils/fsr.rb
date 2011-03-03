@@ -43,6 +43,7 @@ module TinyCallCenter
           sock.originate(target: proxy_uri(to), target_options: opts, endpoint: endpoint)
         end
         res = [orig.raw, orig.run]
+        Log.devel "<< Origination command #{res} >>"
         sock.socket.close
         res
       end
