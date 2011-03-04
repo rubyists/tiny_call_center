@@ -25,6 +25,11 @@ module TinyCallCenter
         ENV["TCC_ModCallcenterDB"] # example: 'postgres://callcenter:PASSWORD@localhost/callcenter'
     end
 
+    sub :memcached do
+      o 'Memcached servers to use for answer/originate hashes', :servers,
+        (ENV["TCC_MemcachedServers"] ? ENV["TCC_MemcachedServers"].split(",") : nil)
+    end
+
     sub :tiny_cdr do
       o 'TinyCdr postgres database uri', :db,
         ENV["TCC_TinyCdrDB"]

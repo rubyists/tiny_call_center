@@ -1,10 +1,19 @@
+if TCC.options.memcached.servers
+  require "memcached"
+  $originate_cache = Memcached.new TCC.options.memcached.servers, :prefix_key => 'orig_'
+  $answer_cache = Memcached.new TCC.options.memcached.servers, :prefix_key => 'answer_'
+end
 module TinyCallCenter
   class Monitor < FSR::Listener::Inbound
     include ChannelRelay
 
     def initialize(*args, &callback)
-      @channel_answers = {}
-      @channel_originates = {}
+      if TCC.options.memcached.servers
+        @originate_cache = $originate_cache.clone
+        @answer_cache = $answer_cache.clone
+      else
+        @channel_answers, @channel_originates = {}, {}
+      end
       super
     end
 
@@ -19,6 +28,38 @@ module TinyCallCenter
     def channel_create(event)
       msg = cleanup(event.content)
       relay msg
+    end
+
+    def set_originate(uuid, msg)
+      if TCC.options.memcached.servers
+        @originate_cache.set "#{uuid}", msg
+      else
+        @channel_originates[uuid] = msg
+      end
+    end
+
+    def get_originate(uuid)
+      if TCC.options.memcached.servers
+        @originate_cache.get("#{uuid}") rescue nil
+      else
+        @channel_originates[uuid]
+      end
+    end
+
+    def set_answer(uuid, msg)
+      if TCC.options.memcached.servers
+        @answer_cache.set "#{uuid}", msg
+      else
+        @channel_answers[uuid] = msg
+      end
+    end
+
+    def get_answer(uuid)
+      if TCC.options.memcached.servers
+        @answer_cache.get("#{uuid}") rescue nil
+      else
+        @channel_answers[uuid]
+      end
     end
 
     def channel_originate(event)
@@ -36,8 +77,8 @@ module TinyCallCenter
 
       return if try_pure_originate(msg)
 
-      @channel_originates[uuid] = msg
-      @channel_originates[content[:other_leg_unique_id]] = msg
+      set_originate uuid, msg
+      set_originate content[:other_leg_unique_id], msg
       try_call_dispatch(uuid, content[:other_leg_unique_id])
     end
 
@@ -88,7 +129,7 @@ module TinyCallCenter
 
       return if try_pure_channel_answer(msg)
 
-      @channel_answers[content[:unique_id]] = msg
+      set_answer content[:unique_id], msg
       try_call_dispatch(content[:unique_id])
     end
 
@@ -176,16 +217,16 @@ module TinyCallCenter
     def try_call_dispatch(left, right = nil)
       # If we're an originate, check for both answers
       if right
-        return unless left_answer = @channel_answers[left]
-        return unless right_answer = @channel_answers[right]
-        originate = @channel_originates[left]
+        return unless left_answer = get_answer(left)
+        return unless right_answer = get_answer(right)
+        originate = get_originate(left)
         dispatch_call(left_answer, right_answer, originate) if left_answer and right_answer
-      elsif left_answer = @channel_answers[left]
-        return unless originate = @channel_originates[left]
+      elsif left_answer = get_answer(left)
+        return unless originate = get_originate(left)
         if left == originate[:other_leg_unique_id]
-          return unless right_answer = @channel_answers[originate[:unique_id]]
+          return unless right_answer = get_answer(originate[:unique_id])
         else
-          return unless right_answer = @channel_answers[originate[:other_leg_unique_id]]
+          return unless right_answer = get_answer(originate[:other_leg_unique_id])
         end
         dispatch_call(left_answer, right_answer, originate) if left_answer and right_answer
       end
