@@ -75,7 +75,8 @@ class Call
     $('.dtmf-form', @sel).submit (event) ->
       input = $('.dtmf-input', $(event.target))
       val = input.val()
-      store.send(method: 'dtmf', uuid: @uuid, digit: val, dtmf: val)
+      uuid = $('.uuid', $(event.target)).text()
+      store.send(method: 'dtmf', uuid: uuid, digit: val, dtmf: val)
       input.val('')
       false
 
@@ -291,7 +292,6 @@ agentCancelsOriginate = (clickEvent) ->
 
 agentWantsDTMF = (clickEvent) ->
   call_div = $(clickEvent.target).closest('.call')
-  uuid = $('.uuid', call_div).text()
 
   $('.dtmf-form', call_div).toggle ->
     $('.dtmf-input', call_div).focus()
