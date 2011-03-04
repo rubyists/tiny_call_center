@@ -27,7 +27,7 @@ module TinyCallCenter
 
     sub :memcached do
       o 'Memcached servers to use for answer/originate hashes', :servers,
-        (ENV["TCC_MemcachedServers"] ? ENV["TCC_MemcachedServers"].split(",") : nil)
+        ENV["TCC_MemcachedServers"].to_s.split(',')
     end
 
     sub :tiny_cdr do

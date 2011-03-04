@@ -1,38 +1,15 @@
-if TCC.options.memcached.servers
-  require "memcached"
-  $originate_cache = Memcached.new TCC.options.memcached.servers, :prefix_key => 'orig_'
-  $answer_cache = Memcached.new TCC.options.memcached.servers, :prefix_key => 'answer_'
-end
 module TinyCallCenter
   class Monitor < FSR::Listener::Inbound
-    include ChannelRelay
-
-    def initialize(*args, &callback)
-      if TCC.options.memcached.servers
-        @originate_cache = $originate_cache.clone
-        @answer_cache = $answer_cache.clone
-      else
-        @channel_answers, @channel_originates = {}, {}
+    module MemcachedBackend
+      def initialize(*args, &block)
+        require "memcached"
+        @originate_cache = Memcached.new(TCC.options.memcached.servers, prefix_key: 'orig_')
+        @answer_cache = Memcached.new(TCC.options.memcached.servers, prefix_key: 'answer_')
+        super
       end
-      super
-    end
 
-    def before_session
-      [ :CHANNEL_ORIGINATE, # Call being placed/ringing
-        :CHANNEL_ANSWER,    # Call starts
-        :CHANNEL_HANGUP,    # Call ends
-        #:CHANNEL_CREATE,    # Channel created
-      ].each{|flag| add_event(flag, &method(flag.to_s.downcase)) }
-    end
-
-    def channel_create(event)
-      msg = cleanup(event.content)
-      relay msg
-    end
-
-    if TCC.options.memcached.servers
       def set_originate(uuid, msg)
-        @originate_cache.set "#{uuid}", msg
+        @originate_cache.set("#{uuid}", msg)
       end
 
       def get_originate(uuid)
@@ -40,13 +17,20 @@ module TinyCallCenter
       end
 
       def set_answer(uuid, msg)
-        @answer_cache.set "#{uuid}", msg
+        @answer_cache.set("#{uuid}", msg)
       end
 
       def get_answer(uuid)
         @answer_cache.get("#{uuid}") rescue nil
       end
-    else
+    end
+
+    module MemoryBackend
+      def initialize(*args, &block)
+        @channel_answers, @channel_originates = {}, {}
+        super
+      end
+
       def set_originate(uuid, msg)
         @channel_originates[uuid] = msg
       end
@@ -62,6 +46,27 @@ module TinyCallCenter
       def get_answer(uuid)
         @channel_answers[uuid]
       end
+    end
+
+    if TCC.options.memcached.servers.empty?
+      include MemoryBackend
+    else
+      include MemcachedBackend
+    end
+
+    include ChannelRelay
+
+    def before_session
+      [ :CHANNEL_ORIGINATE, # Call being placed/ringing
+        :CHANNEL_ANSWER,    # Call starts
+        :CHANNEL_HANGUP,    # Call ends
+        #:CHANNEL_CREATE,    # Channel created
+      ].each{|flag| add_event(flag, &method(flag.to_s.downcase)) }
+    end
+
+    def channel_create(event)
+      msg = cleanup(event.content)
+      relay msg
     end
 
     def channel_originate(event)
