@@ -1,56 +1,10 @@
 module TinyCallCenter
   class Monitor < FSR::Listener::Inbound
-    module MemcachedBackend
-      def initialize(*args, &block)
-        require "memcached"
-        @originate_cache = Memcached.new(TCC.options.memcached.servers, prefix_key: 'orig_')
-        @answer_cache = Memcached.new(TCC.options.memcached.servers, prefix_key: 'answer_')
-        super
-      end
-
-      def set_originate(uuid, msg)
-        @originate_cache.set("#{uuid}", msg)
-      end
-
-      def get_originate(uuid)
-        @originate_cache.get("#{uuid}") rescue nil
-      end
-
-      def set_answer(uuid, msg)
-        @answer_cache.set("#{uuid}", msg)
-      end
-
-      def get_answer(uuid)
-        @answer_cache.get("#{uuid}") rescue nil
-      end
-    end
-
-    module MemoryBackend
-      def initialize(*args, &block)
-        @channel_answers, @channel_originates = {}, {}
-        super
-      end
-
-      def set_originate(uuid, msg)
-        @channel_originates[uuid] = msg
-      end
-
-      def get_originate(uuid)
-        @channel_originates[uuid]
-      end
-
-      def set_answer(uuid, msg)
-        @channel_answers[uuid] = msg
-      end
-
-      def get_answer(uuid)
-        @channel_answers[uuid]
-      end
-    end
-
     if TCC.options.memcached.servers.empty?
+      require "tiny_call_center/utils/memory_backend"
       include MemoryBackend
     else
+      require "tiny_call_center/utils/memcached_backend"
       include MemcachedBackend
     end
 
