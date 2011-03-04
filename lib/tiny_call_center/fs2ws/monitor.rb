@@ -30,34 +30,36 @@ module TinyCallCenter
       relay msg
     end
 
-    def set_originate(uuid, msg)
-      if TCC.options.memcached.servers
+    if TCC.options.memcached.servers
+      def set_originate(uuid, msg)
         @originate_cache.set "#{uuid}", msg
-      else
+      end
+
+      def get_originate(uuid)
+        @originate_cache.get("#{uuid}") rescue nil
+      end
+
+      def set_answer(uuid, msg)
+        @answer_cache.set "#{uuid}", msg
+      end
+
+      def get_answer(uuid)
+        @answer_cache.get("#{uuid}") rescue nil
+      end
+    else
+      def set_originate(uuid, msg)
         @channel_originates[uuid] = msg
       end
-    end
 
-    def get_originate(uuid)
-      if TCC.options.memcached.servers
-        @originate_cache.get("#{uuid}") rescue nil
-      else
+      def get_originate(uuid)
         @channel_originates[uuid]
       end
-    end
 
-    def set_answer(uuid, msg)
-      if TCC.options.memcached.servers
-        @answer_cache.set "#{uuid}", msg
-      else
+      def set_answer(uuid, msg)
         @channel_answers[uuid] = msg
       end
-    end
 
-    def get_answer(uuid)
-      if TCC.options.memcached.servers
-        @answer_cache.get("#{uuid}") rescue nil
-      else
+      def get_answer(uuid)
         @channel_answers[uuid]
       end
     end
