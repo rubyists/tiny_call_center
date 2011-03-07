@@ -72,11 +72,10 @@ class Call
     @dom.uuid.text(@remote_leg.uuid)
     @dom.channel.text(@local_leg.channel)
 
-    $('.dtmf-form', @sel).submit (event) ->
+    $('.dtmf-form', @sel).submit (event) =>
       input = $('.dtmf-input', $(event.target))
       val = input.val()
-      uuid = $('.uuid', $(event.target)).text()
-      store.send(method: 'dtmf', uuid: uuid, digit: val, dtmf: val)
+      store.send(method: 'dtmf', uuid: @uuid, dtmf: val)
       input.val('')
       false
 

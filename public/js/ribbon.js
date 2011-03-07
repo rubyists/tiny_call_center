@@ -78,19 +78,18 @@
       this.dom.queueName.text(this.local_leg.queue);
       this.dom.uuid.text(this.remote_leg.uuid);
       this.dom.channel.text(this.local_leg.channel);
-      return $('.dtmf-form', this.sel).submit(function(event) {
+      return $('.dtmf-form', this.sel).submit(__bind(function(event) {
         var input, val;
         input = $('.dtmf-input', $(event.target));
         val = input.val();
         store.send({
           method: 'dtmf',
           uuid: this.uuid,
-          digit: val,
           dtmf: val
         });
         input.val('');
         return false;
-      });
+      }, this));
     };
     Call.prototype['bridge-agent-start'] = function(msg) {
       this.dom.cidName.text(msg.cc_caller_cid_name);
@@ -327,9 +326,8 @@
     return false;
   };
   agentWantsDTMF = function(clickEvent) {
-    var call_div, uuid;
+    var call_div;
     call_div = $(clickEvent.target).closest('.call');
-    uuid = $('.uuid', call_div).text();
     $('.dtmf-form', call_div).toggle(function() {
       return $('.dtmf-input', call_div).focus();
     });
