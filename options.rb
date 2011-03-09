@@ -59,5 +59,11 @@ module TinyCallCenter
 
     o "Log Level (DEBUG, DEVEL, INFO, NOTICE, ERROR, CRIT)", :log_level,
       ENV["TCC_LogLevel"] || "INFO"
+
+    o "QueueRouter Listener Port", :qr_port,
+      ENV["TCC_QrPort"] || 8884
+
+    o "QueueRouter Listener Address", :qr_addr,
+      ENV["TCC_QrAddress"] || "127.0.0.1"
   end
 end

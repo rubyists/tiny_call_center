@@ -1,0 +1,21 @@
+#!/usr/bin/env ruby
+# $VERBOSE = 2
+
+require 'pp'
+
+require_relative '../lib/tiny_call_center'
+require_relative '../options'
+require_relative '../model/init'
+
+require "fsr/listener/outbound"
+FSR.load_all_applications
+TCC::Log.level = Log4r.const_get(TCC.options.log_level)
+
+require_relative '../lib/tiny_call_center/queue_router/listener'
+
+port = TinyCallCenter.options.qr_port.to_i
+addr = TinyCallCenter.options.qr_addr
+
+$stdout.sync = true
+EM.epoll?
+FSR.start_oes! TCC::QueueRouter::Listener, :port => port, :host => addr

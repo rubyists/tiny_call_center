@@ -268,7 +268,7 @@ module TinyCallCenter
       reply(
         tiny_action: 'agent_status_history',
         cc_agent: msg['agent'],
-        history: TCC.options.mod_callcenter.db ? TCC::StatusLog.agent_history_a(msg["agent"]) : []
+        history: TCC.options.mod_callcenter.db ? TCC::CallCenter::StatusLog.agent_history_a(msg["agent"]) : []
       )
     end
 
@@ -277,7 +277,7 @@ module TinyCallCenter
       reply(
         tiny_action: 'agent_state_history',
         cc_agent: msg['agent'],
-        history: TCC.options.mod_callcenter.db ? TCC::StateLog.agent_history_a(msg["agent"]) : []
+        history: TCC.options.mod_callcenter.db ? TCC::CallCenter::StateLog.agent_history_a(msg["agent"]) : []
       )
     end
   end
