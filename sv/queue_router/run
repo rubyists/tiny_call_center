@@ -1,0 +1,12 @@
+#!/bin/sh -e
+envdir=$PWD/env
+root=$(<env/TCC_Root)
+echo Starting from $root
+cd $root
+if [ -s $HOME/.rvm/scripts/rvm ]; then
+  source $HOME/.rvm/scripts/rvm
+  echo "Using RVM $(which rvm)"
+  rvm use 1.9.2 2>&1
+fi
+exec 2>&1
+exec chpst -e $envdir ./bin/queue_router 2>&1
