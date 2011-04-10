@@ -14,6 +14,7 @@ require_relative 'node/tiers'
 require_relative 'node/accounts'
 require_relative 'node/ribbon'
 require_relative 'node/live'
+require_relative 'node/live_log'
 
 Innate.middleware! do |mw|
   mw.use Rack::CommonLogger
