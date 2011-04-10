@@ -10,6 +10,7 @@ require_relative 'node/main'
 require_relative 'node/queues'
 require_relative 'node/agents'
 require_relative 'node/tiers'
+require_relative 'node/managers'
 
 require_relative 'node/accounts'
 require_relative 'node/ribbon'

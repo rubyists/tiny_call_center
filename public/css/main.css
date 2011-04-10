@@ -49,7 +49,7 @@ header h1 {
 }
 
 header nav {
-  background: #333;
+  background: #393939;
   line-height: 2em;
   padding: 1em;
 }
@@ -108,23 +108,23 @@ header a {
 .standby {             background: #fa9; }
 .logged-out {          background: #f66; }
 
-#agents_new {
+form.table {
   width: 44em;
   padding: 1em;
   margin: 1em auto;
   background: #444;
 }
 
-#agents_new .row {
+form.table .row {
   color: #fff;
   padding: 0.5em;
 }
 
-#agents_new .row > * {
+form.table .row > * {
   text-align: left;
 }
 
-#agents_new .table {
+form.table .table {
   width: 42em;
 }
 

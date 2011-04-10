@@ -60,6 +60,10 @@ module TinyCallCenter
       agent.split('-', 2).last.tr("_", " ")
     end
 
+    def self.all_usernames
+      NrsLdap.all_employees.map{|employee| employee['uid'] }.flatten.uniq
+    end
+
     def initialize(user)
       @uid = user
       warn "<<<ERROR>>> No Such User #{user} in #{self.class} #initialize (from #user_raw)" unless @exists = user_raw

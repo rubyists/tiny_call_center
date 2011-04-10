@@ -1,0 +1,11 @@
+#managers {
+  width: 100%;
+}
+
+#managers tr:hover {
+  background: #222;
+}
+
+#managers a {
+  color: #fff;
+}
