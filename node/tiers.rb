@@ -106,7 +106,7 @@ module TinyCallCenter
 
     # all of these should also be in a model/module, but they need access to 'fsr', which is already in another helper
     def fsr_tiers(queue)
-      ancestral_trait[:tiers] || fsr.call_center(:tier).list(queue.to_sym).run
+      ancestral_trait[:tiers] || fsr.call_center(:queue).list_tiers(queue.to_sym).run
     end
 
     def fsr_all_agents
