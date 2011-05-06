@@ -281,6 +281,7 @@ agentOriginates = (submitEvent) ->
     method: 'originate',
     dest: $('#originate-dest').val(),
     agent: store.agent_name,
+    identifier: $('#originate-identifier').val(),
   )
   $('#originate').hide()
   false

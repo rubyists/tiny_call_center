@@ -57,7 +57,10 @@
 
   <form id="originate">
     <fieldset>
-      <input id="originate-dest" type="phone" placeholder="Number To Call" />
+      <label for="originate-dest">Phone# </label>
+      <input id="originate-dest" type="phone" placeholder="Number To Call" /> <br />
+      <label for="originate-identifier">Ref ID: </label>
+      <input id="originate-identifier" type="text" placeholder="Reference Identifier" /> <br />
       <input type="submit" value="Call" />
       <input id="originate-cancel" type="button" value="Cancel" />
     </fieldset>
