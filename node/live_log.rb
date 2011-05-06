@@ -9,6 +9,7 @@ module TinyCallCenter
       redirect Accounts.r(:login) unless logged_in?
       redirect Main.r(:index) unless user.manager?
 
+      @agent = user.agent
       @server = TinyCallCenter.options.listener.server if request.local_net?
     end
   end
