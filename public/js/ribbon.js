@@ -316,7 +316,8 @@
     store.send({
       method: 'originate',
       dest: $('#originate-dest').val(),
-      agent: store.agent_name
+      agent: store.agent_name,
+      identifier: $('#originate-identifier').val()
     });
     $('#originate').hide();
     return false;

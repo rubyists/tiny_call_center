@@ -1,0 +1,17 @@
+<table id="managers">
+  <tr>
+    <th>Name</th>
+    <th>Include</th>
+    <th>Exclude</th>
+    <th>&nbsp;</th>
+  </tr>
+  <?r @managers.each do |manager| ?>
+    <tr>
+      <td class="username">#{h manager.username}</td>
+      <td class="include">#{h manager.include}</td>
+      <td class="exclude">#{h manager.exclude}</td>
+      <td class="edit">#{a 'Edit', :edit, manager.id, manager.username}</td>
+      <td class="delete">#{a 'Delete', :delete, manager.id, manager.username}</td>
+    </tr>
+  <?r end ?>
+</table>

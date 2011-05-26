@@ -62,6 +62,10 @@ module TinyCallCenter
       find extension: ext
     end
 
+    def self.all_usernames
+      map{|account| account.username }
+    end
+
     def exists?
       @new_record ? false : true
     end

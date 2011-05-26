@@ -37,7 +37,8 @@ module TinyCallCenter
     end
 
     def self.username(agent)
-      name(agent).gsub('_', '')
+      s = name(agent)
+      s.gsub('_', '') if s
     end
 
     def self.name(agent)
@@ -53,11 +54,15 @@ module TinyCallCenter
     end
 
     def self.from_full_name(name)
-      new name.gsub("_", '').gsub(/\s/,'')
+      new name.gsub("_", '').gsub(/\s/,'') if name
     end
 
     def self.full_name(agent)
-      agent.split('-', 2).last.tr("_", " ")
+      agent.split('-', 2).last.tr("_", " ") if agent
+    end
+
+    def self.all_usernames
+      NrsLdap.all_employees.map{|employee| employee['uid'] }.flatten.uniq
     end
 
     def initialize(user)

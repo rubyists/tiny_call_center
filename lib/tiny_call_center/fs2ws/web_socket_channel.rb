@@ -65,12 +65,14 @@ module TinyCallCenter
     def got_status_of(msg)
       mapped = STATUS_MAPPING[msg['status']]
       agent = msg['agent']
+      Log.debug "%p changes status of %p to %p" % [user, agent, mapped]
       reporter.callcenter!{|cc| cc.set(agent, :status, mapped) }
     end
 
     def got_state_of(msg)
-      agent = msg['agent']
-      reporter.callcenter!{|cc| cc.set(agent, :state, msg['state']) }
+      agent, state = msg.values_at('agent', 'state')
+      Log.debug "%p changes state of %p to %p" % [user, agent, state]
+      reporter.callcenter!{|cc| cc.set(agent, :state, state) }
     end
 
     def got_agents_of(msg)

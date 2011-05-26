@@ -11,7 +11,7 @@ module TinyCallCenter
         TCC.options.proxy_server_fmt % destination
       end
 
-      def originate(from, to)
+      def originate(from, to, identifier)
         Log.devel "<< Originate #{from} => #{to} >>"
         account = if from.respond_to?(:registration_server)
                     from
@@ -26,6 +26,8 @@ module TinyCallCenter
           sip_callee_id_number: to,
           caller_id_number: to,
           tcc_action: 'originate',
+          tcc_identifier: "'#{identifier.strip}'",
+          ignore_early_media: false,
           origination_caller_id_name: "'#{account.full_name}'"
         }
         orig = if to.size < 10
