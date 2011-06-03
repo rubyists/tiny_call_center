@@ -5,6 +5,7 @@ module TinyCallCenter
     def before_session
       add_event(:CUSTOM, "callcenter::info", &method(:callcenter_info))
       @responses = []
+      start_callcenter_queue
     end
 
     def last_response
@@ -69,14 +70,24 @@ module TinyCallCenter
       relay_agent out
     end
 
-    def callcenter
-      @callcenter ||= FSR::Cmd::CallCenter.new(nil, :agent)
+    # @cc_queue forces all calls on @cc_cmd into sequencial order to avoid
+    # possible state collisions while maintaining a single connection.
+    def start_callcenter_queue
+      @cc_cmd = FSR::Cmd::CallCenter.new(nil, :agent)
+      @cc_queue = EM::Queue.new
     end
 
-    def callcenter!
-      yield callcenter
-      FSR::Log.info callcenter.raw
-      api callcenter.raw
+    # please note that this doesn't happen immediately, so don't try to rely on
+    # any changes after calling it.
+    def callcenter!(&given_block)
+      @cc_queue.push(given_block)
+
+      # the pop doesn't happen immediately, will be scheduled later
+      @cc_queue.pop do |block|
+        block.call(@cc_cmd)
+        FSR::Log.info @cc_cmd.raw
+        api @cc_cmd.raw
+      end
     end
   end
 end
