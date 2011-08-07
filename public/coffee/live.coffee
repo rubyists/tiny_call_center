@@ -327,9 +327,15 @@ class Agent
     $('.username', @dom).text(@username)
     $('#agents').isotope('updateSortData', @dom)
 
+  getUsername: ->
+    $('.username', @dom).text()
+
   setExtension: (@extension) ->
     $('.extension', @dom).text(@extension)
     $('#agents').isotope('updateSortData', @dom)
+
+  getExtension: ->
+    $('.extension', @dom).text()
 
   calltap: ->
     p "Tapping #{@name} for #{store.agent}"
@@ -350,7 +356,7 @@ class Agent
     @dialog.attr('id', "dialog-#{@name}")
     @dialog.dialog(
       autoOpen: true,
-      title: "#{@extension} #{@username}",
+      title: "#{@getExtension()} #{@getUsername()}",
       modal: false,
       width: 600,
       height: 400,
