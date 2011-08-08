@@ -2,7 +2,7 @@
   var p;
   p = function(obj) {
     var _ref;
-    return (_ref = window.console) != null ? typeof _ref.debug == "function" ? _ref.debug(obj) : void 0 : void 0;
+    return (_ref = window.console) != null ? typeof _ref.debug === "function" ? _ref.debug(obj) : void 0 : void 0;
   };
   $(function() {
     var root;
