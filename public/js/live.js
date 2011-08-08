@@ -3,7 +3,7 @@
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   p = function() {
     var _ref;
-    return (_ref = window.console) != null ? typeof _ref.debug == "function" ? _ref.debug(arguments) : void 0 : void 0;
+    return (_ref = window.console) != null ? typeof _ref.debug === "function" ? _ref.debug(arguments) : void 0 : void 0;
   };
   store = {
     agents: {},
@@ -329,8 +329,8 @@
       var extMatch, left, leftMatch, right, rightMatch, _ref, _ref2, _ref3, _ref4, _ref5;
       extMatch = /(?:^|\/)(?:sip:)?(\d+)[@-]/;
       _ref = [msg.left, msg.right], left = _ref[0], right = _ref[1];
-      leftMatch = (_ref2 = left.channel) != null ? typeof _ref2.match == "function" ? (_ref3 = _ref2.match(extMatch)) != null ? _ref3[1] : void 0 : void 0 : void 0;
-      rightMatch = (_ref4 = right.channel) != null ? typeof _ref4.match == "function" ? (_ref5 = _ref4.match(extMatch)) != null ? _ref5[1] : void 0 : void 0 : void 0;
+      leftMatch = (_ref2 = left.channel) != null ? typeof _ref2.match === "function" ? (_ref3 = _ref2.match(extMatch)) != null ? _ref3[1] : void 0 : void 0 : void 0;
+      rightMatch = (_ref4 = right.channel) != null ? typeof _ref4.match === "function" ? (_ref5 = _ref4.match(extMatch)) != null ? _ref5[1] : void 0 : void 0 : void 0;
       if (this.extension === leftMatch) {
         return this.makeCall(left, right, msg);
       } else if (this.extension === rightMatch) {
@@ -420,10 +420,16 @@
       $('.username', this.dom).text(this.username);
       return $('#agents').isotope('updateSortData', this.dom);
     };
+    Agent.prototype.getUsername = function() {
+      return $('.username', this.dom).text();
+    };
     Agent.prototype.setExtension = function(extension) {
       this.extension = extension;
       $('.extension', this.dom).text(this.extension);
       return $('#agents').isotope('updateSortData', this.dom);
+    };
+    Agent.prototype.getExtension = function() {
+      return $('.extension', this.dom).text();
     };
     Agent.prototype.calltap = function() {
       p("Tapping " + this.name + " for " + store.agent);
@@ -444,7 +450,7 @@
       this.dialog.attr('id', "dialog-" + this.name);
       return this.dialog.dialog({
         autoOpen: true,
-        title: "" + this.extension + " " + this.username,
+        title: "" + (this.getExtension()) + " " + (this.getUsername()),
         modal: false,
         width: 600,
         height: 400,
