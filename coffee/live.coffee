@@ -28,7 +28,7 @@ formatInterval = (start) ->
 formatPhoneNumber = (number) ->
   return number unless number?
 
-  if md = number.match(/^(\d+?)(\d(\d{3})(\d{3})(\d{4})$/)
+  if md = number.match(/^(\d+?)(\d{3})(\d{3})(\d{4})$/)
     "(#{md[2]})-#{md[3]}-#{md[4]}"
   else
     number
