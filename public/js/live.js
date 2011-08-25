@@ -34,11 +34,11 @@
     if (number == null) {
       return number;
     }
-    md = number.match(/^(\d{3})(\d{3})(\d{4})/);
-    if (md == null) {
+    if (md = number.match(/^(\d+?)(\d(\d{3})(\d{3})(\d{4})$/)) {
+      return "(" + md[2] + ")-" + md[3] + "-" + md[4];
+    } else {
       return number;
     }
-    return "(" + md[1] + ")-" + md[2] + "-" + md[3];
   };
   searchToQuery = function(raw) {
     var part, query, _i, _len, _ref;
