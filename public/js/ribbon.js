@@ -200,7 +200,9 @@
             return p("Created Call", call);
           }
         };
-        if (store.agent_ext === ((_ref = msg.left.channel) != null ? typeof _ref.match === "function" ? (_ref2 = _ref.match(extMatch)) != null ? _ref2[1] : void 0 : void 0 : void 0)) {
+        if (msg.left.channel === msg.right.channel) {
+          return;
+        } else if (store.agent_ext === ((_ref = msg.left.channel) != null ? typeof _ref.match === "function" ? (_ref2 = _ref.match(extMatch)) != null ? _ref2[1] : void 0 : void 0 : void 0)) {
           makeCall(msg.left, msg.right, msg);
         } else if (store.agent_ext === ((_ref3 = msg.right.channel) != null ? typeof _ref3.match === "function" ? (_ref4 = _ref3.match(extMatch)) != null ? _ref4[1] : void 0 : void 0 : void 0)) {
           makeCall(msg.right, msg.left, msg);

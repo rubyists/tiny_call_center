@@ -52,22 +52,34 @@ module TinyCallCenter
           cid_number:  msg[:caller_caller_id_number],
           cid_name:    msg[:caller_caller_id_name],
           channel:     msg[:caller_channel_name],
-          destination: msg[:variable_dialed_user],
+          destination: msg[:variable_dialed_user] || msg[:variable_cc_agent][/^(\d+)-/, 1],
           uuid:        msg[:cc_agent_uuid],
         },
         right: {
-          cid_number:  msg[:cc_caller_cid_number],
-          cid_name:    msg[:cc_caller_cid_name],
+          cid_number:  msg[:cc_caller_cid_number] || msg[:cc_member_cid_number],
+          cid_name:    msg[:cc_caller_cid_name] || msg[:cc_member_cid_name],
           channel:     msg[:channel_name],
-          destination: msg[:variable_dialed_user],
-          uuid:        msg[:cc_caller_uuid],
+          destination: msg[:variable_dialed_user] || msg[:variable_cc_agent][/^(\d+)-/, 1],
+          uuid:        msg[:cc_caller_uuid] || msg[:cc_member_uuid],
         }
       }
+
+      bridge_agent_start_check(out, :left)
+      bridge_agent_start_check(out, :right)
 
       FSR::Log.debug "!!! Bridge Agent Start Initiates Call Start !!!"
       FSR::Log.debug out
 
       relay_agent out
+    end
+
+    def bridge_agent_start_check(hash, leg_name)
+      leg = hash[leg_name]
+      FSR::Log.warn("#{leg_name} has missing cid_number") unless leg[:cid_number]
+      FSR::Log.warn("#{leg_name} has missing cid_name") unless leg[:cid_name]
+      FSR::Log.warn("#{leg_name} has missing channel") unless leg[:channel]
+      FSR::Log.warn("#{leg_name} has missing destination") unless leg[:destination]
+      FSR::Log.warn("#{leg_name} has missing uuid") unless leg[:uuid]
     end
 
     # @cc_queue forces all calls on @cc_cmd into sequencial order to avoid

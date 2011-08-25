@@ -183,18 +183,27 @@ onMessage = (event) ->
           call = new Call(left, right, msg)
           p "Created Call", call
 
-      if store.agent_ext == msg.left.channel?.match?(extMatch)?[1]
+      if msg.left.channel == msg.right.channel
+        return undefined
+
+      else if store.agent_ext == msg.left.channel?.match?(extMatch)?[1]
         makeCall(msg.left, msg.right, msg)
+
       else if store.agent_ext == msg.right.channel?.match?(extMatch)?[1]
         makeCall(msg.right, msg.left, msg)
+
       else if msg.right.destination == msg.right.channel?.match?(extMatch)?[1]
         makeCall(msg.right, msg.left, msg)
+
       else if msg.left.destination == msg.left.channel?.match?(extMatch)?[1]
         makeCall(msg.left, msg.right, msg)
+
       else if msg.left.cid_number == msg.left.channel?.match?(extMatch)?[1]
         makeCall(msg.left, msg.right, msg)
+
       else if msg.right.cid_number == msg.right.channel?.match?(extMatch)?[1]
         makeCall(msg.right, msg.left, msg)
+
     else
       for key, value of msg
         if /unique|uuid/.test(key)
