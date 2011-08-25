@@ -86,7 +86,7 @@ module TinyCallCenter
 
     def give_queues
       sock = fsr_socket(self.command_socket_server)
-      queues = sock.call_center(:queue).list.run
+      queues = sock.call_center(:queue).list.run.reject { |r| r.name !~ /_dialer$/ }
       reply method: :queues, args: [queues]
     end
 
@@ -194,16 +194,16 @@ module TinyCallCenter
     end
 
     def got_calltap(msg)
-      agent, tapper = msg.values_at('agent', 'tapper').map { |a| 
+      agent, tapper = msg.values_at('agent', 'tapper').map { |a|
         if Account.respond_to? :find
           # If your Account backend responds to #find, we expect
           # that you define a #username function to get the username from
           # 1234-First_Last
-          Account.find(username: Account.username(a)) 
+          Account.find(username: Account.username(a))
         else
           # If your Account model doesn't respond to #find, we expect
           # #new to take a username
-          Account.new(Account.username a) 
+          Account.new(Account.username a)
         end
       }
 
