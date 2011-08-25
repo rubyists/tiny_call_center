@@ -86,7 +86,7 @@ module TinyCallCenter
 
     def give_queues
       sock = fsr_socket(self.command_socket_server)
-      queues = sock.call_center(:queue).list.run.reject { |r| r.name !~ /_dialer$/ }
+      queues = sock.call_center(:queue).list.run.select { |r| r.name !~ /_dialer$/ }
       reply method: :queues, args: [queues]
     end
 
