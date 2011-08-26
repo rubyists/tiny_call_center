@@ -33,13 +33,17 @@ module TinyCallCenter
         relay_agent content.merge(tiny_action: 'state_change')
       when 'bridge-agent-start'
         bridge_agent_start(content)
+      when 'bridge-agent-end'
+        bridge_agent_end(content)
       else
         relay content
       end
     end
 
     def bridge_agent_start(msg)
-      return unless msg[:answer_state] == 'answered' && msg[:caller_destination_number] == '19999'
+      File.open("/tmp/bridge-agent-start.log", "a+") { |f| f.print msg }
+      return unless msg[:answer_state] == 'answered' &&
+                    msg[:caller_destination_number] == '19999'
 
       out = {
         tiny_action: 'call_start',
@@ -60,7 +64,7 @@ module TinyCallCenter
           cid_name:    msg[:cc_caller_cid_name] || msg[:cc_member_cid_name],
           channel:     msg[:channel_name],
           destination: msg[:variable_dialed_user] || msg[:variable_cc_agent][/^(\d+)-/, 1],
-          uuid:        msg[:cc_caller_uuid] || msg[:cc_member_uuid],
+          uuid:        msg[:cc_caller_uuid] || msg[:cc_member_session_uuid],
         }
       }
 
@@ -80,6 +84,19 @@ module TinyCallCenter
       FSR::Log.warn("#{leg_name} has missing channel") unless leg[:channel]
       FSR::Log.warn("#{leg_name} has missing destination") unless leg[:destination]
       FSR::Log.warn("#{leg_name} has missing uuid") unless leg[:uuid]
+    end
+
+    def bridge_agent_end(msg)
+      File.open('/tmp/bridge-agent-end.log', 'w+'){|io| io.write(msg.pretty_inspect) }
+      out = msg.merge(
+        tiny_action: 'call_end',
+        call_created: msg[:variable_rfc2822_date],
+        cc_agent: msg[:cc_agent],
+        producer: 'bridge_agent_end',
+        original: msg
+      )
+
+      relay_agent(out)
     end
 
     # @cc_queue forces all calls on @cc_cmd into sequencial order to avoid

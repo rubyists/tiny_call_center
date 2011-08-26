@@ -7,6 +7,7 @@
       return this.ws.send(JSON.stringify(obj));
     }
   };
+  window.tcc_store = store;
   keyCodes = {
     F1: 112,
     F2: 113,
@@ -43,7 +44,7 @@
     if (number == null) {
       return number;
     }
-    md = number.match(/^(\d{3})(\d{3})(\d{4})/);
+    md = number.match(/^(\d+)?(\d{3})(\d{3})(\d{4})$/);
     if (md == null) {
       return number;
     }
@@ -96,7 +97,7 @@
       this.dom.cidNumber.text(formatPhoneNumber(msg.cc_caller_cid_number));
       return this.talkingStart(new Date(Date.now()));
     };
-    Call.prototype['bridge-agent-end'] = function(msg) {
+    Call.prototype.call_end = function(msg) {
       return this.talkingEnd();
     };
     Call.prototype.channel_hangup = function(msg) {
@@ -126,6 +127,7 @@
       }, this), 1000);
     };
     Call.prototype.talkingEnd = function() {
+      p("talkingEnd", this);
       clearInterval(this.answeredInterval);
       delete store.calls[this.uuid];
       this.askDisposition();
@@ -200,19 +202,25 @@
             return p("Created Call", call);
           }
         };
-        if (msg.left.channel === msg.right.channel) {
+        if (msg.right.cid_number === '8675309' || msg.left.cid_number === '8675309') {
           return;
         } else if (store.agent_ext === ((_ref = msg.left.channel) != null ? typeof _ref.match === "function" ? (_ref2 = _ref.match(extMatch)) != null ? _ref2[1] : void 0 : void 0 : void 0)) {
-          makeCall(msg.left, msg.right, msg);
+          p(1);
+          makeCall(msg.right, msg.left, msg);
         } else if (store.agent_ext === ((_ref3 = msg.right.channel) != null ? typeof _ref3.match === "function" ? (_ref4 = _ref3.match(extMatch)) != null ? _ref4[1] : void 0 : void 0 : void 0)) {
+          p(2);
           makeCall(msg.right, msg.left, msg);
         } else if (msg.right.destination === ((_ref5 = msg.right.channel) != null ? typeof _ref5.match === "function" ? (_ref6 = _ref5.match(extMatch)) != null ? _ref6[1] : void 0 : void 0 : void 0)) {
+          p(3);
           makeCall(msg.right, msg.left, msg);
         } else if (msg.left.destination === ((_ref7 = msg.left.channel) != null ? typeof _ref7.match === "function" ? (_ref8 = _ref7.match(extMatch)) != null ? _ref8[1] : void 0 : void 0 : void 0)) {
+          p(4);
           makeCall(msg.left, msg.right, msg);
         } else if (msg.left.cid_number === ((_ref9 = msg.left.channel) != null ? typeof _ref9.match === "function" ? (_ref10 = _ref9.match(extMatch)) != null ? _ref10[1] : void 0 : void 0 : void 0)) {
+          p(5);
           makeCall(msg.left, msg.right, msg);
         } else if (msg.right.cid_number === ((_ref11 = msg.right.channel) != null ? typeof _ref11.match === "function" ? (_ref12 = _ref11.match(extMatch)) != null ? _ref12[1] : void 0 : void 0 : void 0)) {
+          p(6);
           makeCall(msg.right, msg.left, msg);
         }
         break;

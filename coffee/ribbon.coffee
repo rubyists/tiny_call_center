@@ -3,6 +3,8 @@ store = {
   send: (obj) -> @ws.send(JSON.stringify(obj))
 }
 
+window.tcc_store = store
+
 # Expand as you need it.
 keyCodes = {
   F1:  112,
@@ -36,7 +38,7 @@ formatInterval = (start) ->
 
 formatPhoneNumber = (number) ->
   return number unless number?
-  md = number.match(/^(\d{3})(\d{3})(\d{4})/)
+  md = number.match(/^(\d+)?(\d{3})(\d{3})(\d{4})$/)
   return number unless md?
   "(#{md[1]})-#{md[2]}-#{md[3]}"
 
@@ -84,7 +86,7 @@ class Call
     @dom.cidNumber.text(formatPhoneNumber(msg.cc_caller_cid_number))
     @talkingStart(new Date(Date.now()))
 
-  'bridge-agent-end': (msg) ->
+  call_end: (msg) ->
     @talkingEnd()
 
   channel_hangup: (msg) ->
@@ -121,6 +123,7 @@ class Call
     , 1000
 
   talkingEnd: ->
+    p "talkingEnd", this
     clearInterval(@answeredInterval)
     delete store.calls[@uuid]
     @askDisposition()
@@ -183,25 +186,31 @@ onMessage = (event) ->
           call = new Call(left, right, msg)
           p "Created Call", call
 
-      if msg.left.channel == msg.right.channel
+      if msg.right.cid_number == '8675309' || msg.left.cid_number == '8675309'
         return undefined
 
       else if store.agent_ext == msg.left.channel?.match?(extMatch)?[1]
-        makeCall(msg.left, msg.right, msg)
+        p 1
+        makeCall(msg.right, msg.left, msg)
 
       else if store.agent_ext == msg.right.channel?.match?(extMatch)?[1]
+        p 2
         makeCall(msg.right, msg.left, msg)
 
       else if msg.right.destination == msg.right.channel?.match?(extMatch)?[1]
+        p 3
         makeCall(msg.right, msg.left, msg)
 
       else if msg.left.destination == msg.left.channel?.match?(extMatch)?[1]
+        p 4
         makeCall(msg.left, msg.right, msg)
 
       else if msg.left.cid_number == msg.left.channel?.match?(extMatch)?[1]
+        p 5
         makeCall(msg.left, msg.right, msg)
 
       else if msg.right.cid_number == msg.right.channel?.match?(extMatch)?[1]
+        p 6
         makeCall(msg.right, msg.left, msg)
 
     else
@@ -266,7 +275,7 @@ agentWantsCallTransfer = (clickEvent) ->
   uuid = $('.uuid', call_div).text()
   $('#transfer-cancel').click (cancelEvent) =>
     $('#transfer').hide()
-    false;
+    false
 
   $('#transfer').submit (submitEvent) =>
     store.send(
