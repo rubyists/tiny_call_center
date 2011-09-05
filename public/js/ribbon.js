@@ -348,7 +348,9 @@
     return window.location.pathname = "/accounts/logout";
   };
   setupWs = function() {
-    store.ws = new WebSocket(store.server);
+    var webSocket;
+    webSocket = "MozWebSocket" in window ? MozWebSocket : WebSocket;
+    store.ws = new webSocket(store.server);
     store.ws.onerror = onError;
     store.ws.onclose = onClose;
     store.ws.onopen = onOpen;

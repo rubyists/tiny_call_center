@@ -319,7 +319,8 @@ agentWantsToLogout = (clickEvent) ->
   window.location.pathname = "/accounts/logout"
 
 setupWs = ->
-  store.ws = new WebSocket(store.server)
+  webSocket = if "MozWebSocket" of window then MozWebSocket else WebSocket
+  store.ws = new webSocket(store.server)
 
   store.ws.onerror = onError
   store.ws.onclose = onClose

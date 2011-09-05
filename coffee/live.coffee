@@ -50,10 +50,11 @@ class Socket
     @connect()
 
   connect: () ->
-    @ws = new WebSocket(store.server)
+    webSocket = if "MozWebSocket" of window then MozWebSocket else WebSocket
+    @ws = new webSocket(store.server)
     @reconnector = setInterval =>
       unless @connected
-        @ws = new WebSocket(store.server)
+        @ws = new webSocket(store.server)
         @prepareWs()
     , 1000
 

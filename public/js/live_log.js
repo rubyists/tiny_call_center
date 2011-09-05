@@ -14,10 +14,12 @@
       this.connect();
     }
     Socket.prototype.connect = function() {
-      this.ws = new WebSocket(store.server);
+      var webSocket;
+      webSocket = "MozWebSocket" in window ? MozWebSocket : WebSocket;
+      this.ws = new webSocket(store.server);
       return this.reconnector = setInterval(__bind(function() {
         if (!this.connected) {
-          this.ws = new WebSocket(store.server);
+          this.ws = new webSocket(store.server);
           return this.prepareWs();
         }
       }, this), 1000);
