@@ -54,7 +54,7 @@ module TinyCallCenter
         message[:other_leg_caller_id_number],
         message[:caller_rdnis],
         message[:other_leg_rdnis],
-      ].grep(/^\d{4}$/).uniq
+      ].grep(/^\d{3,4}$/).uniq
 
       Log.debug "Possible Numbers: %p" % [possible]
 

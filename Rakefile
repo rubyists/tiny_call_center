@@ -6,7 +6,11 @@ begin; require 'rubygems'; rescue LoadError; end
 
 require 'rake'
 require 'rake/clean'
-require 'rake/gempackagetask'
+begin
+  require 'rake/gempackagetask'
+rescue LoadError
+  require 'rubygems/package_task'
+end
 require 'time'
 require 'date'
 

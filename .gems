@@ -1,9 +1,10 @@
+em-websocket -v0.3.1
 thin -v1.2.11
-ramaze -v2011.01.30
+ramaze -v2011.07.25
 bacon -v1.1.0
 freeswitcher -v0.6.12
 log4r -v1.1.9
 name_parse -v0.0.5
 pg -v0.10.1
-sequel -v3.19.0
-sqlite3 -v1.3.4
+sequel -v3.27.0
+#sqlite3 -v1.3.4

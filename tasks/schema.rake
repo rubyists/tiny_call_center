@@ -8,7 +8,7 @@ task :test_db do
 end
 
 desc "Dump the test schema"
-task :schema, :format, :needs => [:test_db] do |t,args|
+task :schema, [:format] => [:test_db] do |t,args|
   args.with_defaults(:format => "html")
   descs = FXC.db.tables.inject([]) do |arr, table|
     arr << "\\dd #{table};\\d+ #{table}"

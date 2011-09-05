@@ -8,6 +8,7 @@ if [ -s $HOME/.rvm/scripts/rvm ]; then
   source $HOME/.rvm/scripts/rvm
   echo "Using RVM $(which rvm)"
   rvm use 1.9.2 2>&1
+  source .rvmrc.tcc
 fi
 exec 2>&1
 exec chpst -e $envdir thin -R config.ru -p $port start 2>&1
