@@ -36,8 +36,8 @@ module TinyCallCenter
         excludes[manager.exclude] += 1
       end
 
-      @manager.include = includes.max_by{|k,v| v }.first
-      @manager.exclude = excludes.max_by{|k,v| v }.first
+      @manager.include = includes.max_by{|k,v| v }.first if includes.any?
+      @manager.exclude = excludes.max_by{|k,v| v }.first if excludes.any?
     end
 
     def edit(id, name = nil)
