@@ -38,9 +38,11 @@ formatInterval = (start) ->
 
 formatPhoneNumber = (number) ->
   return number unless number?
-  md = number.match(/^(\d+)?(\d{3})(\d{3})(\d{4})$/)
-  return number unless md?
-  "(#{md[1]})-#{md[2]}-#{md[3]}"
+
+  if md = number.match(/^(\d+?)(\d{3})(\d{3})(\d{4})$/)
+    "(#{md[2]})-#{md[3]}-#{md[4]}"
+  else
+    number
 
 class Call
   constructor: (local_leg, remote_leg, msg) ->
