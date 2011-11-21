@@ -87,6 +87,11 @@ header a {
   color: #00f;
   background: #aff;
   text-align: center;
+  cursor: pointer;
+}
+
+.table .head > *:hover {
+  background: rgba(0,0,0,0.3);
 }
 
 .table .row {
