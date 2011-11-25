@@ -11,7 +11,7 @@ require 'nokogiri'
 
 Innate.options.roots = [File.expand_path('../../../../', __FILE__)]
 
-describe 'FsrCallcenter Agents' do
+describe 'TinyCallCenter Agents' do
   behaves_like :rack_test
 
   it "Shows A list of Agents" do

@@ -1,18 +1,15 @@
 # Copyright (c) 2008-2009 The Rubyists, LLC (effortless systems) <rubyists@rubyists.com>
 # Distributed under the terms of the MIT license.
 # The full text can be found in the LICENSE file included with this software
-#
-require File.expand_path('../../../spec_helper', __FILE__)
-require File.expand_path('../../../fsr_helper', __FILE__)
+
+require_relative '../../helper'
 require "fsr/model/queue"
-require File.expand_path('../../../../app', __FILE__)
-require 'nokogiri'
 
 Innate.options.roots = ['./']
 Innate.options.started = true
 Innate.setup_dependencies
 
-describe 'FsrCallcenter Queue' do
+describe 'TinyCallCenter Queue' do
   it "Shows A list of Queues" do
     # TODO Load an innate node, set @queues to an array of  FSR::Model::Queue instances
     # and then test the view output
@@ -24,7 +21,7 @@ describe 'FsrCallcenter Queue' do
                   "record_template"]
     data = ["helpdesk@default", "longest-idle-agent", "local_stream://moh", "system",
                "false", "30", "true", "true", "60", "false", "0", "0",
-               "/home/freeswitch/recordings/${strftime(%Y-%m-%d-%H-%M-%S)}.${destination_number}.${caller_id_number}.${uuid}.wav"] 
+               "/home/freeswitch/recordings/${strftime(%Y-%m-%d-%H-%M-%S)}.${destination_number}.${caller_id_number}.${uuid}.wav"]
     queue = FSR::Model::Queue.new(headers, *data)
 
     action = TinyCallCenter::Queues.resolve('/')

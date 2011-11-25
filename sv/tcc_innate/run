@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/bash -e
 envdir=$PWD/env
 root=$(<env/TCC_Root)
 port=$(<env/TCC_Innate_Port)

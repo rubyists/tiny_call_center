@@ -28,6 +28,7 @@ module TinyCallCenter
 
         @queue = queue
         @tiers = fsr_tiers(queue) # each of these will be an agent/queue relationship
+        Ramaze::Log.debug @tiers
         @agents = fsr_agents(@tiers)
         agent_names = Set.new(@agents.map(&:name))
         @all_agents = fsr_all_agents.reject{|agent|
@@ -43,10 +44,6 @@ module TinyCallCenter
         map{|agent|
           index(agent.name)
           render_view(:index) }.join
-    end
-
-    def mass_set(queue, agents = [], field_values = {})
-
     end
 
     def set_status

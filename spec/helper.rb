@@ -3,17 +3,42 @@
 # The full text can be found in the LICENSE file included with this software
 #
 
+require "fsr"
+require FSR::ROOT/"../spec/fsr_listener_helper"
+require FSR::ROOT/"fsr/listener/outbound"
+require FSR::ROOT/"fsr/listener/mock"
+require "em-spec/bacon"
+require 'nokogiri'
+
+require_relative '../lib/tiny_call_center'
 require_relative "../lib/tiny_call_center/db"
+require_relative '../app'
+
 TinyCallCenter.options.db = "sqlite://:memory:"
 
-require File.expand_path('../../app', __FILE__)
-require 'innate/spec/bacon'
+Innate::Log.loggers = [Logger.new($stdout)]
+Innate.options.roots = [File.expand_path('../../', __FILE__)]
 
-Innate::Log.loggers = [Logger.new(FXC::ROOT/:log/"innate.log")]
+require 'innate/spec/bacon'
 Innate.middleware! :spec do |m|
   m.use Rack::Lint
   m.use Rack::CommonLogger, Innate::Log
   m.innate
 end
 
-Innate.options.roots = [FsrCallcenter::ROOT]
+Bacon.summary_on_exit
+
+shared :make_account do
+  def make_account(ext, pass, first, last)
+    TCC::Account.create(
+      username: "#{first}#{last}",
+      password: pass,
+      first_name: first,
+      last_name: last,
+      extension: ext,
+      registration_server: 'foo.bar.bit'
+    )
+  end
+
+  before{ TCC::Account.delete }
+end
