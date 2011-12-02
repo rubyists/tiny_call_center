@@ -1,0 +1,16 @@
+<table>
+  <thead>
+    <tr>
+      <th>
+        <th>Name</th>
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <?r @users.each do |user| ?>
+      <tr>
+        <td>#{h user.inspect}</td>
+      </tr>
+    <?r end ?>
+  </tbody>
+</table>

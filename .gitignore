@@ -1,5 +1,6 @@
 .[a-z]*
 *~
+log/*
 *.swp
 services/*/log/*
 services/*/supervise/*

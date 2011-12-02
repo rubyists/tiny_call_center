@@ -1,0 +1,24 @@
+<form method="post" action="#{r :update, @user.id}" class="table">
+  <fieldset>
+    <legend>Benutzer Details</legend>
+
+    <div class="row">
+      <label for="fullname">Name</label>
+      <input type="text" id="fullname" name="fullname" value="#{h @user.fullname}">
+    </div>
+
+    <div class="row">
+      <label for="extension">Durchwahl</label>
+      <input type="text" id="extension" name="extension" value="#{h @user.extension}">
+    </div>
+
+    <div class="row">
+      <label for="active">Aktiv</label>
+      <input type="checkbox" id="active" name="active" #{'checked' if @user.active}>
+    </div>
+
+    <div class="row">
+      <input type="submit" value="Änderungen bestätigen">
+    </div>
+  </fieldset>
+</form>

@@ -1,0 +1,8 @@
+<form method="post" action="#{r :create}">
+  <fieldset>
+    <legend>Benutzer Details</legend>
+    <input type="text" name="fullname" value="#{h @user.fullname}">
+    <input type="text" name="extension" value="#{h @user.extension}">
+    <input type="submit" value="Benutzer erstellen">
+  </fieldset>
+</form>

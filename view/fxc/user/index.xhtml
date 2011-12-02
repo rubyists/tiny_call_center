@@ -1,0 +1,26 @@
+<h1>Benutzer</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Durchwahl</th>
+      <th>Sprachbox</th>
+      <th>Aktiv</th>
+      <th>Details</th>
+      <th>Löschen</th>
+    </tr>
+  </thead>
+  <tbody>
+    <?r @users.each do |user| ?>
+      <tr>
+        <td>#{h user.fullname}</td>
+        <td>#{h user.extension}</td>
+        <td>#{h user.mailbox}</td>
+        <td>#{h user.active}</td>
+        <td>#{a 'Details', :view, user.id}</td>
+        <td>#{a 'Löschen', :delete, user.id}</td>
+      </tr>
+    <?r end ?>
+  </tbody>
+</table>
