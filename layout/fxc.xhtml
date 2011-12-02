@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta encoding="UTF-8">
+    <title>FXC</title>
+    <link href="/css/common.css" rel="stylesheet">
+    <link href="/css/fxc.css" rel="stylesheet">
+  </head>
+  <body>
+    <header>
+      <h1>#{TCC::FXC::User.a('FXC', :/)}</h1>
+      <nav>
+        <ul>
+          <li>#{TCC::FXC::User.a('Benutzer', :/)}</li>
+        </ul>
+      </nav>
+    </header>
+    <section id="content">
+      #{@content}
+    </section>
+    <footer>
+      <div id="copyright">TinyCallCenter &copy; by The Rubyists LLC. 2010-2011</div>
+    </footer>
+  </body>
+</html>

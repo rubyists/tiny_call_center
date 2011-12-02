@@ -30,6 +30,11 @@ module TinyCallCenter
         ENV["TCC_MemcachedServers"].to_s.split(',')
     end
 
+    sub :fxc do
+      o 'FXC Root Directory', :root,
+        ENV["FXC_Root"]
+    end
+
     sub :tiny_cdr do
       o 'TinyCdr postgres database uri', :db,
         ENV["TCC_TinyCdrDB"]
@@ -53,9 +58,9 @@ module TinyCallCenter
       ENV["TCC_OffHook"] || false
 
     o "Sequel Database URI (adapter://user:pass@host/database)", :db,
-      ENV["TCC_DB"] || "sqlite://%s" % File.expand_path("../db/call_center.db", __FILE__)
+      ENV["TCC_DB"] || ("sqlite://%s" % File.expand_path("../db/call_center.db", __FILE__))
 
-    o "Accounts Backend", :backend, ENV["TCC_Backend"]
+    o "Accounts Backend", :backend, (ENV["TCC_Backend"] || 'db')
 
     o "Log Level (DEBUG, DEVEL, INFO, NOTICE, ERROR, CRIT)", :log_level,
       ENV["TCC_LogLevel"] || "INFO"
@@ -65,5 +70,8 @@ module TinyCallCenter
 
     o "QueueRouter Listener Address", :qr_addr,
       ENV["TCC_QrAddress"] || "127.0.0.1"
+
+    o "Mode for spec", :mode,
+      ENV['TCC_Mode'] || 'live'
   end
 end

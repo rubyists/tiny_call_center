@@ -58,10 +58,10 @@ module TinyCallCenter
     end
 
     def edit(agent)
-      p fsr.call_center(:agent).list.run
+      Innate::Log.debug 'fsr.call_center(:agent).list.run' => fsr.call_center(:agent).list.run
       @agent = fsr.call_center(:agent).list.run.find{|x| x.name == agent}
       @extension = Account.extension(@agent.name)
-      @agent_name = Account.name(@agent.name)
+      @agent_name = Account.agent_name(@agent.name)
       @title = "Edit #{@agent_name}"
     end
 
@@ -119,7 +119,7 @@ module TinyCallCenter
       end
     end
 
-    def update_agent(agent,agt)
+    def update_agent(agent, agt)
       flash[:errors] ||= []
       extension, name, type = agent.values_at("extension", "name", "type")
       cmd = fsr.call_center(:agent).list
@@ -142,6 +142,7 @@ module TinyCallCenter
         end
       end
     end
+
     def delete_agent(agent)
       flash[:errors] ||= []
       cmd = fsr.call_center(:agent).del agent

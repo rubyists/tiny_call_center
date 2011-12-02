@@ -41,7 +41,7 @@ module TinyCallCenter
       s.gsub('_', '') if s
     end
 
-    def self.name(agent)
+    def self.agent_name(agent)
       agent.split('-',2).last
     end
 

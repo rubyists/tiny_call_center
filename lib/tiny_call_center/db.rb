@@ -9,6 +9,6 @@ module TinyCallCenter
   end
 
   def self.db=(other)
-    @db = other
+    @db = Sequel.connect(other)
   end
 end

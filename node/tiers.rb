@@ -28,7 +28,7 @@ module TinyCallCenter
 
         @queue = queue
         @tiers = fsr_tiers(queue) # each of these will be an agent/queue relationship
-        Ramaze::Log.debug @tiers
+        Innate::Log.debug @tiers
         @agents = fsr_agents(@tiers)
         agent_names = Set.new(@agents.map(&:name))
         @all_agents = fsr_all_agents.reject{|agent|

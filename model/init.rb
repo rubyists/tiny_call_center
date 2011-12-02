@@ -31,21 +31,37 @@ module TinyCallCenter
       @db = other
     end
   end
+
+  module FXC
+    @db ||= nil
+
+    def self.db
+      @db ||= Sequel.connect(TinyCallCenter.options.fxc.db)
+    end
+
+    def self.db=(other)
+      @db = other
+    end
+  end
 end
 
 # Here go your requires for models:
 
 require_relative "manager"
-if backend = TinyCallCenter.options.backend
-  require_relative "#{backend}/account"
-else
-  require_relative "db/account"
-end
+require_relative "#{TinyCallCenter.options.backend}/account"
 require_relative "disposition"
 require_relative "call_record"
+
 if TinyCallCenter.options.mod_callcenter.db
   require_relative 'call_center/status_log'
   require_relative 'call_center/state_log'
   require_relative 'call_center/tier'
 end
-require_relative 'tiny_cdr_call' if TinyCallCenter.options.tiny_cdr.db
+
+if TinyCallCenter.options.tiny_cdr.db
+  require_relative 'tiny_cdr_call'
+end
+
+if TinyCallCenter.options.fxc.db
+  require_relative "fxc_init"
+end

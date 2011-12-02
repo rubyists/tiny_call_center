@@ -5,11 +5,13 @@
 require_relative '../../helper'
 require "fsr/model/queue"
 
-Innate.options.roots = ['./']
-Innate.options.started = true
-Innate.setup_dependencies
+# Innate.options.roots = ['./']
+# Innate.options.started = true
+# Innate.setup_dependencies
 
 describe 'TinyCallCenter Queue' do
+  behaves_like :rack_test, :make_account
+
   it "Shows A list of Queues" do
     # TODO Load an innate node, set @queues to an array of  FSR::Model::Queue instances
     # and then test the view output

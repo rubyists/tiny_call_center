@@ -1,3 +1,4 @@
+.[a-z]*
 *~
 *.swp
 services/*/log/*

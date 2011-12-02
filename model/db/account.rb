@@ -42,7 +42,7 @@ module TinyCallCenter
       full_name agent.tr(' ', '')
     end
 
-    def self.name(agent)
+    def self.agent_name(agent)
       agent.split('-',2).last
     end
 
@@ -103,7 +103,7 @@ module TinyCallCenter
     end
 
     def manager?
-      manager
+      !!manager
     end
   end
 end

@@ -10,7 +10,7 @@ require "fsr/model/agent"
 Innate.options.roots = [File.expand_path('../../../../', __FILE__)]
 
 describe 'TinyCallCenter Agents' do
-  behaves_like :rack_test
+  behaves_like :rack_test, :make_account
 
   it "Shows an empty Tier" do
     aheaders = ["name", "system", "uuid", "type", "contact", "status", "state", "max_no_answer","wrap_up_time", "reject_delay_time", "busy_delay_time","last_bridge_start", "last_bridge_end", "last_offered_call", "last_status_change", "no_answer_count", "calls_answered", "talk_time", "ready_time"]
@@ -59,7 +59,6 @@ describe 'TinyCallCenter Agents' do
     res = get('/tiers/helpdesk@default')
     doc = Nokogiri::HTML(res.body)
 
-    puts doc
     doc.css('form.tier-control').first[:action].should == '/tiers/set/1011-John_Lennon/helpdesk@default'
     doc.css('form.tier-control .name').first.text.should == '1011-John_Lennon'
     doc.xpath('//option[@selected]/@value').map { |n| n.text}.should == ["No Answer", "Logged Out", "1", "1", "Ready", "Logged Out", "2", "1"]

@@ -1,19 +1,14 @@
-# Copyright (c) 2008-2011 The Rubyists, LLC (effortless systems) <rubyists@rubyists.com>
+# Copyright (c) 2008-2009 The Rubyists, LLC (effortless systems) <rubyists@rubyists.com>
 # Distributed under the terms of the MIT license.
 # The full text can be found in the LICENSE file included with this software
-
+#
 require_relative '../../helper'
-require "fsr/model/agent"
-
-Innate.options.roots = [File.expand_path('../../../../', __FILE__)]
+require 'fsr/model/agent'
 
 describe 'TinyCallCenter Agents' do
   behaves_like :rack_test, :make_account
 
-  it "Shows A list of Agents" do
-    # TODO Load an innate node, set @queues to an array of  FSR::Model::Agent instances
-    # and then test the view output
-    # Example agent instance:
+  it "Allows an Agent to log in" do
     headers = ["name", "system", "uuid", "type", "contact", "status", "state", "max_no_answer",
                "wrap_up_time", "reject_delay_time", "busy_delay_time", "last_bridge_start",
                "last_bridge_end", "last_offered_call", "last_status_change", "no_answer_count",
@@ -36,3 +31,4 @@ describe 'TinyCallCenter Agents' do
     doc.xpath('//option[@selected]/@value').text.should == 'Available'
   end
 end
+
