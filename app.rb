@@ -28,6 +28,7 @@ module Innate
       accept_language_with_weight(string).map{|lang, weight| lang }
     end
     alias locales accept_language
+
     def accept_language_with_weight(string = env['HTTP_ACCEPT_LANGUAGE'])
       string.to_s.gsub(/\s+/, '').split(',').
         map{|chunk|        chunk.split(';q=', 2) }.

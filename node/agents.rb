@@ -26,7 +26,8 @@ module TinyCallCenter
 
     def new
       @title = "Add Agent"
-      @queues = ancestral_trait[:queues] || fsr.call_center(:queue).list.run.map { |n| n.name }
+      @queues = ancestral_trait[:queues] ||
+        fsr.call_center(:queue).list.run.map(&:name)
     end
 
     def all_agents
