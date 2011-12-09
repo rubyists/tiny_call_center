@@ -14,8 +14,9 @@ module Innate
       trait :localize_locale => ::Locale::Tag::Simple.new('en')
       trait :localize_charset => 'UTF-8'
 
+      # NOTE: this is of course specific to TCC
       def localize(string, substitute = nil)
-        localize_dictionary.translate(string, locales, substitute)
+        TCC::DICTIONARY.translate(string, locales, substitute)
       end
       alias l localize
 

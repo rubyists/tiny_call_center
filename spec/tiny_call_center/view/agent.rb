@@ -5,8 +5,6 @@
 require_relative '../../helper'
 require "fsr/model/agent"
 
-Innate.options.roots = [File.expand_path('../../../../', __FILE__)]
-
 describe 'TinyCallCenter Agents' do
   behaves_like :rack_test, :make_account
 

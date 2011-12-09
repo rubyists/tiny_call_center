@@ -5,10 +5,6 @@
 require_relative '../../helper'
 require "fsr/model/queue"
 
-# Innate.options.roots = ['./']
-# Innate.options.started = true
-# Innate.setup_dependencies
-
 describe 'TinyCallCenter Queue' do
   behaves_like :rack_test, :make_account
 

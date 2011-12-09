@@ -4,9 +4,9 @@
 #
 
 require "fsr"
-require FSR::ROOT/"../spec/fsr_listener_helper"
-require FSR::ROOT/"fsr/listener/outbound"
-require FSR::ROOT/"fsr/listener/mock"
+require File.expand_path("../spec/fsr_listener_helper", FSR::ROOT)
+require File.expand_path("fsr/listener/outbound", FSR::ROOT)
+require File.expand_path("fsr/listener/mock", FSR::ROOT)
 require "em-spec/bacon"
 require 'nokogiri'
 

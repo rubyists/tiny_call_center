@@ -1,11 +1,11 @@
-# Copyright (c) 2008-2009 The Rubyists, LLC (effortless systems) <rubyists@rubyists.com>
+# Copyright (c) 2008-2011 The Rubyists, LLC (effortless systems) <rubyists@rubyists.com>
 # Distributed under the terms of the MIT license.
 # The full text can be found in the LICENSE file included with this software
 #
 module TinyCallCenter
   class Queues
     Innate.node "/queues", self
-    helper :user, :fsr
+    helper :user, :fsr, :localize
     layout :default
     trait :user_model => TinyCallCenter::Account
 

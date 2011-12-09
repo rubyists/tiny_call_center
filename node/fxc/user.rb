@@ -75,12 +75,6 @@ module TCC
           [{action: :dial, numbers: [target]}]
         )
       end
-
-      private
-
-      def localize_dictionary
-        TCC::DICTIONARY
-      end
     end
   end
 end
