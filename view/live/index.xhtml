@@ -1,15 +1,15 @@
 <nav id="nav-search">
   <select id="prev-search"></select>
   <input type="search" id="search" placeholder="Search anything" />
-  <button id="save-search">Keep</button>
+  <button id="save-search">{l 'Keep' }</button>
 </nav>
 
 <nav id="nav-main">
-  <h3>Queues</h3>
+  <h3>{l 'Queues' }</h3>
   <ul id="nav-queues"></ul>
 
   <ul id="nav-show-all">
-    <li><a href="#" id="show-all-agents">Show All</a></li>
+    <li><a href="#" id="show-all-agents">{l 'Show All'}</a></li>
   </ul>
 
   <ul id="nav-sections">
@@ -20,11 +20,11 @@
 
 <nav id="nav-sort">
   <ul>
-    <li><h3>Sort</h3></li>
-    <li><a href="#" class="sorter" id="sort-username">Name</a></li>
-    <li><a href="#" class="sorter" id="sort-extension">Extension</a></li>
-    <li><a href="#" class="sorter" id="sort-status">Status</a></li>
-    <li><a href="#" class="sorter" id="sort-idle">Idle Time</a></li>
+    <li><h3>{l 'Sort' }</h3></li>
+    <li><a href="#" class="sorter" id="sort-username">{l 'Name' }</a></li>
+    <li><a href="#" class="sorter" id="sort-extension">{l 'Extension' }</a></li>
+    <li><a href="#" class="sorter" id="sort-status">{l 'Status' }</a></li>
+    <li><a href="#" class="sorter" id="sort-idle">{l 'Idle Time'}</a></li>
   </ul>
 </nav>
 
@@ -60,69 +60,69 @@
     <span class="agent-name"></span>
     <div class="dialog-tabs">
       <ul>
-        <li><a href="#" class="tab-title">Overview</a></li>
-        <li><a href="#" class="tab-title">Status Log</a></li>
-        <li><a href="#" class="tab-title">State Log</a></li>
-        <li><a href="#" class="tab-title">Call History</a></li>
+        <li><a href="#" class="tab-title">{l 'Overview' }</a></li>
+        <li><a href="#" class="tab-title">{l 'Status Log'}</a></li>
+        <li><a href="#" class="tab-title">{l 'State Log'}</a></li>
+        <li><a href="#" class="tab-title">{l 'Call History'}</a></li>
       </ul>
 
       <div class="tab-content tab-overview">
-        <h2>Calls</h2>
+        <h2>{l 'Calls'}</h2>
         <ul class="calls">
         </ul>
 
-        <h2>Status</h2>
+        <h2>{l 'Status'}</h2>
         <ul class="status">
-          <li><a class="available" href="#">Available</a></li>
-          <li><a class="available-on-demand" href="#">Available (On Demand)</a></li>
-          <li><a class="on-break" href="#">On Break</a></li>
-          <li><a class="logged-out" href="#">Logged Out</a></li>
+          <li><a class="available" href="#">{l 'Available'}</a></li>
+          <li><a class="available-on-demand" href="#">{l 'Available (On Demand)'}</a></li>
+          <li><a class="on-break" href="#">{l 'On Break'}</a></li>
+          <li><a class="logged-out" href="#">{l 'Logged Out'}</a></li>
         </ul>
 
-        <h2>State</h2>
+        <h2>{l 'State'}</h2>
         <ul class="state">
-          <li><a class="Waiting" href="#">Ready</a></li>
-          <li><a class="Idle" href="#">Wrap Up</a></li>
+          <li><a class="Waiting" href="#">{l 'Ready'}</a></li>
+          <li><a class="Idle" href="#">{l 'Wrap Up'}</a></li>
         </ul>
 
         <button class="calltap ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" role="button" aria-disabled="false">
-          <span class="ui-button-text">Tap</span>
+          <span class="ui-button-text">{l 'Tap'}</span>
         </button>
       </div>
 
       <div class="tab-content tab-status-log">
-        <h2>Todays Status Log</h2>
+        <h2>{l 'Todays Status Log'}</h2>
         <table class="tab-container">
           <thead>
-            <th>Status</th>
-            <th>Time</th>
+            <th>{l 'Status'}</th>
+            <th>{l 'Time'}</th>
           </thead>
           <tbody></tbody>
         </table>
       </div>
 
       <div class="tab-content tab-state-log">
-        <h2>Todays State Log</h2>
+        <h2>{l 'Todays State Log'}</h2>
         <table class="tab-container">
           <thead>
-            <th>State</th>
-            <th>Time</th>
+            <th>{l 'State'}</th>
+            <th>{l 'Time'}</th>
           </thead>
           <tbody></tbody>
         </table>
       </div>
 
       <div class="tab-content tab-call-log">
-        <h2>Todays Call History</h2>
+        <h2>{l 'Todays Call History'}</h2>
         <table class="tab-container">
           <thead>
-            <th>Time</th>
-            <th>CID #</th>
-            <th>CID Name</th>
-            <th>To</th>
-            <th>Context</th>
-            <th>Dur</th>
-            <th>Bill</th>
+            <th>{l 'Time'}</th>
+            <th>{l 'CID #'}</th>
+            <th>{l 'CID Name'}</th>
+            <th>{l 'To'}</th>
+            <th>{l 'Context'}</th>
+            <th>{l 'Dur'}</th>
+            <th>{l 'Bill' }</th>
           </thead>
           <tbody></tbody>
         </table>

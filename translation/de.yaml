@@ -1,0 +1,87 @@
+--- 
+Extension: Durchwahl
+Name: Name
+Delete: Löschen
+Voicemail: Sprachbox
+Active: Aktiv
+Details: Angaben
+Users: Benutzer
+User: Benutzer
+Monday: Montag
+Tuesday: Dienstag
+Wednesday: Mittwoch
+Thursday: Donnerstag
+Friday: Freitag
+Saturday: Samstag
+Sunday: Sonntag
+Cancel: Abbrechen
+Create: Erstellen
+Confirm: Bestätigen
+"Add User": "Benutzer hinzufügen"
+"Day of the Week": "Tag der Woche"
+"Time-Based Routing": "Zeit-Basierte Regeln"
+Rules: Regeln
+"Add New": "Regel hinzufügen"
+Delete: Löschen
+Status: Status
+Meta: Meta
+State: Zustand
+Edit: Bearbeiten
+"First Name": Vorname
+"Last Name": Nachname
+Type: Typ
+Contact: Kontakt
+dialstring: Nummer
+"Mark Agent 'On Break' after this many no-answers": Agenten nach wievielen Versuchen pausieren.
+"Allow this many seconds wrap-up time after a complete call": Lasse so viele Sekunden Nachbearbeitungszeit nach einem Anruf.
+"Click save to make this agent available in the Tiers call": Klicken Sie auf Speichern um diesen Agenten der Schicht zuzuweisen.
+"Add Agent": Agenten hinzufügen
+"How many seconds to ring the agent before moving on": Wie viele Sekunden klingeln die Agenten bevor
+"Agent's initial (and primary) queue assignment": Agenten im ursprünglichen (und primär) queue Zuordnung
+"Click add to make this agent available in the Tiers view": Klicken Sie auf Hinzufügen, um dieses Anbieters in den Tiers Blick
+Password: Kennwort
+"Show All": Alle
+Sort: Art
+Day: Tag
+Days: Tage
+"Idle Time": Idle-Ziet
+Overview: Überblick
+"Status Log": Status-Protokoll
+"State Log": Staat Log
+"Call History": Anrufliste
+Available: Verfügbar
+"Available (on Demand)": Verfügbar (auf Anfrage)
+"On Break": Am Pause
+"Logged Out": Abgemeldet
+Ready: Bereit
+"Wrap Up": Einpacken
+"Todays Status Log": Der heutige Status-Log
+Status: Status
+Time: Zeit
+"Todays State Log": Der heutige Zustand log
+"CID #": CID #
+"CID Name": CID Namen
+To: Zu
+Context: Kontext
+Dur: Dauer
+Bill: Rechnung
+Calls: Anrufe
+Tap: Hahn
+Suspend: Aussetzen
+Resume: Wieder
+Action: Aktion
+Agent: Agent
+Detail: Details
+Include: Enthalten
+Exclude: Ausschließen
+Username: Benutzername
+Strategy: Strategie
+"In a queue call": In einer Warteschlange aufrufen
+"Call Me": Rufen Sie mich an
+"Make Call": Anruf tätigen
+Logout: Ausloggen
+Phone: Telefon
+"Reference ID": Kennziffer
+Tier: Stufe
+Position: Position
+"Available Agents": Verfügbare Agenten

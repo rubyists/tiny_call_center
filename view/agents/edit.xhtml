@@ -1,36 +1,36 @@
 <div id="agents_new">
   <form action="/agents/update/#{@agent.name}" method="post" class="table">
     <div class="row">
-      <label for="input-extension">Extension</label>
+      <label for="input-extension">#{l 'Extension'}</label>
       <input type="text" name="extension" id="input-extension" value="#{@extension}" />
     </div>
     <div class="row">
-      <label for="input-name">Name (First Last)</label>
+      <label for="input-name">#{l 'Name'} (#{l 'First Name' } #{l 'Last Name'})</label>
       <input type="text" name="name" id="input-name" value="#{@agent_name}" />
     </div>
     <div class="row">
-      <label for="select-type">Type</label>
+      <label for="select-type">#{l 'Type' }</label>
       <select name="type" id="select-type" />
         <?r TinyCallCenter::Agents::TYPES.map do |tp| ?>
-        <option value="#{tp}" #{tp == "callback" ? '"selected=selected"' : '' }>#{tp}</option>
+          <option value="#{tp}" #{'selected' if tp == "callback"}>#{tp}</option>
         <?r end ?>
       </select>
     </div>
     <div class="row">
-      <label for="input-contact">Contact (dialstring)
-      (Don't change this unless you know what you're doing)</label>
+      <label for="input-contact">#{l 'Contact' } (#{l 'dialstring' })
+        (#{l "Don't change this unless you know what you're doing"})</label>
       <input type="text" name="contact" id="input-contact" value="#{@agent.contact}"/>
     </div>
     <div class="row">
-      <label for="input-max_no_answer">Mark Agent 'On Break' after this many no-answers</label>
+      <label for="input-max_no_answer">#{l 'Mark Agent "On Break" after this many no-answers'}</label>
       <input type="text" name="max_no_answer" value="3" id="input-max_no_answer" />
     </div>
     <div class="row">
-      <label for="input_wrap_up_time">Allow this many seconds wrap-up time after a completed call</label>
+      <label for="input_wrap_up_time">#{l 'Allow this many seconds wrap-up time after a completed call'}</label>
       <input type="text" name="wrap_up_time" value="5" id="input-wrap_up_time" />
     </div>
     <div class="row">
-      <label for="submit-add">Click save to make this agent available in the Tiers view</label>
+      <label for="submit-add">#{l 'Click save to make this agent available in the Tiers view'}</label>
       <input class="button" type="submit" value="Save" id="submit-update" />
     </div>
   </form>

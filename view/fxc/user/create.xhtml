@@ -1,8 +1,10 @@
 <form method="post" action="#{r :create}">
   <fieldset>
-    <legend>Benutzer Details</legend>
+    <legend>{ l 'User' } { l 'Details' }</legend>
     <input type="text" name="fullname" value="#{h @user.fullname}">
     <input type="text" name="extension" value="#{h @user.extension}">
-    <input type="submit" value="Benutzer erstellen">
+    <input type="submit" value="#{l 'Benutzer'} #{l 'Erstellen'}">
   </fieldset>
+  <a id="cancel" name="cancel" href="cancel">#{l 'Cancel'}</a></a>
+  <!-- Also offer a means to cancel the transaction here. -->
 </form>

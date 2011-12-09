@@ -1,12 +1,12 @@
 <div id="agents">
   <div class="table">
     <div class="row head">
-      <div class="name">Name</div>
-      <div class="extension">Extension</div>
-      <div class="status">Status</div>
-      <div class="state">State</div>
-      <div class="action">Action</div>
-      <div class="meta">Meta</div>
+      <div class="name">#{l 'Name'}</div>
+      <div class="extension">#{l 'Extension'}</div>
+      <div class="status">#{l 'Status'}</div>
+      <div class="state">#{l 'State'}</div>
+      <div class="action">{l 'Action'}</div>
+      <div class="meta">{l 'Meta'}</div>
     </div>
     <?r @agents.each do |agent| ?>
       <form action="/agents/set/#{agent.name}" method="post" class="row #{agent.status.downcase.scan(/\w+/)*'-'}">
@@ -24,7 +24,7 @@
           <input type="submit" class="button" name="submit" value="Update" />
           <input type="submit" class="button" name="submit" value="Delete" />
         </div>
-        <a class="meta" href="/agents/edit/#{agent.name}">Edit </a>
+        <a class="meta" href="/agents/edit/#{agent.name}">{l 'Edit' } </a>
       </form>
     <?r end ?>
   </div>

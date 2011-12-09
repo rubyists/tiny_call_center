@@ -1,3 +1,6 @@
 <form method="post" action="#{r :delete, @user.id}">
-  <input type="submit" value="Löschen bestätigen">
+  <input type="submit" value"#{l 'Löschen'} #{l 'bestätigen'}">
+  <!-- Rails apps offer up a "Are you sure?" on_click. We should as well in case the user accidently clicked the submit. -->
+  <!-- This should redirect to the list of users  (Rails would be  link_to "View All", users_path) or you could do a -->
+  <!-- link_to "Return to User", edit_user_path(@user) -->
 </form>

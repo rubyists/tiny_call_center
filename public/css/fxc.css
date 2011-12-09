@@ -30,7 +30,7 @@ header a {
 }
 
 a {
-  color: #66f;
+  color: #aaf;
 }
 
 #copyright {
@@ -66,7 +66,23 @@ a {
 .table .row > * {
   display: table-cell;
   text-align: center;
-  border: 1px solid #333;
+}
+
+.table .row label {
+  padding-right: 2em;
+}
+
+.table .row label:after {
+  content: ":";
+}
+
+.table .buttons {
+  text-align: center;
+}
+
+form .error {
+  color: #f00;
+  padding: 0em 1em;
 }
 
 .available {           background: #afa; }
@@ -97,20 +113,48 @@ form.table .table {
   width: 42em;
 }
 
-.tiers {
+h1 {
+  margin: 1em;
+}
+
+.users {
   margin: auto;
   width: 90%;
 }
 
-.tiers .table {
-  width: 100%;
+.users table {
+  padding: 1em;
 }
 
-.tiers h2 a {
-  color: #fff;
+.users thead tr {
+  background: #336;
 }
 
-.tiers .add {
-  background: #444;
+.users thead tr th {
   padding: 0.5em;
+}
+
+.users tbody tr td {
+  padding: 0.2em;
+}
+
+.users th {
+  text-align: left;
+}
+
+.users tr.even {
+  background: rgba(0,0,0,0.3);
+}
+
+.users tr.odd {
+  background: rgba(0,0,0,0.1);
+}
+
+.hidden {
+  display: none;
+}
+
+.ui-state-highlight {
+  height: 1.5em;
+  line-height: 1.2em;
 }

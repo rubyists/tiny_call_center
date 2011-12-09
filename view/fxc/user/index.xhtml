@@ -1,26 +1,36 @@
-<h1>Benutzer</h1>
+<h1>#{l 'Users'}</h1>
 
-<table>
+<table class="users">
   <thead>
     <tr>
-      <th>Name</th>
-      <th>Durchwahl</th>
-      <th>Sprachbox</th>
-      <th>Aktiv</th>
-      <th>Details</th>
-      <th>Löschen</th>
+      <th>#{l 'Name'}</th>
+      <th>#{l 'Extension'}</th>
+      <th>#{l 'Voicemail'}</th>
+      <th>#{l 'Active'}</th>
+      <th></th>
+      <th></th>
     </tr>
   </thead>
   <tbody>
-    <?r @users.each do |user| ?>
-      <tr>
+    <?r
+      cycle = %w[odd even].cycle
+      @users.each do |user|
+      ?>
+      <tr class="#{cycle.next}">
         <td>#{h user.fullname}</td>
         <td>#{h user.extension}</td>
         <td>#{h user.mailbox}</td>
         <td>#{h user.active}</td>
-        <td>#{a 'Details', :view, user.id}</td>
-        <td>#{a 'Löschen', :delete, user.id}</td>
+        <td>#{a l('Details'), :view, user.id}</td>
+        <td>#{a l('Delete'), :delete, user.id}</td>
       </tr>
-    <?r end ?>
+      <!-- Should add a 'new' button here if this page is also where we're allowing them to add as well as list current users. -->
+      <!-- This would allow for a decent flow. However, are we checking for admin rights on the user (like current_user.is_admin?) -->
+      <!-- If the user is an admin, I would also suggest that we allow for checkbox based multi-deletion of users from here -->
+      <!-- not just individual goto user entries. If not, then the new button, nor the checkboxes should show which makes the page a -->
+      <!-- generic 'status' page for the rest of the userbase with access. -->
+      <!-- If this is the lookup page for existing assigned extensions, if there are a *limited* number of extensions then this will work -->
+      <!-- I'm thinking autocompleting field if there could be hundreds of assigned extensions to make lookup of users easier. -->
+      <?r end ?>
   </tbody>
 </table>

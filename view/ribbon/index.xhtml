@@ -1,22 +1,22 @@
 <div id="ws">
   <ul id="status">
-    <li><button class="change-status green" id="available">Available</button></li>
-    <li><button class="change-status yellow" id="on_break">On Break</button></li>
-    <li><button class="change-status red" id="logged_out">Logged Out</button></li>
+    <li><button class="change-status green" id="available">{l 'Available' }</button></li>
+    <li><button class="change-status yellow" id="on_break">{l 'On Break'}</button></li>
+    <li><button class="change-status red" id="logged_out">{l 'Logged Out'}</button></li>
   </ul>
 
   <ul id="state">
-    <li><button class="change-state green" id="Waiting">Ready</button></li>
-    <li><button class="change-state yellow" disabled="true" id="In_a_queue_call">In a queue call</button></li>
-    <li><button class="change-state red" id="Idle">Wrap Up</button></li>
+    <li><button class="change-state green" id="Waiting">{l 'Ready' }</button></li>
+    <li><button class="change-state yellow" disabled="true" id="In_a_queue_call">{l 'In a queue call'}</button></li>
+    <li><button class="change-state red" id="Idle">{l 'Wrap Up'}</button></li>
   </ul>
 
   <ul id="control">
     <?r if TinyCallCenter.options.off_hook ?>
-      <li><button class="callme red">Call Me</button></li>
+    <li><button class="callme red">{l 'Call Me'}</button></li>
     <?r end ?>
-    <li><button class="originate green">Make Call</button></li>
-    <li><button class="logout red">Logout</button></li>
+    <li><button class="originate green">{l 'Make Call'}</button></li>
+    <li><button class="logout red">{l 'Logout'}</button></li>
   </ul>
 
   <div id="call-template" class="call">
@@ -57,9 +57,10 @@
 
   <form id="originate">
     <fieldset>
-      <label for="originate-dest">Phone# </label>
+      <label for="originate-dest">{l 'Phone'}# </label>
       <input id="originate-dest" type="phone" placeholder="Number To Call" /> <br />
-      <label for="originate-identifier">Ref ID: </label>
+      <label for="originate-identifier">{l 'Reference ID'}:
+      </label>
       <input id="originate-identifier" type="text" placeholder="Reference Identifier" /> <br />
       <input type="submit" value="Call" />
       <input id="originate-cancel" type="button" value="Cancel" />

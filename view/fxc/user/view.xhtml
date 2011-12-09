@@ -1,24 +1,112 @@
-<form method="post" action="#{r :update, @user.id}" class="table">
+<div class="hidden" id="days_of_week">
+  <ul>
+    <li>#{l "Monday"}</li>
+    <li>#{l "Tuesday"}</li>
+    <li>#{l "Wednesday"}</li>
+    <li>#{l "Thursday"}</li>
+    <li>#{l "Friday"}</li>
+    <li>#{l "Saturday"}</li>
+    <li>#{l "Sunday"}</li>
+  </ul>
+</div>
+<form method="post" action="#{r :view, @user.id}" class="table">
   <fieldset>
-    <legend>Benutzer Details</legend>
+    <legend>#{l 'User'} #{l 'Details'}</legend>
 
     <div class="row">
-      <label for="fullname">Name</label>
+      <label for="fullname">#{l 'Name'}</label>
       <input type="text" id="fullname" name="fullname" value="#{h @user.fullname}">
     </div>
 
     <div class="row">
-      <label for="extension">Durchwahl</label>
+      <label for="extension">#{l 'Extension'}</label>
       <input type="text" id="extension" name="extension" value="#{h @user.extension}">
+      <?r if error = @errors[:extension] ?>
+        <div class="error">#{h error.join(', ')}</div>
+      <?r end ?>
     </div>
 
     <div class="row">
-      <label for="active">Aktiv</label>
+      <label for="active">#{l 'Active'}</label>
       <input type="checkbox" id="active" name="active" #{'checked' if @user.active}>
     </div>
 
-    <div class="row">
-      <input type="submit" value="Änderungen bestätigen">
+    <div class="buttons">
+      <!-- Michael, can you change add_user to edit_ or update_ user? Thanks -->
+      <input type="submit" name="add_user" value="#{l 'Add User'}">
+      <input type="submit" name="cancel" value="#{l 'Cancel'}">
+      <!-- The cancel should be on the same line in the page as the update button (if thats what Änderungen bestätigen" means) and redirect_to users_path -->
+      <!-- Here we could return to EITHER edit_users_path(@user) which would basically reset the current page by repulling the user to repopulate the field correctly -->
+      <!-- in the event of a mistake (like the cancel) or users_path -->
     </div>
   </fieldset>
 </form>
+
+<h4>#{l 'Time-Based Routing'} #{l 'Rules'}</h4>
+<div id="tod-contain">
+  <h2>#{l 'Time-Based Routes'}</h2>
+  <table id="tod" class="ui-widget ui-widget-content">
+    <thead>
+      <tr class="ui-widget-header">
+        <th>#{l 'Time'}</th>
+        <th>#{l 'Days'}</th>
+        <th>#{l 'Action'}</th>
+        <th>#{l 'Position'}</th>
+      </tr>
+    </thead>
+    <tbody class="sortable">
+      <?r @tod_rules.each do |rule|
+        cond = rule.conditions.first
+      ?>
+        <tr class="ui-state-default" id="condition-#{h cond.id}">
+          <td class="time">#{h cond.minute_of_day_to_times}</td>
+          <td class="days">#{h cond.wdays.map{|w| l(w) }.join('-')}</td>
+          <td class="dialstring">#{h cond.actions.last.dialstring}</td>
+          <td class="position">#{h rule.position}</td>
+        </tr>
+      <?r end ?>
+    </tbody>
+  </table>
+</div>
+
+<button id="add-tod">#{l 'Add New'}</button>
+
+<div id="add-tod-dialog">
+  <form id="add-tod-form" action="#{r :timeroute}" method="post">
+    <fieldset>
+      <legend>#{l 'Time-Based Routing'}</legend>
+
+      <input type="hidden" id="user-id" value="#{h @user.id}">
+
+      <div class="row slider">
+        <label>#{l 'Time'}</label>
+        <input type="hidden" id="time-from" value="540">
+        <input type="hidden" id="time-to" value="1020">
+        <div id="time-show"></div>
+        <div id="timerange"></div>
+      </div>
+
+      <div class="row slider">
+        <input type="hidden" name="mo" value="#{l 'Monday'}">
+        <input type="hidden" name="tu" value="#{l 'Tuesday'}">
+        <input type="hidden" name="we" value="#{l 'Wednesday'}">
+        <input type="hidden" name="th" value="#{l 'Thursday'}">
+        <input type="hidden" name="fr" value="#{l 'Friday'}">
+        <input type="hidden" name="sa" value="#{l 'Saturday'}">
+        <input type="hidden" name="su" value="#{l 'Sunday'}">
+
+        <input type="hidden" id="day-from" name="day-from" value="0">
+        <input type="hidden" id="day-to" name="day-to" value="4">
+
+        <label>#{l 'Day of the Week'}</label>
+        <div id="day-show"></div>
+        <div id="dayrange"></div>
+      </div>
+
+      <div class="row">
+        <label for="route-ext">#{l 'Route to number'}</label>
+        <input type="text" name="route-ext" id="route-ext">
+      </div>
+    </fieldset>
+  </form>
+</div>
