@@ -22,11 +22,10 @@ describe 'TinyCallCenter Queue' do
                "/home/freeswitch/recordings/${strftime(%Y-%m-%d-%H-%M-%S)}.${destination_number}.${caller_id_number}.${uuid}.wav"]
     queue = FSR::Model::Queue.new(headers, *data)
 
-    action = TinyCallCenter::Queues.resolve('/')
-    action.variables[:queues] = [queue]
+    TinyCallCenter::Queues.trait queues: [queue]
 
-    raw = action.render
-    doc = Nokogiri::HTML(raw)
+    res = get('/queues/')
+    doc = Nokogiri::HTML(res.body)
     (doc/:td).map(&:text).should == ["Name", "Strategy", "helpdesk@default", "longest-idle-agent"]
   end
 end

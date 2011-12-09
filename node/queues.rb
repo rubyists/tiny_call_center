@@ -9,12 +9,15 @@ module TinyCallCenter
     layout :default
     trait :user_model => TinyCallCenter::Account
 
+    trait queues: nil
+
     before_all do
       redirect TCC::Accounts.r(:login) unless logged_in?
     end
 
     def index(queue_name = nil)
-      @queues ||= fsr.call_center(:queue).list(queue_name).run
+      @queues = ancestral_trait[:queues] ||
+        fsr.call_center(:queue).list(queue_name).run
     end
   end
 end
