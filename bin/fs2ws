@@ -32,11 +32,13 @@ auth = TinyCallCenter.options.fs_auth
 agent_ws = TinyCallCenter.options.ribbon.server
 live_ws = TinyCallCenter.options.listener.server
 EM.run do
+  FSR::Log.notice "Using #{TinyCallCenter.options.registration_servers} registration servers"
   TinyCallCenter.options.registration_servers.each do |monitor_server|
-    FSR::Log.notice "Connecting to #{monitor_server}"
+    FSR::Log.notice "Connecting to #{monitor_server}:#{port}"
     EventMachine.connect(monitor_server, port, TinyCallCenter::Monitor, host: monitor_server, port: port, auth: auth, output_format: 'plain')
   end
 
+  FSR::Log.notice "Using #{command_socket_server}"
   EventMachine.connect(command_socket_server, port, TinyCallCenter::QueueReporter, host: command_socket_server, port: port, auth: auth, output_format: 'plain') do |reporter|
     FSR::Log.notice "Connecting to #{command_socket_server}:#{port}"
     EventMachine.start_server(agent_ws.host, agent_ws.port, EventMachine::WebSocket::Connection, {}) do |websocket|
