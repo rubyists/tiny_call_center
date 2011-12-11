@@ -37,7 +37,7 @@ module TinyCallCenter
     end
 
     def self.username(agent)
-      s = name(agent)
+      s = agent_name(agent)
       s.gsub('_', '') if s
     end
 

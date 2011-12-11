@@ -1,0 +1,81 @@
+<h3>#{TinyCallCenter::Tiers.a(@queue, :/, @queue)}</h3>
+<div class="queue-tiers">
+  <form class="mass-control"></form>
+
+  <div class="table">
+    <div class="row head">
+      <div class="name">Name</div>
+      <div class="state">State</div>
+      <div class="status">Status</div>
+      <div class="level">Tier</div>
+      <div class="position">Position</div>
+      <div class="action">Action</div>
+    </div>
+
+    <?r @tiers.each do |tier|
+      agent = @agents.find{|n| n.name == tier.agent }
+      state_class, status_class = [tier.state, agent.status].map{|s| s.downcase.scan(/\w+/).join('-') }
+      ?>
+      <form action="/tiers/set/#{tier.agent}/#{@queue}" method="post" class="row tier-control #{state_class} #{status_class}">
+        <input type="hidden" name="queue" value="#{h @queue}" />
+        <div class="name">#{h tier.agent}</div>
+        <div class="state">
+          <select name="state">
+            <?r TinyCallCenter::Tiers::STATES.each do |option| ?>
+              <option value="#{option}" #{'selected' if option == tier.state}>#{option}</option>
+            <?r end ?>
+          </select>
+        </div>
+        <div class="status">
+          <select name="status">
+            <?r TinyCallCenter::Agents::STATUSES.each do |option| ?>
+              <option value="#{option}" #{'selected' if option == agent.status}>#{option}</option>
+            <?r end ?>
+          </select>
+        </div>
+        <div class="level">
+          <select name="level">
+            <?r TinyCallCenter::Tiers::LEVELS.each do |option| ?>
+              <option value="#{option}" #{'selected' if option == tier.level}>#{option}</option>
+            <?r end ?>
+          </select>
+        </div>
+        <div class="position">
+          <select name="position">
+            <?r TinyCallCenter::Tiers::POSITIONS.each do |option| ?>
+              <option value="#{option}" #{'selected' if option == tier.position}>#{option}</option>
+            <?r end ?>
+          </select>
+        </div>
+        <div class="action">
+          <input type="submit" name="submit" value="Update" />
+          <input type="submit" name ="submit" value="Delete" />
+        </div>
+      </form>
+    <?r end ?>
+  </div>
+
+  <?r if @all_agents.size > 0 ?>
+    <form action="/tiers/add_agent/#{@queue}" method="post" class="add">
+      <label for="agent">Available Agents</label>
+      <select name="agent">
+        <?r @all_agents.each do |agent| ?>
+          <option value="#{agent.name}">#{agent.name}</option>
+        <?r end ?>
+      </select>
+      <label for="level">Level: </label>
+      <select name="level">
+        <?r TinyCallCenter::Tiers::LEVELS.each do |option| ?>
+          <option value="#{option}">#{option}</option>
+        <?r end ?>
+      </select>
+      <label for="position">Position: </label>
+      <select name="position">
+        <?r TinyCallCenter::Tiers::POSITIONS.each do |option| ?>
+          <option value="#{option}">#{option}</option>
+        <?r end ?>
+      </select>
+      <input type="submit" value="Add Agent" />
+    </form>
+  <?r end ?>
+</div>

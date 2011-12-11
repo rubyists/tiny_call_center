@@ -1,7 +1,7 @@
 module TinyCallCenter
   class Live
     Innate.node "/live", self
-    helper :user, :fsr
+    helper :user, :fsr, :localize
     layout :live
     trait :user_model => TinyCallCenter::Account
 

@@ -6,7 +6,7 @@ module TinyCallCenter
   class Tiers
     Innate.node "/tiers", self
     layout :default
-    helper :user, :flash, :fsr
+    helper :user, :flash, :fsr, :localize
     trait :user_model => TinyCallCenter::Account
 
     trait :tiers => nil

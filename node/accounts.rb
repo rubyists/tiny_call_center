@@ -6,6 +6,7 @@ module TinyCallCenter
   class Accounts
     Innate.node "/accounts", self
     helper :user
+    helper :localize
     trait :user_model => TinyCallCenter::Account
     layout :main
 
