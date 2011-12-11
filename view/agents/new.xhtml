@@ -1,16 +1,16 @@
 <form action="/agents/add" method="post" class="table">
   <fieldset>
-    <legend>{l 'Add Agent' }</legend>
+    <legend>#{l 'Add Agent' }</legend>
     <div class="row">
-      <label for="input-extension">{l 'Extension' }</label>
+      <label for="input-extension">#{l 'Extension' }</label>
       <input type="text" name="extension" id="input-extension" autofocus placeholder="Extension" />
     </div>
     <div class="row">
-      <label for="input-name">{l 'Name' } ({l 'First' } {l 'Last' })</label>
+      <label for="input-name">#{l 'Name' } (#{l 'First' } #{l 'Last' })</label>
       <input type="text" name="name" id="input-name" placeholder="First Last" />
     </div>
     <div class="row">
-      <label for="select-type">{l 'Type' }</label>
+      <label for="select-type">#{l 'Type' }</label>
       <select name="type" id="select-type" />
         <?r TinyCallCenter::Agents::TYPES.map do |tp| ?>
         <option value="#{tp}" #{tp == "callback" ? '"selected=selected"' : '' }>#{tp}</option>
@@ -18,23 +18,23 @@
       </select>
     </div>
     <div class="row">
-      <label for="input-timeout">{l 'How many seconds to ring the agent before moving on'}</label>
+      <label for="input-timeout">#{l 'How many seconds to ring the agent before moving on'}</label>
       <input type="text" name="timeout" value="10" id="input-timeout" />
     </div>
     <div class="row">
-      <label for="input-contact">{l 'Contact' } ({l 'dialstring' })</label>
+      <label for="input-contact">#{l 'Contact' } (#{l 'dialstring' })</label>
       <input type="text" name="contact" id="input-contact" />
     </div>
     <div class="row">
-      <label for="input-max_no_answer">{l "Mark Agent 'On Break' after this many no-answers"}</label>
+      <label for="input-max_no_answer">#{l "Mark Agent 'On Break' after this many no-answers"}</label>
       <input type="text" name="max_no_answer" value="3" id="input-max_no_answer" />
     </div>
     <div class="row">
-      <label for="input-wrap_up_time">{l 'Allow this many seconds wrap-up time after a completed call'}</label>
+      <label for="input-wrap_up_time">#{l 'Allow this many seconds wrap-up time after a completed call'}</label>
       <input type="text" name="wrap_up_time" value="5" id="input-wrap_up_time" />
     </div>
     <div class="row">
-      <label for="input-initial_queue">{l 'Agent's initial (and primary) queue assignment'}</label>
+      <label for="input-initial_queue">#{l("Agent's initial (and primary) queue assignment")}</label>
       <select name="initial_queue" id="input-initial_queue" >
         <?r @queues.each do |queue| ?>
         <option value="#{queue}" #{'selected="selected"' if queue == 'small_balance'}>
@@ -44,7 +44,7 @@
       </select>
     </div>
     <div class="row">
-      <label for="submit-add">{l 'Click add to make this agent available in the Tiers view'}</label>
+      <label for="submit-add">#{l 'Click add to make this agent available in the Tiers view'}</label>
       <input type="submit" value="Add" id="submit-add" />
     </div>
   </fieldset>
