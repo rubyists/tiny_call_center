@@ -4,14 +4,15 @@
     <th>{l 'Include' }</th>
     <th>{l 'Exclude' }</th>
     <th>&nbsp;</th>
+    <th>&nbsp;</th>
   </tr>
   <?r @managers.each do |manager| ?>
-    <tr>
-      <td class="username">#{h manager.username}</td>
-      <td class="include">#{h manager.include}</td>
-      <td class="exclude">#{h manager.exclude}</td>
-      <td class="edit">#{a '{l 'Edit' }', :edit, manager.id, manager.username}</td>
-      <td class="delete">#{a '{l 'Delete' }', :delete, manager.id, manager.username}</td>
-    </tr>
+  <tr>
+    <td class="username">#{h manager.username}</td>
+    <td class="include">#{h manager.include}</td>
+    <td class="exclude">#{h manager.exclude}</td>
+    <td class="edit">#{a "{l 'Edit' }", :edit, manager.id, manager.username}</td>
+    <td class="delete">#{a "{l 'Delete' }", :delete, manager.id, manager.username}</td>
+  </tr>
   <?r end ?>
 </table>
