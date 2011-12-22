@@ -21,29 +21,24 @@ module TinyCallCenter
     end
 
     def index(queue = nil)
-      if queue.nil?
-        redirect r(:list)
-      else
-        @title = "Tiers"
+      redirect r(:list) unless @queue ||= queue
 
-        @queue = queue
-        @tiers = fsr_tiers(queue) # each of these will be an agent/queue relationship
-        Innate::Log.debug @tiers
-        @agents = fsr_agents(@tiers)
-        agent_names = Set.new(@agents.map(&:name))
-        @all_agents = fsr_all_agents.reject{|agent|
-          agent_names.include?(agent.name)
-        }.sort_by{|agent| agent.extension }
-        @agent_table = Agents.render_view(:index, agents: @agents)
-      end
+      @title = "Tiers"
+      @tiers = fsr_tiers(@queue) # each of these will be an agent/queue relationship
+
+      @agents = fsr_agents(@tiers)
+      agent_names = Set.new(@agents.map(&:name))
+      @all_agents = fsr_all_agents.reject{|agent|
+        agent_names.include?(agent.name)
+      }.sort_by{|agent| agent.extension }
+
+      @agent_table = Agents.render_view(:index, agents: @agents)
     end
 
     def list
       fsr.call_center(:queue).list.run.
         sort_by{|agent| agent.name }.
-        map{|agent|
-          index(agent.name)
-          render_view(:index) }.join
+        map{|agent| render_partial(:index, queue: agent.name) }.join
     end
 
     def set_status
