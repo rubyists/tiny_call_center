@@ -33,6 +33,9 @@ module TinyCallCenter
     sub :redis do
       o 'Redis server to use for answer/originate hashes', :server,
         ENV['TCC_RedisServer'] || '127.0.0.1:6379'
+
+      o 'TTL for cached entries in Redis', :ttl,
+        (ENV['TCC_RedisTTL'] || (12 * 60 * 60)).to_i
     end
 
     sub :fxc do
