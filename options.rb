@@ -30,6 +30,11 @@ module TinyCallCenter
         ENV["TCC_MemcachedServers"].to_s.split(',')
     end
 
+    sub :redis do
+      o 'Redis server to use for answer/originate hashes', :server,
+        ENV['TCC_RedisServer'] || '127.0.0.1:6379'
+    end
+
     sub :fxc do
       o 'FXC Root Directory', :root,
         ENV["FXC_Root"]

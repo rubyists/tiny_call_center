@@ -1,10 +1,13 @@
 module TinyCallCenter
   class Monitor < FSR::Listener::Inbound
-    if TCC.options.memcached.servers.empty?
-      require "tiny_call_center/utils/memory_backend"
+    if TCC.options.redis.server.empty?
+      require_relative "../utils/redis_backend"
+      include RedisBackend
+    elsif TCC.options.memcached.servers.empty?
+      require_relative "../utils/memory_backend"
       include MemoryBackend
     else
-      require "tiny_call_center/utils/memcached_backend"
+      require_relative "../utils/memcached_backend"
       include MemcachedBackend
     end
 
