@@ -19,24 +19,22 @@ module TinyCallCenter
 
     def set_originate(uuid, msg)
       key = "originate_#{uuid}"
-      @originate_cache.setnx(key, msg)
-      @originate_cache.expire(key, @ttl)
+      @originate_cache.setex(key, @ttl, msg)
       msg
     end
 
     def get_originate(uuid)
-      @originate_cache.get("originate_#{uuid}")
+      @originate_cache["originate_#{uuid}"]
     end
 
     def set_answer(uuid, msg)
       key = "answer_#{uuid}"
-      @answer_cache.set(key, msg)
-      @answer_cache.expire(key, @ttl)
+      @answer_cache.setex(key, @ttl, msg)
       msg
     end
 
     def get_answer(uuid)
-      @answer_cache.get("answer_#{uuid}")
+      @answer_cache["answer_#{uuid}"]
     end
   end
 end
