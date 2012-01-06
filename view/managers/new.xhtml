@@ -3,7 +3,7 @@
     <legend>#{h @legend}</legend>
 
     <div class="row">
-      <legend for="form-username">{l 'Username' }</legend>
+      <legend for="form-username">#{l 'Username' }</legend>
       <select name="username" id="form-username">
         <?r @usernames.each do |username| ?>
           <?r if username == @manager.username ?>
@@ -16,12 +16,12 @@
     </div>
 
     <div class="row">
-      <legend for="form-include">{l 'Include' }</legend>
+      <legend for="form-include">#{l 'Include' }</legend>
       <input type="text" name="include" id="form-include" value="#{h @manager.include}">
     </div>
 
     <div class="row">
-      <legend for="form-exclude">{l 'Exclude' }</legend>
+      <legend for="form-exclude">#{l 'Exclude' }</legend>
       <input type="text" name="exclude" id="form-exclude" value="#{h @manager.exclude}">
     </div>
 
