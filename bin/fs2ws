@@ -24,13 +24,14 @@ require_relative '../lib/tiny_call_center/fs2ws/web_socket_channel'
 require_relative '../lib/tiny_call_center/fs2ws/web_socket_reporter'
 
 $stdout.sync = true
-EM.epoll?
+
 # Need to make all of these env vars
 command_socket_server = TinyCallCenter.options.command_server
 port = TinyCallCenter.options.fs_port.to_i
 auth = TinyCallCenter.options.fs_auth
 agent_ws = TinyCallCenter.options.ribbon.server
 live_ws = TinyCallCenter.options.listener.server
+
 EM.run do
   FSR::Log.notice "Using #{TinyCallCenter.options.registration_servers} registration servers"
   TinyCallCenter.options.registration_servers.each do |monitor_server|
@@ -41,12 +42,15 @@ EM.run do
   FSR::Log.notice "Using #{command_socket_server}"
   EventMachine.connect(command_socket_server, port, TinyCallCenter::QueueReporter, host: command_socket_server, port: port, auth: auth, output_format: 'plain') do |reporter|
     FSR::Log.notice "Connecting to #{command_socket_server}:#{port}"
-    EventMachine.start_server(agent_ws.host, agent_ws.port, EventMachine::WebSocket::Connection, {}) do |websocket|
+
+    FSR::Log.notice "Starting Agent WebSocket: #{agent_ws.host}:#{agent_ws.port}"
+    EventMachine::WebSocket.start(host: agent_ws.host, port: agent_ws.port, debug: true) do |agent_websocket|
       FSR::Log.notice "Starting WebSocket Reporter: #{websocket}"
       TinyCallCenter::WebSocketReporter.new(reporter, websocket, command_socket_server)
     end
 
-    EventMachine.start_server(live_ws.host, live_ws.port, EventMachine::WebSocket::Connection, {}) do |websocket|
+    FSR::Log.notice "Starting Live WebSocket: #{live_ws.host}:#{live_ws.port}"
+    EventMachine::WebSocket.start(host: live_ws.host, port: live_ws.port, debug: true) do |websocket|
       FSR::Log.notice "Starting WebSocket Channel: #{websocket}"
       TinyCallCenter::WebSocketChannel.new(reporter, websocket, command_socket_server)
     end
