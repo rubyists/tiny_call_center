@@ -1,0 +1,49 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#pause, #play {
+  color: #fff;
+}
+
+.line {
+  background: rgba(255,255,255,0.1);
+}
+
+.line.active {
+  background: rgba(255,0,0,0.1);
+}
+
+dl {
+  margin: 0;
+}
+
+#log {
+  width: 40%;
+  height: 90%;
+  overflow: auto;
+  background: #111;
+  display: block;
+  float: left;
+}
+
+#detail {
+  width: 60%;
+  height: 90%;
+  overflow: auto;
+  background: #111;
+  display: block;
+  float: right;
+}
+
+footer {
+  display: block;
+  text-align: center;
+  font-size: 0.9em;
+}
+
+#agent_name, #server {
+  display: none;
+}
