@@ -1,0 +1,21 @@
+script: 'RUBYOPT=-rubygems rake bacon'
+before_script:
+  - test -s "$HOME/.rvm/scripts/rvm" && source "$HOME/.rvm/scripts/rvm"
+  - test -s .gems && rvm gemset import .gems
+  - psql -U postgres -c 'create database tcc_spec;'
+env: TCC_ModCallcenterDB=postgres://postgres@localhost/tcc_spec
+rvm:
+  - 1.8.7
+  - 1.9.2
+  - 1.9.3
+  - ruby-head
+  - rbx-18mode
+  - rbx-19mode
+  - ree
+  - jruby
+notifications:
+  email:
+    - mf@rubyists.com
+branches:
+  only:
+    - master

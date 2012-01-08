@@ -3,7 +3,7 @@ addressable -v2.2.6
 bacon -v1.1.0
 daemons -v1.1.5
 diff-lcs -v1.1.3
-em-spec -v0.2.5
+em-spec -v0.2.6
 em-websocket -v0.3.6
 eventmachine -v0.12.10
 freeswitcher -v0.6.12

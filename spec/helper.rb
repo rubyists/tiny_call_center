@@ -9,11 +9,19 @@ require File.expand_path("fsr/listener/outbound", FSR::ROOT)
 require File.expand_path("fsr/listener/mock", FSR::ROOT)
 require "em-spec/bacon"
 require 'nokogiri'
+require 'uri'
 
-db = "postgres://callcenter@localhost/tcc_spec"
-system('dropdb', '-U', 'postgres', 'tcc_spec')
-system('createdb', '-U', 'postgres', '-O', 'callcenter', 'tcc_spec')
-ENV['TCC_DB'] = db
+db = ENV['TCC_DB'] ||= "postgres://callcenter@localhost/tcc_spec"
+uri = URI(db)
+case uri.scheme
+when 'postgres'
+  db_name = uri.path.split('/').last
+  system('dropdb', '-U', 'postgres', db_name)
+  system('createdb', '-U', 'postgres', db_name)
+else
+  raise 'we only support postgres for now'
+end
+
 system('rake', 'migrate')
 
 require_relative '../options'
