@@ -2,6 +2,7 @@ module TinyCallCenter
   class Managers
     Innate.node "/managers", self
     helper :user
+    helper :localize
     trait :user_model => TinyCallCenter::Account
     layout :managers
 
