@@ -45,8 +45,8 @@ EM.run do
 
     FSR::Log.notice "Starting Agent WebSocket: #{agent_ws.host}:#{agent_ws.port}"
     EventMachine::WebSocket.start(host: agent_ws.host, port: agent_ws.port, debug: true) do |agent_websocket|
-      FSR::Log.notice "Starting WebSocket Reporter: #{websocket}"
-      TinyCallCenter::WebSocketReporter.new(reporter, websocket, command_socket_server)
+      FSR::Log.notice "Starting WebSocket Reporter: #{agent_websocket}"
+      TinyCallCenter::WebSocketReporter.new(reporter, agent_websocket, command_socket_server)
     end
 
     FSR::Log.notice "Starting Live WebSocket: #{live_ws.host}:#{live_ws.port}"
