@@ -9,6 +9,7 @@ module TinyCallCenter
   class Ribbon
     Innate.node "/ribbon", self
     helper :user
+    helper :localize
     trait :user_model => TinyCallCenter::Account
     layout :ribbon
 
