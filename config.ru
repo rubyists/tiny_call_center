@@ -12,5 +12,5 @@
 # the same configuration.
 
 require ::File.expand_path('app', ::File.dirname(__FILE__))
-Innate.start(:file => __FILE__, :root => TinyCallCenter::ROOT, :started => true)
+Innate.start(:file => __FILE__, :started => true)
 run Innate
