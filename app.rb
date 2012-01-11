@@ -38,13 +38,28 @@ module Innate
   end
 end
 
+class WorkAroundRackStatic
+  def initialize(app)
+    @app = app
+    @static = Rack::Static.new(@app, urls: %w[/css /stylesheets /js /images], root: "public", cache_control: 'public')
+  end
+
+  def call(env)
+    if env['PATH_INFO'] == '/'
+      @app.call(env)
+    else
+      @static.call(env)
+    end
+  end
+end
+
 Innate.middleware! do |mw|
   mw.use Rack::CommonLogger
   mw.use Rack::ShowExceptions
   mw.use Rack::ETag
   mw.use Rack::ConditionalGet
   mw.use Rack::ContentLength
-  mw.use Rack::Static, urls: %w[/css /stylesheets /js /images], root: "public"
+  mw.use WorkAroundRackStatic
   mw.use Rack::Reloader
   mw.innate
 end
