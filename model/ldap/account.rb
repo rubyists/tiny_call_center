@@ -20,13 +20,13 @@ module TinyCallCenter
     def self.registration_server(extension)
       case extension
       when /^2[458]00$/
-        "192.168.6.240"
-      when /^2[45]\d\d$/
-        "192.168.6.249"
+        "192.168.6.240" #moses
+      when /^2[458]\d\d$/
+        "192.168.6.249" #pip
       when /^10\d\d$/
-        "192.168.134.15"
+        "192.168.134.15" #tyler
       else
-        "192.168.6.240"
+        "192.168.6.240" #moses
       end
     end
 

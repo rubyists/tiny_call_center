@@ -44,13 +44,13 @@ EM.run do
     FSR::Log.notice "Connecting to #{command_socket_server}:#{port}"
 
     FSR::Log.notice "Starting Agent WebSocket: #{agent_ws.host}:#{agent_ws.port}"
-    EventMachine::WebSocket.start(host: agent_ws.host, port: agent_ws.port, debug: true) do |agent_websocket|
+    EventMachine::WebSocket.start(host: agent_ws.host, port: agent_ws.port, debug: false) do |agent_websocket|
       FSR::Log.notice "Starting WebSocket Reporter: #{agent_websocket}"
       TinyCallCenter::WebSocketReporter.new(reporter, agent_websocket, command_socket_server)
     end
 
     FSR::Log.notice "Starting Live WebSocket: #{live_ws.host}:#{live_ws.port}"
-    EventMachine::WebSocket.start(host: live_ws.host, port: live_ws.port, debug: true) do |websocket|
+    EventMachine::WebSocket.start(host: live_ws.host, port: live_ws.port, debug: false) do |websocket|
       FSR::Log.notice "Starting WebSocket Channel: #{websocket}"
       TinyCallCenter::WebSocketChannel.new(reporter, websocket, command_socket_server)
     end

@@ -18,15 +18,20 @@ module TinyCallCenter
       FSR::CommandSocket.new(:server => server)
     end
 
+    # Check the agents extension against all the calls passed in.
+    # When new Channel or Call fields are added, the calls.select
+    # block needs to know about them
     def agent_status(extension, calls)
       return {} unless extension && calls
 
       sip = /sip:#{extension}@/
       return {} unless founds = calls.select do |call|
-        [call.dest, call.callee_cid_num, call.caller_cid_num].include?(extension) ||
+        #FSR::Log.devel extension: extension, includes: [call.dest, call.cid_num, call.callee_cid_num, call.caller_cid_num]
+        #FSR::Log.devel sip: sip, any: [call.caller_chan_name, call.callee_chan_name]
+
+        [call.dest, call.callee_cid_num, call.caller_cid_num, call.cid_num].include?(extension) ||
         [call.caller_chan_name, call.callee_chan_name].any?{|name| name =~ sip }
       end
-
 
       found_calls = founds.map { |found|
         if found.dest && found.dest == extension && found.cid_num == extension
