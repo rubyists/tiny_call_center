@@ -1,0 +1,25 @@
+#!/usr/bin/env ruby
+
+require 'sequel'
+require 'pgpass'
+require 'socket'
+
+channels = ARGV
+if channels.empty?
+  warn "No Channels Specified, falling back to defaults"
+  channels = ['channel_insert', 'channel_update', 'channel_delete', 'call_insert', 'call_update', 'call_delete']
+end
+
+url = Pgpass.match(database: 'freeswitch').to_url
+DB = Sequel.connect(url)
+
+warn "connected to pg: %p (%p)" % [url, DB]
+warn "listening on %p" % [channels]
+# channels = ['channel_insert', 'channel_update', 'channel_delete', 'call_insert', 'call_update', 'call_delete']
+
+
+TCPSocket.open 'localhost', 43442 do |socket|
+  DB.listen channels, loop: true do |channel, pid, payload|
+    socket.puts("#{channel}\t#{payload}")
+  end
+end
