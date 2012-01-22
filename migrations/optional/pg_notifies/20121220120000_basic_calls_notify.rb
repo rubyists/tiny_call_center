@@ -7,15 +7,15 @@ Class.new Sequel::Migration do
         -- Send NOTIFY events for every change to the calls table
         --
         IF (TG_OP = 'INSERT') THEN
-            PERFORM pg_notify('call_insert', '{"uuid": "'||NEW.uuid||'", "callstate": "'||NEW.callstate||'"}');
+            PERFORM pg_notify('call_insert', row_to_json_object(NEW));
             RETURN NEW;
         ELSIF (TG_OP = 'UPDATE') THEN
             IF OLD.callstate <> NEW.callstate THEN
-              PERFORM pg_notify('call_update', '{"uuid": "'||NEW.uuid||'", "callstate": "'||NEW.callstate||'"}');
+              PERFORM pg_notify('call_update', row_to_json_object(NEW));
               RETURN NEW;
             END IF;
         ELSIF (TG_OP = 'DELETE') THEN
-            PERFORM pg_notify('call_delete', '{"uuid": "'||OLD.uuid||'", "callstate": "'||OLD.callstate||'"}');
+            PERFORM pg_notify('call_delete', row_to_json_object(OLD));
             RETURN OLD;
         END IF;
         RETURN NULL; -- result is ignored since this is an AFTER trigger

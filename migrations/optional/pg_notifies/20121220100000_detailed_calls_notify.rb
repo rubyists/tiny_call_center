@@ -15,7 +15,7 @@ Class.new Sequel::Migration do
               RETURN NEW;
             END IF;
         ELSIF (TG_OP = 'DELETE') THEN
-            PERFORM pg_notify('channel_delete', '{"uuid": "'||OLD.uuid||'", "callstate": "'||OLD.callstate||'"}');
+            PERFORM pg_notify('channel_delete', row_to_json_object(OLD));
             RETURN OLD;
         END IF;
         RETURN NULL; -- result is ignored since this is an AFTER trigger
