@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta encoding="UTF-8">
+    <title>Ribbon v2</title>
+    <link rel="stylesheet" href="/css/ribbon.css">
+  </head>
+  <body>
+    <div id="ribbon">
+      <ul id="status">
+        <li><button class="available green">#{l 'Available' }</button></li>
+        <li><button class="on_break yellow">#{l 'On Break'}</button></li>
+        <li><button class="logged_out red">#{l 'Logged Out'}</button></li>
+      </ul>
+
+      <ul id="state">
+        <li><button class="Waiting green">#{l 'Ready' }</button></li>
+        <li><button class="In_a_queue_call yellow" disabled="true">#{l 'In a queue call'}</button></li>
+        <li><button class="Idle red">#{l 'Wrap Up'}</button></li>
+      </ul>
+
+      <ul id="control">
+        <?r if TinyCallCenter.options.off_hook ?>
+        <li><button class="callme red">#{l 'Call Me'}</button></li>
+        <?r end ?>
+        <li><button class="originate green">#{l 'Make Call'}</button></li>
+        <li><button class="logout red">#{l 'Logout'}</button></li>
+      </ul>
+
+      <div id="call-template" class="call">
+        <div class="call-control">
+          <a href="#" title="Transfer" class="transfer">&#x27f9;</a>
+          <a href="#" title="Dialpad" class="dtmf">&#x266f;</a>
+          <a href="#" title="Hang up" class="hangup">&#x2715;</a>
+        </div>
+        <div class="call-data">
+          <span class="cid-name"></span>
+          <span class="cid-number"></span>
+          <span class="arrow">&harr;</span>
+          <span class="destination"></span>
+          <span class="answered"></span>
+          <span class="queue-name"></span>
+          <span class="channel"></span>
+          <span class="uuid"></span>
+        </div>
+        <form class="dtmf-form">
+          <input type="dtmf" class="dtmf-input" />
+        </form>
+      </div>
+
+      <div id="calls">
+      </div>
+
+      <form id="disposition">
+        <ul>
+          <?r TinyCallCenter::Disposition.each do |d| ?>
+            <li>
+              <button id="disp-#{h d.code}" accesskey="#{h d.key}" label="#{h d.description}">
+                #{h d.description} (#{h d.key})
+              </button>
+            </li>
+          <?r end ?>
+        </ul>
+      </form>
+
+      <form id="originate">
+        <fieldset>
+          <label for="originate-dest">#{l 'Phone'}# </label>
+          <input id="originate-dest" type="phone" placeholder="Number To Call" /> <br />
+          <label for="originate-identifier">#{l 'Reference ID'}:
+          </label>
+          <input id="originate-identifier" type="text" placeholder="Reference Identifier" /> <br />
+          <input type="submit" value="Call" />
+          <input id="originate-cancel" type="button" value="Cancel" />
+        </fieldset>
+      </form>
+
+      <form id="transfer">
+        <fieldset>
+          <input id="transfer-dest" type="phone" placeholder="Transfer to" />
+          <input type="submit" value="Initiate Transfer" />
+          <input id="transfer-cancel" type="button" value="Cancel" />
+        </fieldset>
+      </form>
+
+      <div id="console">
+        <span id="server">#{h @server}</span>
+        <span id="agent_name">#{h @agent}</span>
+        <span id="agent_ext">#{h @extension}</span>
+        <div id="error"></div>
+        <div id="debug"></div>
+      </div>
+    </div>
+
+    <script src="/js/jquery-1.7.1.min.js"></script>
+    <script src="/js/underscore.js"></script>
+    <script src="/js/backbone.js"></script>
+    <script src="/js/rubyists.js"></script>
+    <script src="/js/ribbon2.js"></script>
+  </body>
+</html>

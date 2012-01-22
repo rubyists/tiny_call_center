@@ -1,4 +1,5 @@
 require 'innate'
+require 'pgpass'
 
 module TinyCallCenter
   include Innate::Optioned
@@ -21,8 +22,8 @@ module TinyCallCenter
     end
 
     sub :mod_callcenter do
-      o 'Mod_callcenter postgres database uri', :db,
-        ENV["TCC_ModCallcenterDB"] # example: 'postgres://callcenter:PASSWORD@localhost/callcenter'
+      o 'Mod_callcenter postgres database uri (postgres://user:pass@host/callcenter)', :db,
+        ENV["TCC_ModCallcenterDB"] || Pgpass.match(database: 'callcenter').to_url
     end
 
     sub :memcached do
@@ -66,7 +67,7 @@ module TinyCallCenter
       ENV["TCC_OffHook"] || false
 
     o "Sequel Database URI (adapter://user:pass@host/database)", :db,
-      ENV["TCC_DB"] || ("sqlite://%s" % File.expand_path("../db/call_center.db", __FILE__))
+      ENV["TCC_DB"] || Pgpass.match(database: 'tcc').to_url
 
     o "Accounts Backend", :backend, (ENV["TCC_Backend"] || 'db')
 

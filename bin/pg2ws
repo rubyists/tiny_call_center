@@ -14,7 +14,9 @@ module TCC
     include EM::P::ObjectProtocol
 
     def receive_object(obj)
-      p obj
+      channel, body = obj.values_at(:c, :b)
+      msg = JSON.parse(body)
+      p channel => msg
     end
   end
 

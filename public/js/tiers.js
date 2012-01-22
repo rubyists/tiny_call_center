@@ -1,9 +1,11 @@
 (function() {
   var p;
+
   p = function(obj) {
     var _ref;
     return (_ref = window.console) != null ? typeof _ref.debug === "function" ? _ref.debug(obj) : void 0 : void 0;
   };
+
   $(function() {
     var root;
     root = $('.tiers_agents .tiers');
@@ -32,9 +34,7 @@
       return $('select', control).change(function(event) {
         var forms, target;
         target = $(event.target);
-        if (target.val() === '-') {
-          return false;
-        }
+        if (target.val() === '-') return false;
         tiers = target.closest('.tiers');
         forms = $('.tier-control', tiers);
         return forms.each(function(i, hform) {
@@ -65,4 +65,5 @@
       });
     });
   });
+
 }).call(this);

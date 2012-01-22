@@ -1,10 +1,11 @@
 (function() {
   var Agent, Call, Controller, Socket, divmod, formatInterval, formatPhoneNumber, p, queueToClass, searchToQuery, statusOrStateToClass, store;
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
   p = function() {
     var _ref;
     return (_ref = window.console) != null ? typeof _ref.debug === "function" ? _ref.debug(arguments) : void 0 : void 0;
   };
+
   store = {
     agents: {},
     searches: {},
@@ -13,15 +14,19 @@
       Waiting: 'Ready'
     }
   };
+
   statusOrStateToClass = function(prefix, str) {
     return prefix + str.toLowerCase().replace(/\W+/g, "-").replace(/^-+|-+$/g, "");
   };
+
   queueToClass = function(queue) {
     return queue.toLowerCase().replace(/\W+/g, '_').replace(/^_+|_+$/g, "");
   };
+
   divmod = function(num1, num2) {
     return [num1 / num2, num1 % num2];
   };
+
   formatInterval = function(start) {
     var hours, minutes, rest, seconds, total, _ref, _ref2;
     total = parseInt((Date.now() - start) / 1000, 10);
@@ -29,17 +34,17 @@
     _ref2 = divmod(rest, 60), minutes = _ref2[0], seconds = _ref2[1];
     return sprintf("%02d:%02d:%02d", hours, minutes, seconds);
   };
+
   formatPhoneNumber = function(number) {
     var md;
-    if (number == null) {
-      return number;
-    }
+    if (number == null) return number;
     if (md = number.match(/^(\d+?)(\d{3})(\d{3})(\d{4})$/)) {
       return "(" + md[2] + ")-" + md[3] + "-" + md[4];
     } else {
       return number;
     }
   };
+
   searchToQuery = function(raw) {
     var part, query, _i, _len, _ref;
     if (/^[,\s]*$/.test(raw)) {
@@ -57,50 +62,62 @@
     }
     return query.join(", ");
   };
+
   Socket = (function() {
+
     function Socket(controller) {
       this.controller = controller;
       this.connect();
     }
+
     Socket.prototype.connect = function() {
-      var webSocket;
+      var webSocket,
+        _this = this;
       webSocket = "MozWebSocket" in window ? MozWebSocket : WebSocket;
       this.ws = new webSocket(store.server);
-      return this.reconnector = setInterval(__bind(function() {
-        if (!this.connected) {
-          this.ws = new webSocket(store.server);
-          return this.prepareWs();
+      return this.reconnector = setInterval(function() {
+        if (!_this.connected) {
+          _this.ws = new webSocket(store.server);
+          return _this.prepareWs();
         }
-      }, this), 1000);
+      }, 1000);
     };
+
     Socket.prototype.prepareWs = function() {
-      this.ws.onopen = __bind(function() {
-        this.say({
+      var _this = this;
+      this.ws.onopen = function() {
+        _this.say({
           method: 'subscribe',
           agent: store.agent
         });
-        return this.connected = true;
-      }, this);
-      this.ws.onmessage = __bind(function(message) {
+        return _this.connected = true;
+      };
+      this.ws.onmessage = function(message) {
         var data;
         data = JSON.parse(message.data);
-        return this.controller.dispatch(data);
-      }, this);
-      this.ws.onclose = __bind(function() {
+        return _this.controller.dispatch(data);
+      };
+      this.ws.onclose = function() {
         p("Closing WebSocket");
-        return this.connected = false;
-      }, this);
-      return this.ws.onerror = __bind(function(error) {
+        return _this.connected = false;
+      };
+      return this.ws.onerror = function(error) {
         return p("WebSocket Error:", error);
-      }, this);
+      };
     };
+
     Socket.prototype.say = function(obj) {
       return this.ws.send(JSON.stringify(obj));
     };
+
     return Socket;
+
   })();
+
   Controller = (function() {
+
     function Controller() {}
+
     Controller.prototype.dispatch = function(msg) {
       var action, method;
       p(msg);
@@ -110,6 +127,7 @@
         return store.agents[msg.cc_agent]["got_" + action](msg);
       }
     };
+
     Controller.prototype.got_queues = function(queues) {
       var a, li, list, queue, sorted, unsorted, _i, _j, _len, _len2, _results;
       list = $('#nav-queues');
@@ -134,6 +152,7 @@
       }
       return _results;
     };
+
     Controller.prototype.got_agent_list = function(agents) {
       var agent, rawAgent, _i, _len, _results;
       p(agents);
@@ -145,6 +164,7 @@
       }
       return _results;
     };
+
     Controller.prototype.got_agents_of = function(queue, tiers) {
       var agent, tier, _i, _len;
       for (_i = 0, _len = tiers.length; _i < _len; _i++) {
@@ -156,15 +176,21 @@
         filter: "." + (queueToClass(queue))
       });
     };
+
     Controller.prototype.got_call_start = function(msg) {
       return store.agents[msg.cc_agent].got_call_start(msg);
     };
+
     Controller.prototype.got_channel_hangup = function(msg) {
       return store.agents[msg.cc_agent].got_channel_hangup(msg);
     };
+
     return Controller;
+
   })();
+
   Call = (function() {
+
     function Call(agent, localLeg, remoteLeg, msg) {
       this.agent = agent;
       this.localLeg = localLeg;
@@ -177,6 +203,7 @@
       this.setTimer(new Date(Date.parse(msg.call_created)));
       this.agent.addCall(this);
     }
+
     Call.prototype.createDOM = function() {
       this.dom = store.protoCall.clone();
       this.dom.attr('id', '');
@@ -191,17 +218,20 @@
       $('.channel', this.dom).text(this.localLeg.channel);
       return this.dialogDOM = this.dom.clone(true);
     };
+
     Call.prototype.setTimer = function(startingTime) {
+      var _this = this;
       this.startingTime = startingTime;
-      return this.timer = setInterval(__bind(function() {
-        if (this.dom) {
-          $('.time-of-call-start', this.dom).text(formatInterval(this.startingTime));
+      return this.timer = setInterval(function() {
+        if (_this.dom) {
+          $('.time-of-call-start', _this.dom).text(formatInterval(_this.startingTime));
         }
-        if (this.dialogDOM) {
-          return $('.time-of-call-start', this.dialogDOM).text(formatInterval(this.startingTime));
+        if (_this.dialogDOM) {
+          return $('.time-of-call-start', _this.dialogDOM).text(formatInterval(_this.startingTime));
         }
-      }, this), 1000);
+      }, 1000);
     };
+
     Call.prototype.hangup = function(msg) {
       this.agent.startingTime = new Date(Date.now());
       this.agent.removeCall(this);
@@ -212,14 +242,17 @@
       });
       return this.dialogDOM.remove();
     };
+
     Call.prototype.renderInAgent = function() {
       return $('.calls', this.agent.dom).append(this.dom);
     };
+
     Call.prototype.renderInDialog = function() {
       if (this.agent.dialog != null) {
         return $('.calls', this.agent.dialog).append(this.dialogDOM);
       }
     };
+
     Call.prototype.calltap = function() {
       p("tapping " + this.agent.name + ": " + this.agent.extension + " <=> " + this.remoteLeg.cid_number + " (" + this.localLeg.uuid + ") by " + store.agent);
       return store.ws.say({
@@ -231,9 +264,13 @@
         phoneNumber: this.remoteLeg.cid_number
       });
     };
+
     return Call;
+
   })();
+
   Agent = (function() {
+
     function Agent(name) {
       this.name = name;
       this.calls = {};
@@ -241,20 +278,24 @@
       this.createDOM();
       store.agents[this.name] = this;
     }
+
     Agent.prototype.createDOM = function() {
       this.dom = store.protoAgent.clone();
       this.dom.attr('id', "agent-" + this.name);
       $('.name', this.dom).text(this.name);
       return $('#agents').isotope('insert', this.dom);
     };
+
     Agent.prototype.setTimer = function(startingTime) {
+      var _this = this;
       this.startingTime = startingTime;
       $('.time-since-status-change', this.dom).text(formatInterval(this.startingTime));
       $('#agents').isotope('updateSortData', this.dom);
-      return this.timer = setInterval(__bind(function() {
-        return $('.time-since-status-change', this.dom).text(formatInterval(this.startingTime));
-      }, this), 1000);
+      return this.timer = setInterval(function() {
+        return $('.time-since-status-change', _this.dom).text(formatInterval(_this.startingTime));
+      }, 1000);
     };
+
     Agent.prototype.fillFromAgent = function(d) {
       var call, msg, _i, _len, _ref, _results;
       this.setName(d.name);
@@ -279,9 +320,7 @@
       this.type = d.type;
       this.uuid = d.uuid;
       this.wrap_up_time = d.wrap_up_time;
-      if (this.last_call_time) {
-        this.setTimer(this.last_call_time);
-      }
+      if (this.last_call_time) this.setTimer(this.last_call_time);
       _ref = d.calls;
       _results = [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -306,6 +345,7 @@
       }
       return _results;
     };
+
     Agent.prototype.fillFromTier = function(d) {
       this.setName(d.agent);
       this.setState(d.state);
@@ -313,20 +353,19 @@
       this.position = d.position;
       return this.setQueue(d.queue);
     };
+
     Agent.prototype.addCall = function(call) {
       this.calls[call.uuid] = call;
       this.callCount += 1;
-      if (this.callCount > 1) {
-        return $('.more-calls', this.dom).text('+');
-      }
+      if (this.callCount > 1) return $('.more-calls', this.dom).text('+');
     };
+
     Agent.prototype.removeCall = function(call) {
       delete this.calls[call.uuid];
       this.callCount -= 1;
-      if (this.callCount < 2) {
-        return $('.more-calls', this.dom).text('');
-      }
+      if (this.callCount < 2) return $('.more-calls', this.dom).text('');
     };
+
     Agent.prototype.got_call_start = function(msg) {
       var extMatch, left, leftMatch, right, rightMatch, _ref, _ref2, _ref3, _ref4, _ref5;
       extMatch = /(?:^|\/)(?:sip:)?(\d+)[@-]/;
@@ -347,14 +386,13 @@
         return this.makeCall(right, left, msg);
       }
     };
+
     Agent.prototype.makeCall = function(left, right, msg) {
-      if (!this.calls[left.uuid]) {
-        return new Call(this, left, right, msg);
-      }
+      if (!this.calls[left.uuid]) return new Call(this, left, right, msg);
     };
+
     Agent.prototype.got_channel_hangup = function(msg) {
-      var call, key, value, _results;
-      _results = [];
+      var call, key, value;
       for (key in msg) {
         value = msg[key];
         if (/unique|uuid/.test(key)) {
@@ -364,43 +402,44 @@
           }
         }
       }
-      return _results;
     };
+
     Agent.prototype.got_status_change = function(msg) {
       return this.setStatus(msg.cc_agent_status);
     };
+
     Agent.prototype.got_state_change = function(msg) {
       return this.setState(msg.cc_agent_state);
     };
+
     Agent.prototype.setQueue = function(queue) {
       this.queue = queue;
       $('.queue', this.dom).text(this.queue);
       return this.dom.addClass(queueToClass(queue));
     };
+
     Agent.prototype.setName = function(name) {
       this.name = name;
       return this.dom.attr('id', "agent-" + name);
     };
+
     Agent.prototype.setState = function(state) {
       var alias, klass, targetKlass, _i, _len, _ref;
       this.state = state;
-      if (!(alias = store.stateMapping[state])) {
-        return;
-      }
+      if (!(alias = store.stateMapping[state])) return;
       state = alias;
       targetKlass = statusOrStateToClass("state-", state);
       _ref = this.dom.attr('class').split(' ');
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         klass = _ref[_i];
-        if (/^state-/.test(klass)) {
-          this.dom.removeClass(klass);
-        }
+        if (/^state-/.test(klass)) this.dom.removeClass(klass);
       }
       this.dom.addClass(targetKlass);
       $('.state', this.dom).text(state);
       $('#agents').isotope('updateSortData', this.dom);
       return this.syncDialogState();
     };
+
     Agent.prototype.setStatus = function(status) {
       var klass, targetKlass, _i, _len, _ref;
       this.status = status;
@@ -408,31 +447,34 @@
       _ref = this.dom.attr('class').split(' ');
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         klass = _ref[_i];
-        if (/^status-/.test(klass)) {
-          this.dom.removeClass(klass);
-        }
+        if (/^status-/.test(klass)) this.dom.removeClass(klass);
       }
       this.dom.addClass(targetKlass);
       $('.status', this.dom).text(status);
       $('#agents').isotope('updateSortData', this.dom);
       return this.syncDialogStatus();
     };
+
     Agent.prototype.setUsername = function(username) {
       this.username = username;
       $('.username', this.dom).text(this.username);
       return $('#agents').isotope('updateSortData', this.dom);
     };
+
     Agent.prototype.getUsername = function() {
       return $('.username', this.dom).text();
     };
+
     Agent.prototype.setExtension = function(extension) {
       this.extension = extension;
       $('.extension', this.dom).text(this.extension);
       return $('#agents').isotope('updateSortData', this.dom);
     };
+
     Agent.prototype.getExtension = function() {
       return $('.extension', this.dom).text();
     };
+
     Agent.prototype.calltap = function() {
       p("Tapping " + this.name + " for " + store.agent);
       return store.ws.say({
@@ -441,13 +483,17 @@
         tapper: store.agent
       });
     };
+
     Agent.prototype.show = function() {
       return this.dom.show();
     };
+
     Agent.prototype.hide = function() {
       return this.dom.hide();
     };
+
     Agent.prototype.doubleClicked = function() {
+      var _this = this;
       this.dialog = store.protoAgentDialog.clone(true);
       this.dialog.attr('id', "dialog-" + this.name);
       return this.dialog.dialog({
@@ -456,60 +502,61 @@
         modal: false,
         width: 600,
         height: 400,
-        open: __bind(function(event, ui) {
+        open: function(event, ui) {
           var call, uuid, _ref;
-          this.syncDialog();
-          _ref = this.calls;
+          _this.syncDialog();
+          _ref = _this.calls;
           for (uuid in _ref) {
             call = _ref[uuid];
             call.renderInDialog();
           }
-          $('.dialog-tabs .tab-title', this.dialog).each(__bind(function(i, t) {
-            return $(t).attr('href', "#dialog-tab-" + this.name + "-" + i);
-          }, this));
-          $('.dialog-tabs .tab-content', this.dialog).each(__bind(function(i, t) {
-            return $(t).attr('id', "dialog-tab-" + this.name + "-" + i);
-          }, this));
-          $('.dialog-tabs', this.dialog).tabs({
-            idPrefix: "dialog-tab-" + this.name,
-            show: __bind(function(showEvent, showUi) {
-              return this.handleShowTab(showEvent, showUi);
-            }, this)
+          $('.dialog-tabs .tab-title', _this.dialog).each(function(i, t) {
+            return $(t).attr('href', "#dialog-tab-" + _this.name + "-" + i);
           });
-          $('.calltap', this.dialog).click(__bind(function(event) {
-            this.calltap();
+          $('.dialog-tabs .tab-content', _this.dialog).each(function(i, t) {
+            return $(t).attr('id', "dialog-tab-" + _this.name + "-" + i);
+          });
+          $('.dialog-tabs', _this.dialog).tabs({
+            idPrefix: "dialog-tab-" + _this.name,
+            show: function(showEvent, showUi) {
+              return _this.handleShowTab(showEvent, showUi);
+            }
+          });
+          $('.calltap', _this.dialog).click(function(event) {
+            _this.calltap();
             return false;
-          }, this));
-          $('.calls .calltap-uuid', this.dialog).click(__bind(function(event) {
+          });
+          $('.calls .calltap-uuid', _this.dialog).click(function(event) {
             var realCall;
             call = $(event.target).closest('.call');
             uuid = $('.uuid', call).text();
-            realCall = this.calls[uuid];
+            realCall = _this.calls[uuid];
             realCall.calltap();
             return false;
-          }, this));
-          $('.status a', this.dialog).click(__bind(function(event) {
+          });
+          $('.status a', _this.dialog).click(function(event) {
             store.ws.say({
               method: 'status_of',
-              agent: this.name,
+              agent: _this.name,
               status: statusOrStateToClass('', $(event.target).text()).replace(/-/g, '_')
             });
             return false;
-          }, this));
-          return $('.state a', this.dialog).click(__bind(function(event) {
+          });
+          return $('.state a', _this.dialog).click(function(event) {
             store.ws.say({
               method: 'state_of',
-              agent: this.name,
+              agent: _this.name,
               state: $(event.target).attr('class')
             });
             return false;
-          }, this));
-        }, this),
-        close: __bind(function(event, ui) {
-          return this.dialog.remove();
-        }, this)
+          });
+        },
+        close: function(event, ui) {
+          return _this.dialog.remove();
+        }
       });
     };
+
     Agent.prototype.handleShowTab = function(event, ui) {
       var href, tab;
       href = $(ui.tab).attr('href');
@@ -531,6 +578,7 @@
         });
       }
     };
+
     Agent.prototype.got_agent_status_history = function(msg) {
       var created_at, row, _i, _len, _ref, _results;
       $('.tab-status-log tbody', this.dialog).html('');
@@ -543,6 +591,7 @@
       }
       return _results;
     };
+
     Agent.prototype.got_agent_state_history = function(msg) {
       var created_at, row, _i, _len, _ref, _results;
       $('.tab-state-log tbody', this.dialog).html('');
@@ -555,6 +604,7 @@
       }
       return _results;
     };
+
     Agent.prototype.got_agent_call_history = function(msg) {
       var row, start, tr, _i, _len, _ref, _results;
       $('.tab-call-log tbody', this.dialog).html('');
@@ -578,25 +628,32 @@
       }
       return _results;
     };
+
     Agent.prototype.syncDialog = function() {
       this.syncDialogStatus();
       return this.syncDialogState();
     };
+
     Agent.prototype.syncDialogStatus = function() {
       var targetKlass;
       targetKlass = statusOrStateToClass("", this.status);
       $(".status a", this.dialog).removeClass('active');
       return $(".status a." + targetKlass, this.dialog).addClass('active');
     };
+
     Agent.prototype.syncDialogState = function() {
       var targetKlass;
       targetKlass = this.state;
       $(".state a", this.dialog).removeClass('active');
       return $(".state a." + targetKlass, this.dialog).addClass('active');
     };
+
     return Agent;
+
   })();
+
   $(function() {
+    var _this = this;
     store.server = $('#server').text();
     if (store.server === '') {
       store.server = "ws://" + location.hostname + ":8081/websocket";
@@ -605,7 +662,7 @@
     store.protoCall = $('#proto-call').detach();
     store.protoAgent = $('#proto-agent').detach();
     store.protoAgentDialog = $('#proto-agent-dialog').detach();
-    $('#nav-queues a').live('click', __bind(function(event) {
+    $('#nav-queues a').live('click', function(event) {
       var queue;
       queue = $(event.target).text();
       store.ws.say({
@@ -613,18 +670,16 @@
         queue: queue
       });
       return false;
-    }, this));
+    });
     $('#show-all-agents').live('click', function(event) {
       $('#agents').isotope({
         filter: '*'
       });
       return false;
     });
-    $('#search').keyup(__bind(function(event) {
+    $('#search').keyup(function(event) {
       var query, raw;
-      if (event.keyCode === 13) {
-        event.preventDefault();
-      }
+      if (event.keyCode === 13) event.preventDefault();
       raw = $(event.target).val();
       if (query = searchToQuery(raw)) {
         $('#agents').isotope({
@@ -632,8 +687,8 @@
         });
       }
       return false;
-    }, this));
-    $('#save-search').click(__bind(function(event) {
+    });
+    $('#save-search').click(function(event) {
       var query, raw;
       raw = $('#search').val();
       if (query = searchToQuery(raw)) {
@@ -644,14 +699,14 @@
           }).text(raw));
         }
       }
-    }, this));
-    $('#prev-search').change(__bind(function(event) {
+    });
+    $('#prev-search').change(function(event) {
       var query;
       query = $(event.target).val();
       return $('#agents').isotope({
         filter: query
       });
-    }, this));
+    });
     $('.sorter').click(function(event) {
       var sorter;
       sorter = $(event.target).attr('id').replace(/^sort-/, "");
@@ -660,24 +715,22 @@
       });
       return false;
     });
-    $('.agent').live('dblclick', __bind(function(event) {
+    $('.agent').live('dblclick', function(event) {
       var agent, agent_id;
       agent_id = $(event.target).closest('.agent').attr('id').replace(/^agent-/, "");
       agent = store.agents[agent_id];
       agent.doubleClicked();
       return false;
-    }, this));
-    $('.couch-link').live('dblclick', __bind(function(event) {
+    });
+    $('.couch-link').live('dblclick', function(event) {
       var couchid, tr, uri, uri_match;
       uri_match = /^(https?:\/\/[^:]+:\d+\/)(\w+)/;
-      if (!$('#couch_uri').text().match(uri_match)) {
-        return;
-      }
+      if (!$('#couch_uri').text().match(uri_match)) return;
       tr = $(event.target).closest('tr');
       couchid = tr.attr('couchid');
       uri = $('#couch_uri').text().replace(uri_match, '$1_utils/document.html?$2/') + couchid;
       return window.open(uri, "Futon");
-    }, this));
+    });
     $('#agents').isotope({
       itemSelector: '.agent',
       layoutMode: 'fitRows',
@@ -717,4 +770,5 @@
     store.ws = new Socket(new Controller());
     return window.tcc_store = store;
   });
+
 }).call(this);

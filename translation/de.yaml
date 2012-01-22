@@ -51,7 +51,7 @@ Overview: Überblick
 "Call History": Anrufliste
 Available: Verfügbar
 "Available (on Demand)": Verfügbar (auf Anfrage)
-"On Break": Am Pause
+"On Break": Pause
 "Logged Out": Abgemeldet
 Ready: Bereit
 "Wrap Up": Einpacken
@@ -76,7 +76,7 @@ Include: Enthalten
 Exclude: Ausschließen
 Username: Benutzername
 Strategy: Strategie
-"In a queue call": In einer Warteschlange aufrufen
+"In a queue call": In Warteschlange
 "Call Me": Rufen Sie mich an
 "Make Call": Anruf tätigen
 Logout: Ausloggen

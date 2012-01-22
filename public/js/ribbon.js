@@ -1,13 +1,16 @@
 (function() {
-  var Call, agentCancelsOriginate, agentOriginates, agentStateChange, agentStatusChange, agentWantsCallHangup, agentWantsCallTransfer, agentWantsDTMF, agentWantsOriginate, agentWantsStateChange, agentWantsStatusChange, agentWantsToBeCalled, agentWantsToLogout, currentState, currentStatus, divmod, formatInterval, formatPhoneNumber, keyCodes, onClose, onError, onMessage, onOpen, p, setupWs, showError, store;
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+  var Call, agentCancelsOriginate, agentOriginates, agentStateChange, agentStatusChange, agentWantsCallHangup, agentWantsCallTransfer, agentWantsDTMF, agentWantsOriginate, agentWantsStateChange, agentWantsStatusChange, agentWantsToBeCalled, agentWantsToLogout, currentState, currentStatus, divmod, formatInterval, formatPhoneNumber, keyCodes, onClose, onError, onMessage, onOpen, p, setupWs, showError, store,
+    _this = this;
+
   store = {
     calls: {},
     send: function(obj) {
       return this.ws.send(JSON.stringify(obj));
     }
   };
+
   window.tcc_store = store;
+
   keyCodes = {
     F1: 112,
     F2: 113,
@@ -22,16 +25,20 @@
     F11: 122,
     F12: 123
   };
+
   p = function() {
     var _ref;
     return (_ref = window.console) != null ? typeof _ref.debug === "function" ? _ref.debug(arguments) : void 0 : void 0;
   };
+
   showError = function(msg) {
     return $('#error').text(msg);
   };
+
   divmod = function(num1, num2) {
     return [num1 / num2, num1 % num2];
   };
+
   formatInterval = function(start) {
     var hours, minutes, rest, seconds, total, _ref, _ref2;
     total = parseInt((Date.now() - start) / 1000, 10);
@@ -39,18 +46,19 @@
     _ref2 = divmod(rest, 60), minutes = _ref2[0], seconds = _ref2[1];
     return sprintf("%02d:%02d:%02d", hours, minutes, seconds);
   };
+
   formatPhoneNumber = function(number) {
     var md;
-    if (number == null) {
-      return number;
-    }
+    if (number == null) return number;
     if (md = number.match(/^(\d+?)(\d{3})(\d{3})(\d{4})$/)) {
       return "(" + md[2] + ")-" + md[3] + "-" + md[4];
     } else {
       return number;
     }
   };
+
   Call = (function() {
+
     function Call(local_leg, remote_leg, msg) {
       this.uuid = remote_leg.uuid;
       this.local_leg = local_leg;
@@ -59,7 +67,9 @@
       this.prepareDOM();
       this.talkingStart(new Date(Date.parse(msg.call_created)));
     }
+
     Call.prototype.prepareDOM = function() {
+      var _this = this;
       this.sel = store.call_template.clone();
       this.sel.attr('id', '');
       $('#calls').append(this.sel);
@@ -79,30 +89,34 @@
       this.dom.queueName.text(this.local_leg.queue);
       this.dom.uuid.text(this.remote_leg.uuid);
       this.dom.channel.text(this.local_leg.channel);
-      return $('.dtmf-form', this.sel).submit(__bind(function(event) {
+      return $('.dtmf-form', this.sel).submit(function(event) {
         var input, val;
         input = $('.dtmf-input', $(event.target));
         val = input.val();
         store.send({
           method: 'dtmf',
-          uuid: this.uuid,
+          uuid: _this.uuid,
           dtmf: val
         });
         input.val('');
         return false;
-      }, this));
+      });
     };
+
     Call.prototype['bridge-agent-start'] = function(msg) {
       this.dom.cidName.text(msg.cc_caller_cid_name);
       this.dom.cidNumber.text(formatPhoneNumber(msg.cc_caller_cid_number));
       return this.talkingStart(new Date(Date.now()));
     };
+
     Call.prototype.call_end = function(msg) {
       return this.talkingEnd();
     };
+
     Call.prototype.channel_hangup = function(msg) {
       return this.talkingEnd();
     };
+
     Call.prototype.channel_answer = function(msg) {
       if (msg.caller_destination_number === store.agent_ext) {
         return this.answeredCall('Inbound Call', msg.caller_caller_id_name, msg.caller_caller_id_number, msg.channel_call_uuid || msg.unique_id);
@@ -110,22 +124,22 @@
         return this.answeredCall('Outbound Call', msg.caller_destination_number, msg.caller_callee_id_number, msg.channel_call_uuid || msg.unique_id);
       }
     };
+
     Call.prototype.answeredCall = function(cidName, cidNumber, uuid) {
       this.dom.cidNumber.text(cidNumber);
-      if (cidName != null) {
-        this.dom.cidName.text(cidName);
-      }
+      if (cidName != null) this.dom.cidName.text(cidName);
       return this.talkingStart(new Date(Date.now()));
     };
+
     Call.prototype.talkingStart = function(answeredTime) {
-      if (this.answered != null) {
-        return;
-      }
+      var _this = this;
+      if (this.answered != null) return;
       this.answered = answeredTime || new Date(Date.now());
-      return this.answeredInterval = setInterval(__bind(function() {
-        return this.dom.answered.text("" + (this.answered.toLocaleTimeString()) + " " + (formatInterval(this.answered)));
-      }, this), 1000);
+      return this.answeredInterval = setInterval(function() {
+        return _this.dom.answered.text("" + (_this.answered.toLocaleTimeString()) + " " + (formatInterval(_this.answered)));
+      }, 1000);
     };
+
     Call.prototype.talkingEnd = function() {
       p("talkingEnd", this);
       clearInterval(this.answeredInterval);
@@ -133,32 +147,38 @@
       this.askDisposition();
       return this.sel.remove();
     };
+
     Call.prototype.askDisposition = function() {
+      var _this = this;
       return;
       if (this.local_leg.cid_number === "8675309" || this.local_leg.destination === "19999") {
         return;
       }
-      $('#disposition button').one('click', __bind(function(event) {
+      $('#disposition button').one('click', function(event) {
         var jbutton;
         jbutton = $(event.target);
         store.send({
           method: 'disposition',
           code: jbutton.attr('id').split('-')[1],
           desc: jbutton.attr('label'),
-          left: this.local_leg,
-          right: this.remote_leg
+          left: _this.local_leg,
+          right: _this.remote_leg
         });
         $('#disposition').hide();
         return false;
-      }, this));
+      });
       return $('#disposition').show();
     };
+
     return Call;
+
   })();
+
   currentStatus = function(tag) {
     $('.change-status').removeClass('active inactive');
     return tag.addClass('active');
   };
+
   agentStatusChange = function(msg) {
     switch (msg.cc_agent_status.toLowerCase()) {
       case 'available':
@@ -170,15 +190,18 @@
         return currentStatus($('#logged_out'));
     }
   };
+
   currentState = function(tag) {
     $('.change-state').removeClass('active inactive');
     return tag.addClass('active');
   };
+
   agentStateChange = function(msg) {
     var state;
     state = msg.cc_agent_state.replace(/\s+/g, "_");
     return currentState($("#" + state));
   };
+
   onMessage = function(event) {
     var call, extMatch, key, makeCall, msg, value, _name, _ref, _ref10, _ref11, _ref12, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
     msg = JSON.parse(event.data);
@@ -243,12 +266,14 @@
       return $('#callme').hide();
     }
   };
+
   onOpen = function() {
     return store.send({
       method: 'subscribe',
       agent: store.agent_name
     });
   };
+
   onClose = function() {
     $('#debug').text('Reconnecting...');
     return setTimeout(function() {
@@ -256,9 +281,11 @@
       return setupWs();
     }, 5000);
   };
+
   onError = function(event) {
     return showError(event.data);
   };
+
   agentWantsStatusChange = function(a) {
     var curStatus;
     curStatus = $('.change-status[class=active]').text();
@@ -269,6 +296,7 @@
     });
     return false;
   };
+
   agentWantsStateChange = function(a) {
     var curState;
     curState = $('.change-state[class=active]').text();
@@ -279,12 +307,14 @@
     });
     return false;
   };
-  agentWantsToBeCalled = __bind(function(event) {
+
+  agentWantsToBeCalled = function(event) {
     store.send({
       method: 'callme'
     });
     return false;
-  }, this);
+  };
+
   agentWantsCallHangup = function(event) {
     var call_div, uuid;
     call_div = $(event.target).closest('.call');
@@ -296,15 +326,17 @@
     });
     return false;
   };
+
   agentWantsCallTransfer = function(clickEvent) {
-    var call_div, uuid;
+    var call_div, uuid,
+      _this = this;
     call_div = $(clickEvent.target).closest('.call');
     uuid = $('.uuid', call_div).text();
-    $('#transfer-cancel').click(__bind(function(cancelEvent) {
+    $('#transfer-cancel').click(function(cancelEvent) {
       $('#transfer').hide();
       return false;
-    }, this));
-    $('#transfer').submit(__bind(function(submitEvent) {
+    });
+    $('#transfer').submit(function(submitEvent) {
       store.send({
         method: 'transfer',
         uuid: uuid,
@@ -313,15 +345,17 @@
       store.calls[uuid].talkingEnd();
       $('#transfer').hide();
       return false;
-    }, this));
+    });
     $('#transfer').show();
     return false;
   };
+
   agentWantsOriginate = function(clickEvent) {
     $('#originate').show();
     $('#originate-dest').focus();
     return false;
   };
+
   agentOriginates = function(submitEvent) {
     store.send({
       method: 'originate',
@@ -332,10 +366,12 @@
     $('#originate').hide();
     return false;
   };
+
   agentCancelsOriginate = function(clickEvent) {
     $('#originate').hide();
     return false;
   };
+
   agentWantsDTMF = function(clickEvent) {
     var call_div;
     call_div = $(clickEvent.target).closest('.call');
@@ -344,9 +380,11 @@
     });
     return false;
   };
+
   agentWantsToLogout = function(clickEvent) {
     return window.location.pathname = "/accounts/logout";
   };
+
   setupWs = function() {
     var webSocket;
     webSocket = "MozWebSocket" in window ? MozWebSocket : WebSocket;
@@ -356,6 +394,7 @@
     store.ws.onopen = onOpen;
     return store.ws.onmessage = onMessage;
   };
+
   $(function() {
     var height, width, _ref;
     store.server = $('#server').text();
@@ -378,12 +417,8 @@
         keyName = jbutton.attr('accesskey');
         buttonKeyCode = keyCodes[keyName];
         if (keyCode === buttonKeyCode) {
-          if (typeof event.stopPropagation === "function") {
-            event.stopPropagation();
-          }
-          if (typeof event.preventDefault === "function") {
-            event.preventDefault();
-          }
+          if (typeof event.stopPropagation === "function") event.stopPropagation();
+          if (typeof event.preventDefault === "function") event.preventDefault();
           bubble = false;
           return jbutton.click();
         }
@@ -408,9 +443,8 @@
       });
     }, 100);
     _ref = [localStorage.getItem('agent.bar.width'), localStorage.getItem('agent.bar.height')], width = _ref[0], height = _ref[1];
-    if (width && height) {
-      top.resizeTo(width, height);
-    }
+    if (width && height) top.resizeTo(width, height);
     return setupWs();
   });
+
 }).call(this);

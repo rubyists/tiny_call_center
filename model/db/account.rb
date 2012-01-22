@@ -10,8 +10,8 @@ module TinyCallCenter
       name, pass = creds.values_at("name", "pass")
       Account.find(username: name, password: TinyCallCenter::Account.digestify(pass))
     rescue => error
-      Innate::Log.error error
-      Innate::Log.error error.backtrace.join("\n\t")
+      Log.error error
+      Log.error error.backtrace.join("\n\t")
       false
     end
 
@@ -32,9 +32,9 @@ module TinyCallCenter
         proxy
       end
     rescue => error
-      Innate::Log.error "Unknown problem, defaulting reg server to 127.0.0.1"
-      Innate::Log.error error
-      Innate::Log.error error.backtrace.join("\n\t")
+      Log.error "Unknown problem, defaulting reg server to 127.0.0.1"
+      Log.error error
+      Log.error error.backtrace.join("\n\t")
       '127.0.0.1'
     end
 
@@ -104,6 +104,15 @@ module TinyCallCenter
 
     def manager?
       !!manager
+    end
+
+    def status=(new_status)
+      log.debug "set status of #{agent} to #{new_status}"
+      fsr.callcenter!{|cc| cc.set(agent, :status, new_status) }
+    end
+
+    # we cannot give status to the web interface this way
+    def status
     end
   end
 end

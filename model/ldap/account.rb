@@ -5,11 +5,13 @@ module TinyCallCenter
   class Account
     attr_reader :user, :uid
 
+    include Ramaze::Helper::Fsr
+
     def self.authenticate(creds)
       name, pass = creds.values_at("name", "pass")
       Account.new(name) if name && pass && NrsLdap.authenticate(name, pass)
     rescue => error
-      Innate::Log.error(error)
+      Ramaze::Log.error(error)
       false
     end
 
@@ -145,6 +147,16 @@ module TinyCallCenter
       [*u['dn'], *u['groupMembership']].find{|c|
         c =~ %r{manager|executive|technology|fellinger}i
       }
+    end
+
+    def status=(new_status)
+      Ramaze::Log.debug "Set status of #{agent} to #{new_status}"
+      fsr.callcenter!{|cc| cc.set(agent, :status, new_status) }
+    end
+
+    def status
+      Ramaze::Log.debug "Get status of #{agent}"
+      fsr.callcenter!{|cc| cc.get(agent, :status) }
     end
   end
 end

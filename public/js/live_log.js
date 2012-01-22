@@ -1,62 +1,74 @@
 (function() {
   var Controller, Socket, p, store;
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
   p = function() {
     var _ref;
     return (_ref = window.console) != null ? typeof _ref.debug === "function" ? _ref.debug(arguments) : void 0 : void 0;
   };
+
   store = {
     pause: false
   };
+
   Socket = (function() {
+
     function Socket(controller) {
       this.controller = controller;
       this.connect();
     }
+
     Socket.prototype.connect = function() {
-      var webSocket;
+      var webSocket,
+        _this = this;
       webSocket = "MozWebSocket" in window ? MozWebSocket : WebSocket;
       this.ws = new webSocket(store.server);
-      return this.reconnector = setInterval(__bind(function() {
-        if (!this.connected) {
-          this.ws = new webSocket(store.server);
-          return this.prepareWs();
+      return this.reconnector = setInterval(function() {
+        if (!_this.connected) {
+          _this.ws = new webSocket(store.server);
+          return _this.prepareWs();
         }
-      }, this), 1000);
+      }, 1000);
     };
+
     Socket.prototype.prepareWs = function() {
-      this.ws.onopen = __bind(function() {
-        this.say({
+      var _this = this;
+      this.ws.onopen = function() {
+        _this.say({
           method: 'subscribe',
           agent: store.agent
         });
-        return this.connected = true;
-      }, this);
-      this.ws.onmessage = __bind(function(message) {
+        return _this.connected = true;
+      };
+      this.ws.onmessage = function(message) {
         var data;
         data = JSON.parse(message.data);
-        return this.controller.dispatch(data);
-      }, this);
-      this.ws.onclose = __bind(function() {
+        return _this.controller.dispatch(data);
+      };
+      this.ws.onclose = function() {
         p("Closing WebSocket");
-        return this.connected = false;
-      }, this);
-      return this.ws.onerror = __bind(function(error) {
+        return _this.connected = false;
+      };
+      return this.ws.onerror = function(error) {
         return p("WebSocket Error:", error);
-      }, this);
+      };
     };
+
     Socket.prototype.say = function(obj) {
       return this.ws.send(JSON.stringify(obj));
     };
+
     return Socket;
+
   })();
+
   Controller = (function() {
+
     function Controller() {}
+
     Controller.prototype.dispatch = function(msg) {
-      var display, ext, extMatch, key, left, leftMatch, line, right, rightMatch, value, _ref, _ref2, _ref3, _ref4, _ref5;
-      if (store.pause) {
-        return;
-      }
+      var display, ext, extMatch, key, left, leftMatch, line, right, rightMatch, value, _ref, _ref2, _ref3, _ref4, _ref5,
+        _this = this;
+      if (store.pause) return;
       p(msg);
       if (msg.tiny_action) {
         display = msg;
@@ -123,11 +135,12 @@
           }).text(value));
         }
         $('#log tbody').prepend(line);
-        return line.click(__bind(function() {
-          return this.showDetail(line, msg);
-        }, this));
+        return line.click(function() {
+          return _this.showDetail(line, msg);
+        });
       }
     };
+
     Controller.prototype.showDetail = function(line, msg) {
       var detail, dl, general, key, left, right, value, _ref, _ref2;
       $('#log .line').removeClass('active');
@@ -174,8 +187,11 @@
           return detail.append(dl);
       }
     };
+
     return Controller;
+
   })();
+
   $(function() {
     store.server = $('#server').text();
     if (store.server === '') {
@@ -194,4 +210,5 @@
       return $('#log .line:gt(100)').remove();
     }, 1000);
   });
+
 }).call(this);
