@@ -2,24 +2,18 @@
 
 require 'json'
 require 'em-websocket'
+require 'em-jack'
 require 'logger'
 
 # plugin must be loaded first!
 require 'sequel'
 Sequel::Model.plugin :json_serializer
 require_relative '../model/init'
+require_relative '../options'
+
+TCC::Log.level = Log4r.const_get(TCC.options.log_level)
 
 module TCC
-  module PostgresEventReceiver
-    include EM::P::ObjectProtocol
-
-    def receive_object(obj)
-      channel, body = obj.values_at(:c, :b)
-      msg = JSON.parse(body)
-      p channel => msg
-    end
-  end
-
   class RibbonWebSocket < EM::WebSocket::Connection
     def self.start(options, &block)
       EM.epoll?
@@ -30,7 +24,7 @@ module TCC
     end
 
     def trigger_on_message(message)
-      p message: message
+      Log.debug "Message: %p" % {message: message}
       raw = JSON.parse(message)
       frame, body = raw.values_at('frame', 'body')
       url, method, id, attr =
@@ -49,7 +43,7 @@ module TCC
     end
 
     def say(obj)
-      p say: obj
+      Log.debug say: obj
       send(obj.to_json)
     end
 
@@ -59,7 +53,7 @@ module TCC
     ]
 
     def backbone_read(id, attributes)
-      p :read, id: id, attributes: attributes
+      Log.debug read: {id: id, attributes: attributes}
 
       if id
         account = Account[id: id]
@@ -77,27 +71,39 @@ module TCC
       FSR.load_all_commands
       fsr = FSR::CommandSocket.new(server: TCC.options.command_server)
       cmd = fsr.call_center(:agent).set(account.agent, :status, 'Available')
-      p cmd.raw
-      p cmd.run
+      Log.debug cmd.raw
+      Log.debug cmd.run
     end
 
     def backbone_create(*args)
-      p create: args
+      Log.debug create: args
     end
 
     def backbone_update(*args)
-      p update: args
+      Log.debug update: args
     end
 
     def backbone_delete(*args)
-      p delete: args
+      Log.debug delete: args
     end
   end
 end
 
 EM.run do
   # use the faster one, we don't care about the binary part
-  TCC::RibbonWebSocket.start(host: '0.0.0.0', port: 43443, debug: false)
-  TCC::Log.info "connecting to postgres"
-  EM.start_server('localhost', 43442, TCC::PostgresEventReceiver)
+  host = '0.0.0.0'
+  port = 43443
+  TCC::Log.info "Starting Websocket on #{host}:#{port}"
+  TCC::RibbonWebSocket.start(host: host, port: port, debug: false)
+
+  jack = EMJack::Connection.new
+
+  tube = jack.watch('pg')
+  tube.callback{|t|
+    TCC::Log.debug "Jack is listening on #{t}"
+
+    jack.each_job do |job|
+      TCC::Log.debug job
+    end
+  }
 end

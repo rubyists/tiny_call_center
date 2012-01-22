@@ -1,0 +1,32 @@
+#!/usr/bin/env ruby
+
+require 'sequel'
+require 'pgpass'
+require 'beanstalk-client'
+require_relative '../lib/tiny_call_center'
+require_relative '../options'
+
+TCC::Log.level = Log4r.const_get(TCC.options.log_level)
+p TCC.options.log_level
+
+channels = ARGV
+if channels.empty?
+  TCC::Log.warn "No Channels Specified, falling back to defaults"
+  channels = %w[channel call agent tier member].map{|prefix|
+    %w[insert update delete].map{|suffix|
+      "#{prefix}_#{suffix}" }}.flatten
+end
+
+url = Pgpass.match(database: 'freeswitch').to_url
+DB = Sequel.connect(url)
+
+TCC::Log.info "connected to pg: %p (%p)" % [url, DB]
+TCC::Log.info "listening on %p" % [channels]
+
+beanstalk = Beanstalk::Pool.new(['localhost:11300'])
+beanstalk.use 'pg'
+
+DB.listen channels, loop: true do |channel, pid, payload|
+  TCC::Log.debug channel => payload
+  beanstalk.put("#{channel}\t#{payload}")
+end
