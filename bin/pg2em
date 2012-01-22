@@ -44,16 +44,37 @@ end
 EM.run do
   port = 43442
   host = 'localhost'
-
+  queue = []
   EM.connect(host, port, RubyClient, host: host, port: port) do |client|
+    timer = EM::PeriodicTimer.new(1) do
+      next unless client.connected
+      next if queue.size == 0
+      warn "Sending #{queue.size} queued messages"
+      (0 .. queue.size-1).each do |i|
+        channel, payload = queue.shift
+        msg = "#{channel}\t#{payload}"
+        warn msg
+        res = client.send_object(channel: channel, msg: payload)
+        unless res > 0
+          warn "Re-adding to queue: #{msg}"
+          queue.unshift [channel, payload]
+          break
+        end
+        warn "Sent: #{res}"
+      end
+    end
+
     listener = lambda do |channel, pid, payload|
       begin
         msg = "#{channel}\t#{payload}"
-        timer = EM::PeriodicTimer.new(0.1) do
-          next unless client.connected
+        unless client.connected
+          warn "Not connected, added to queue: #{msg}"
+          queue << [channel, payload]
+          warn queue
+        else
           warn msg
           res = client.send_object(channel: channel, msg: payload)
-          timer.cancel unless res == -1
+          queue << [channel, payload] unless res > 1
         end
       rescue Exception => ex
         warn ex
