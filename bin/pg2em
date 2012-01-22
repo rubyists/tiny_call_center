@@ -3,11 +3,14 @@
 require 'sequel'
 require 'pgpass'
 require 'socket'
+require 'eventmachine'
 
 channels = ARGV
 if channels.empty?
   warn "No Channels Specified, falling back to defaults"
-  channels = ['channel_insert', 'channel_update', 'channel_delete', 'call_insert', 'call_update', 'call_delete']
+  channels = %w[channel call agent tier member].map{|prefix|
+    %w[insert update delete].map{|suffix|
+      "#{prefix}_#{suffix}" }}.flatten
 end
 
 url = Pgpass.match(database: 'freeswitch').to_url
@@ -15,11 +18,55 @@ DB = Sequel.connect(url)
 
 warn "connected to pg: %p (%p)" % [url, DB]
 warn "listening on %p" % [channels]
-# channels = ['channel_insert', 'channel_update', 'channel_delete', 'call_insert', 'call_update', 'call_delete']
 
+class RubyClient < EM::Connection
+  attr_reader :connected
+  include EM::P::ObjectProtocol
+  def connection_completed
+    warn "Connection Established to #{@host}:#{@port}."
+    @connected = true
+  end
 
-TCPSocket.open 'localhost', 43442 do |socket|
-  DB.listen channels, loop: true do |channel, pid, payload|
-    socket.puts("#{channel}\t#{payload}")
+  def initialize(args={})
+    super
+    @host = args[:host] || 'localhost'
+    @port = args[:port] || 43442
+    @connected = false
+  end
+
+  def unbind
+    @connected = false
+    warn "Disconnected from #{@host}:#{@port}, reconnecting"
+    EM.add_timer(1) { reconnect @host, @port }
+  end
+end
+
+EM.run do
+  port = 43442
+  host = 'localhost'
+
+  EM.connect(host, port, RubyClient, host: host, port: port) do |client|
+    listener = lambda do |channel, pid, payload|
+      begin
+        msg = "#{channel}\t#{payload}"
+        timer = EM::PeriodicTimer.new(0.1) do
+          next unless client.connected
+          warn msg
+          res = client.send_object(channel: channel, msg: payload)
+          timer.cancel unless res == -1
+        end
+      rescue Exception => ex
+        warn ex
+      ensure
+        $stdout.flush
+      end
+    end
+
+    listening = lambda do
+      DB.listen(channels, &listener)
+      EM.defer(&listening)
+    end
+
+    EM.defer(&listening)
   end
 end
