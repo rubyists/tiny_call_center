@@ -84,7 +84,7 @@ EM.run do
     end
 
     listening = lambda do
-      DB.listen(channels, &listener)
+      DB.listen(channels, loop: true, &listener)
       EM.defer(&listening)
     end
 
