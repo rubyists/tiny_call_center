@@ -31,6 +31,15 @@ module TinyCallCenter
         ENV["TCC_MemcachedServers"].to_s.split(',')
     end
 
+    sub :beanstalk do
+      o 'Beanstalk servers to use for queue (host:port)', :servers,
+        ENV["TCC_BeanstalkServers"] ? ENV["TCC_BeanstalkServers"].to_s.split(',') : ["localhost:11300"]
+      o 'Beanstalk tubes to listen for dequeueing', :listen_tubes,
+        ENV["TCC_BeanstalkListenTubes"] ? ENV["TCC_BeanstalkChannels"].to_s.split(":") : ["tcc_pg"]
+      o 'Beanstalk tube to send for enqueueing', :send_tube,
+        ENV["TCC_BeanstalkSendTube"] || "tcc_pg"
+    end
+
     sub :redis do
       o 'Redis server to use for answer/originate hashes', :server,
         ENV['TCC_RedisServer'] || '127.0.0.1:6379'
