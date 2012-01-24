@@ -43,10 +43,14 @@ Class.new Sequel::Migration do
         --
         IF (TG_OP = 'INSERT') THEN
             PERFORM pg_notify('agent_insert', row_to_json_object(NEW));
-            RETURN NEW;
+            RETURN NULL;
         ELSIF (TG_OP = 'UPDATE') THEN
-            PERFORM pg_notify('agent_update', row_to_json_object(NEW));
-            RETURN NEW;
+            IF OLD.status <> NEW.status THEN
+              PERFORM pg_notify('agent_update', '{"name": "'||NEW.name||'", "status": "'||NEW.status||'"}');
+            ELSIF OLD.state <> NEW.state THEN
+              PERFORM pg_notify('agent_update', '{"name": "'||NEW.name||'", "state": "'||NEW.state||'"}');
+            END IF;
+            RETURN NULL;
         ELSIF (TG_OP = 'DELETE') THEN
             PERFORM pg_notify('agent_delete', row_to_json_object(OLD));
             RETURN OLD;
@@ -78,12 +82,10 @@ Class.new Sequel::Migration do
         --
         IF (TG_OP = 'INSERT') THEN
             PERFORM pg_notify('member_insert', row_to_json_object(NEW));
-            RETURN NEW;
+            RETURN NULL;
         ELSIF (TG_OP = 'UPDATE') THEN
-            IF OLD.callstate <> NEW.callstate THEN
-              PERFORM pg_notify('member_update', row_to_json_object(NEW));
-              RETURN NEW;
-            END IF;
+            PERFORM pg_notify('member_update', row_to_json_object(NEW));
+            RETURN NULL;
         ELSIF (TG_OP = 'DELETE') THEN
             PERFORM pg_notify('member_delete', row_to_json_object(OLD));
             RETURN OLD;
