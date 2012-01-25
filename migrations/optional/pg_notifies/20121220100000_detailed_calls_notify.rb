@@ -10,8 +10,8 @@ Class.new Sequel::Migration do
             PERFORM pg_notify('channel_insert', row_to_json_object(NEW));
             RETURN NEW;
         ELSIF (TG_OP = 'UPDATE') THEN
-            IF OLD.callstate <> NEW.callstate THEN
-              PERFORM pg_notify('channel_update', row_to_json_object(NEW));
+            IF (OLD.callstate <> NEW.callstate) OR (OLD.state <> NEW.state) THEN
+              PERFORM pg_notify('channel_update', OLD.callstate||':'||OLD.state||':'||row_to_json_object(NEW));
               RETURN NEW;
             END IF;
         ELSIF (TG_OP = 'DELETE') THEN
