@@ -3,11 +3,20 @@ require "json"
 
 module TCC
   class JackTube < EMJack::Connection
+    INTERFACES = [RibbonAgent]
+
+    # change this to :devel to see most messages here (anything without a loglevel as the second arg)
+    def log(msg, level = :devel)
+      Log4r::NDC.push("jack_tube")
+      Log.__send__(level, msg)
+      Log4r::NDC.pop
+    end
+
     def watch_socket(tube_names)
       tube_names.each{|tube_name| watch(tube_name) }
 
       each_job do |job|
-        Log.debug job: job
+        log({job: job}, :debug)
         delete(job) if handle_job(job)
       end
     end
@@ -19,49 +28,76 @@ module TCC
       # type is agent, channel, call, etc.
       if type == 'channel'
         if action == 'update'
-          last_state, json = payload.split(":",2)
+          last_call_state, last_state, json = payload.split(":",3)
           body = JSON.parse(json)
-          uuid = body.delete("uuid")
-          channel_update uuid, last_state, body
+          uuid = body["uuid"]
+          channel_update uuid, last_call_state, last_state, body
         else
           body = JSON.parse(payload)
-          uuid = body.delete("uuid")
+          uuid = body["uuid"]
           __send__ channel, uuid, body
         end
       else
         body = JSON.parse(payload)
-        RibbonAgent.__send__("pg_#{type}", action, body)
+        INTERFACES.each { |interface| interface.__send__("pg_#{type}", action, body) }
       end
       true
     rescue => ex
-      Log.error ex
+      log ex, :error
+      log ex.backtrace.join("\n"), :error
       false
     end
 
     def channel_insert(uuid, body)
-      cid_num, dest = body.values_at('cid_num', 'dest')
+      cid_num, dest, name = body.values_at('cid_num', 'dest', 'name')
+      if name =~ %r{/(?:sip:)?(\d+)@[^/]*$}
+        user = $1
+      else
+        user = name
+      end
+      return false if user =~ %r{^loopback/(\w+)-b$}
+      if user =~ %r{^loopback/(\d+)-a$}
+        user = $1
+      end
+      log "New channel #{uuid}: #{name}"
       return false if cid_num.nil? && dest.nil?
-      Log.debug "New call #{uuid}: #{body}"
-      RibbonAgent.__send__("new_call", uuid, cid_num, dest, body)
+      INTERFACES.each { |interface| interface.call_create(uuid, user, cid_num, dest, body) }
     end
 
-    def channel_update(uuid, last_state, body)
-      new_state = body["callstate"]
-      Log.debug "Callstate Changed for #{uuid}: #{last_state} => #{new_state}"
-      cid_num, dest = body.values_at('cid_num', 'dest')
-      return false if cid_num.nil? && dest.nil?
-      if ['RINGING', 'DOWN'].include?(last_state) && new_state == 'ACTIVE'
-        # This is a new call
-        RibbonAgent.__send__("new_call", uuid, cid_num, dest, body)
+    def channel_update(uuid, last_call_state, last_state, body)
+      cid_num, dest, name, new_call_state, new_state = body.values_at('cid_num', 'dest', 'name', 'callstate', 'state')
+      if name =~ %r{/(?:sip:)?(\d+)@[^/]*$}
+        user = $1
       else
-        # Just an update to a call
-        RibbonAgent.__send__("update_call", uuid, cid_num, dest, last_state, body)
+        user = name
+      end
+      log "#{uuid}: #{last_state}:#{last_call_state} => #{new_state}:#{new_call_state} - #{cid_num} => #{dest}"
+      return false if user == 'loopback/voicemail-b'
+      return false if cid_num.nil? && dest.nil?
+      if last_call_state == 'RINGING' && new_call_state == 'RINGING'
+        return false unless last_state == 'CS_INIT'
+        INTERFACES.each { |interface| interface.call_create(uuid, user, cid_num, dest, body) }
+      elsif ['RINGING', 'DOWN'].include?(last_call_state) && ['ACTIVE'].include?(new_call_state)
+        # This is a new call, either ringing (EARLY) or connected (ACTIVE)
+        INTERFACES.each { |interface| interface.call_create(uuid, user, cid_num, dest, body) }
+      elsif last_state == 'CS_INIT' && ['RINGING', 'ACTIVE', 'EARLY'].include?(new_call_state)
+        INTERFACES.each { |interface| interface.call_create(uuid, user, cid_num, dest, body) }
+      else
+        # Just an update to a call (HELD, ACTIVE, EARLY, RINGING, others?)
+        INTERFACES.each { |interface| interface.call_update(uuid, user, cid_num, dest, last_call_state, last_state, body) }
       end
     end
 
     def channel_delete(uuid, body)
-      Log.debug "Call Ended #{uuid}: #{body}"
-      RibbonAgent.__send__("end_call", uuid, body)
+      cid_num, dest, name = body.values_at('cid_num', 'dest', 'name')
+      if name =~ %r{/(?:sip:)?(\d+)@[^/]*$}
+        user = $1
+      else
+        user = name
+      end
+      return false if user == 'loopback/voicemail-b'
+      log "Call Ended #{uuid}: #{body}", :debug
+      INTERFACES.each { |interface| interface.call_delete(uuid, user, cid_num, dest, body) }
     end
   end
 end

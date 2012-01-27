@@ -21,32 +21,11 @@
 
       <ul id="control">
         <?r if TinyCallCenter.options.off_hook ?>
-        <li><button class="callme red">#{l 'Call Me'}</button></li>
+          <li><button class="callme red">#{l 'Call Me'}</button></li>
         <?r end ?>
-        <li><button class="originate green">#{l 'Make Call'}</button></li>
+        <li><button id="originate" class="green">#{l 'Make Call'}</button></li>
         <li><button class="logout red">#{l 'Logout'}</button></li>
       </ul>
-
-      <div id="call-template" class="call">
-        <div class="call-control">
-          <a href="#" title="Transfer" class="transfer">&#x27f9;</a>
-          <a href="#" title="Dialpad" class="dtmf">&#x266f;</a>
-          <a href="#" title="Hang up" class="hangup">&#x2715;</a>
-        </div>
-        <div class="call-data">
-          <span class="cid-name"></span>
-          <span class="cid-number"></span>
-          <span class="arrow">&harr;</span>
-          <span class="destination"></span>
-          <span class="answered"></span>
-          <span class="queue-name"></span>
-          <span class="channel"></span>
-          <span class="uuid"></span>
-        </div>
-        <form class="dtmf-form">
-          <input type="dtmf" class="dtmf-input" />
-        </form>
-      </div>
 
       <div id="calls">
       </div>
@@ -63,23 +42,21 @@
         </ul>
       </form>
 
-      <form id="originate">
+      <form id="originate-form">
         <fieldset>
-          <label for="originate-dest">#{l 'Phone'}# </label>
-          <input id="originate-dest" type="phone" placeholder="Number To Call" /> <br />
-          <label for="originate-identifier">#{l 'Reference ID'}:
-          </label>
-          <input id="originate-identifier" type="text" placeholder="Reference Identifier" /> <br />
-          <input type="submit" value="Call" />
-          <input id="originate-cancel" type="button" value="Cancel" />
+          <input id="originate-dest" type="phone" placeholder="#{l 'Number To Call'}"><br>
+          <input id="originate-identifier" type="text" placeholder="#{l 'Reference Identifier'}"><br>
+
+          <a href="#" class="call">#{l 'Call'}</a>
+          <a href="#" class="close">#{l 'Close'}</a>
         </fieldset>
       </form>
 
       <form id="transfer">
         <fieldset>
-          <input id="transfer-dest" type="phone" placeholder="Transfer to" />
-          <input type="submit" value="Initiate Transfer" />
-          <input id="transfer-cancel" type="button" value="Cancel" />
+          <input id="transfer-dest" type="phone" placeholder="#{l 'Transfer to'}" />
+          <a href="#" class="transfer">#{l 'Transfer'}</a>
+          <a href="#" class="close">#{l 'Close'}</a>
         </fieldset>
       </form>
 

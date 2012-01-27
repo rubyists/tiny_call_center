@@ -107,12 +107,30 @@ module TinyCallCenter
     end
 
     def status=(new_status)
-      log.debug "set status of #{agent} to #{new_status}"
-      fsr.callcenter!{|cc| cc.set(agent, :status, new_status) }
+      Log.debug "set status of #{agent} to #{new_status}"
+      FSListener.execute registration_server do |listener|
+        listener.callcenter!{|cc| cc.set(agent, :status, new_status) }
+      end
     end
 
     # we cannot give status to the web interface this way
     def status
+    end
+
+    def state=(new_state)
+      Log.debug "set state of #{agent} to #{new_state}"
+      FSListener.execute registration_server do |listener|
+        listener.callcenter!{|cc| cc.set(agent, :state, new_state) }
+      end
+    end
+
+    # TODO: might not work
+    def get_queued
+      sock.originate(
+        target: "user/#{extension}",
+        target_options: {tcc_agent: agent},
+        endpoint: "&transfer(19999)"
+      )
     end
   end
 end

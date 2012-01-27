@@ -18,7 +18,7 @@ module TinyCallCenter
                   else
                     Account.from_call_center_name(from)
                   end
-        endpoint = "#{account.extension} XML default"
+        endpoint = "#{account.extension}"
         sock = fsr_socket(account.registration_server)
         Log.devel "<< Originate #{from} => #{to} @ #{account.registration_server} >>"
         opts = {
@@ -36,7 +36,7 @@ module TinyCallCenter
              sock.originate(target: "user/#{to}", target_options: opts, endpoint: endpoint)
           else
             if to_server == '127.0.0.1'
-              sock.originate(target: "loopback/#{to}/default/XML", target_options: opts, endpoint: endpoint)
+              sock.originate(target: "user/#{to}", target_options: opts, endpoint: endpoint)
             else
               sock.originate(target: "sofia/internal/#{to}@#{to_server}", target_options: opts, endpoint: endpoint)
             end

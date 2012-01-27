@@ -293,6 +293,7 @@
     // state will be `set` again.
     save : function(attrs, options) {
       options || (options = {});
+      var changedAttributes = this.changedAttributes(attrs);
       if (attrs && !this.set(attrs, options)) return false;
       var model = this;
       var success = options.success;
@@ -302,7 +303,7 @@
       };
       options.error = wrapError(options.error, model, options);
       var method = this.isNew() ? 'create' : 'update';
-      return (this.sync || Backbone.sync).call(this, method, this, options);
+      return (this.sync || Backbone.sync).call(this, method, this, options, changedAttributes);
     },
 
     // Destroy this model on the server if it was already persisted. Upon success, the model is removed

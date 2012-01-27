@@ -1,19 +1,29 @@
 #!/usr/bin/env ruby
 require_relative "../lib/tiny_call_center"
 require TCC::ROOT/:options
-require TCC::LIBROOT/"tiny_call_center/jack_tube"
 require TCC::LIBROOT/"tiny_call_center/ribbon_web_socket"
+require TCC::LIBROOT/"tiny_call_center/jack_tube"
+require TCC::LIBROOT/"tiny_call_center/fs_listener"
 
 TCC::Log.level = Log4r.const_get(TCC.options.log_level)
+p = Log4r::PatternFormatter.new :pattern => '%l <%x> %m'
+TCC::Log.outputters.each { |outputter| outputter.formatter = p }
+
 EM.run do
-  # use the faster one, we don't care about the binary part
-  host = '0.0.0.0'
-  port = 43443
+  host, port = '0.0.0.0', 43443
+
+  Log4r::NDC.push 'websocket'
   TCC::Log.info "Starting Websocket on #{host}:#{port}"
-  TCC::RibbonWebSocket.start(host: host, port: port, debug: false) do |ribbon|
-    TCC.options.beanstalk.listen_tubes.each do |tube|
-      TCC::Log.info "Starting JackTube for #{tube}"
-      TCC::JackTube.new.watch_socket(tube, ribbon)
-    end
+  EM::WebSocket.start(host: host, port: port, debug: false) do |ws|
+    # TODO TCC::SwitchBoard.new(ws)
+    # TODO TCC::LiveView.new(ws)
+    TCC::RibbonAgent.new(ws)
   end
+  Log4r::NDC.pop
+
+  tubes = TCC.options.beanstalk.listen_tubes
+  Log4r::NDC.push 'jack_tube'
+  TCC::Log.info "Starting JackTube for #{tubes}"
+  TCC::JackTube.new.watch_socket(tubes)
+  Log4r::NDC.pop
 end
