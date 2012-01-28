@@ -10,8 +10,8 @@ Class.new Sequel::Migration do
           queue,
           system,
           uuid,
-          caller_number,
-          caller_name,
+          cid_number,
+          cid_name,
           system_epoch,
           joined_epoch,
           rejoined_epoch,
@@ -27,8 +27,8 @@ Class.new Sequel::Migration do
           NEW.queue,
           NEW.system,
           NEW.uuid,
-          NEW.caller_number,
-          NEW.caller_name,
+          NEW.cid_number,
+          NEW.cid_name,
           NEW.system_epoch,
           NEW.joined_epoch,
           NEW.rejoined_epoch,
@@ -54,6 +54,8 @@ Class.new Sequel::Migration do
   end
 
   def down
-    raise "Cannot Go Down from here"
+    execute 'drop trigger abandon_log_trigger on members'
+    execute 'drop function log_abandons()'
   end
 end
+
