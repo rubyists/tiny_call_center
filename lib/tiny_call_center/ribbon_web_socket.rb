@@ -30,11 +30,22 @@ module TCC
       exts.flatten.uniq.compact.each do |ext|
         next unless AGENTS.key?(ext)
 
+        log "Sending to #{ext}"
         AGENTS[ext].each(&block)
         found_at_least_one = true
       end
 
       found_at_least_one
+    end
+
+    def self.format_display_name_and_number(name, number)
+      if name && number
+        "#{name} (#{number})"
+      elsif name
+        name
+      elsif number
+        number
+      end
     end
 
     # Eventually want to have only those sent to the ribbon.
@@ -50,46 +61,24 @@ module TCC
 
       body.select!{|k,v| KEEP_CALL_KEYS.include?(k) }
 
-      format_display_name_and_number = lambda{|name, number|
-        if name && number
-          "#{name} (#{number})"
-        elsif name
-          name
-        elsif number
-          number
-        end
-      }
-
       case user
       when dest
         # we're sure this is a call for user and he's the receiver
         body['display_name_and_number'] =
-          format_display_name_and_number.(body['cid_name'], body['cid_num'])
-        each_agent(body['callee_num'], &block)
+          format_display_name_and_number(body['cid_name'], body['cid_num'])
+        each_agent(dest, &block)
       when cid_num
         # we're sure this is a call from user and he's the caller
         body['display_name_and_number'] =
-          format_display_name_and_number.(body['callee_name'], body['dest'])
-        each_agent(body['cid_num'], &block)
-      when 'loopback/voicemail-a'
-        log 'ignore voicemail'
-        # ignore voicemail
+          format_display_name_and_number(body['callee_name'], body['dest'])
+        each_agent(cid_num, &block)
       else
         log 'unhandled call'
       end
     end
 
     def self.call_create(uuid, user, cid_num, dest, body)
-      case body['callstate']
-      when 'RINGING', 'EARLY'
-        log "New Call Ringing #{uuid} (#{user}): #{cid_num} => #{dest}"
-        call_dispatch(body, user){|agent| agent.pg_call_create(body) }
-      when 'ACTIVE'
-        log "Call Established #{uuid} (#{user}): #{cid_num} => #{dest}"
-        call_dispatch(body, user){|agent| agent.pg_call_update(body) }
-      else
-        raise "creating callstate #{body['callstate']} not implemented"
-      end
+      call_dispatch(body, user){|agent| agent.pg_call_create(body) }
     end
 
     def self.call_update(uuid, user, cid_num, dest, last_call_state, last_state, body)
@@ -103,6 +92,13 @@ module TCC
       log "Call ended for #{uuid} (#{user}): #{cid_num} => #{dest}"
 
       call_dispatch(body, user){|agent| agent.pg_call_delete(body) }
+    end
+
+    def self.pg_tier(action, body)
+      log [action, body]
+    end
+
+    def self.pg_member(action, body)
     end
 
     def self.pg_agent(action, body)
@@ -144,7 +140,11 @@ module TCC
       bbm = "backbone_#{method}"
       case url
       when 'Agent'
-        say tag: 'backbone', frame: frame, ok: __send__(bbm, id, attr)
+        if attr == false
+          say tag: 'backbone', frame: frame, ok: {id: id}
+        else
+          say tag: 'backbone', frame: frame, ok: __send__(bbm, id, attr)
+        end
       when 'Originate'
         originate(@account.extension, body['dest'], body['identifier'])
       when 'Hangup'

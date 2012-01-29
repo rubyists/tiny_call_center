@@ -170,11 +170,28 @@
       } else {
         data.attributes = model;
       }
-      return this.backboneRequest({
-        data: data,
-        success: options.success,
-        error: options.error
-      });
+      if (data.attributes === false) {
+        switch (method) {
+          case 'update':
+            return typeof options.success === "function" ? options.success(model.attributes) : void 0;
+          case 'delete':
+            return typeof options.success === "function" ? options.success({
+              id: model.id
+            }) : void 0;
+          case 'create':
+            return typeof options.success === "function" ? options.success({
+              id: model.id
+            }) : void 0;
+          case 'read':
+            return typeof options.success === "function" ? options.success(model.attributes) : void 0;
+        }
+      } else {
+        return this.backboneRequest({
+          data: data,
+          success: options.success,
+          error: options.error
+        });
+      }
     };
 
     BackboneWebSocket.prototype.backboneSyncCall = function(method, model, options, changedAttributes) {

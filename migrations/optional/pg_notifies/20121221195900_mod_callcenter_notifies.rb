@@ -10,8 +10,16 @@ Class.new Sequel::Migration do
             PERFORM pg_notify('tier_insert', row_to_json_object(NEW));
             RETURN NEW;
         ELSIF (TG_OP = 'UPDATE') THEN
+          IF NEW.status <> OLD.status || NEW.state <> OLD.state THEN
+            IF NEW.status = 'Receiving' THEN
+              RETURN NEW;
+            END IF;
+            IF NEW.status = 'Waiting' && OLD.status = 'Receiving' THEN
+              RETURN NEW;
+            END IF;
             PERFORM pg_notify('tier_update', row_to_json_object(NEW));
             RETURN NEW;
+          END IF;
         ELSIF (TG_OP = 'DELETE') THEN
             PERFORM pg_notify('tier_delete', row_to_json_object(OLD));
             RETURN OLD;

@@ -110,14 +110,22 @@ class BackboneWebSocket
     else
       data.attributes = model
 
-    # if data.attributes is false, fake success, there is nothing to do for the
-    # server.
-
-    @backboneRequest(
-      data: data,
-      success: options.success,
-      error: options.error
-    )
+    if data.attributes == false
+      switch method
+        when 'update'
+          options.success?(model.attributes)
+        when 'delete'
+          options.success?(id: model.id)
+        when 'create'
+          options.success?(id: model.id)
+        when 'read'
+          options.success?(model.attributes)
+    else
+      @backboneRequest(
+        data: data,
+        success: options.success,
+        error: options.error
+      )
 
   # we never, ever, need syncing for this, all updates are pushed from the
   # server, so we gotta fake successful sync

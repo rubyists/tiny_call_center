@@ -4,7 +4,7 @@ require_relative "options"
 
 require File.expand_path("model/init", TinyCallCenter::ROOT)
 
-require "tiny_call_center/utils/fsr"
+require_relative "lib/tiny_call_center/utils/fsr"
 TCC::Log.level = Log4r.const_get(TCC.options.log_level)
 
 require_relative 'node/main'

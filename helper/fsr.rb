@@ -1,4 +1,4 @@
-module Ramaze
+module Innate
   module Helper
     module Fsr
       def fsr

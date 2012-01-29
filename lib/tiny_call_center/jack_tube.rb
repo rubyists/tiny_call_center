@@ -74,13 +74,11 @@ module TCC
       log "#{uuid}: #{last_state}:#{last_call_state} => #{new_state}:#{new_call_state} - #{cid_num} => #{dest}"
       return false if user == 'loopback/voicemail-b'
       return false if cid_num.nil? && dest.nil?
-      if last_call_state == 'RINGING' && new_call_state == 'RINGING'
-        return false unless last_state == 'CS_INIT'
+      return false if new_call_state == last_call_state
+      if new_call_state == 'ACTIVE' || last_call_state != 'EARLY'
+        # This is a new call,
         INTERFACES.each { |interface| interface.call_create(uuid, user, cid_num, dest, body) }
-      elsif ['RINGING', 'DOWN'].include?(last_call_state) && ['ACTIVE'].include?(new_call_state)
-        # This is a new call, either ringing (EARLY) or connected (ACTIVE)
-        INTERFACES.each { |interface| interface.call_create(uuid, user, cid_num, dest, body) }
-      elsif last_state == 'CS_INIT' && ['RINGING', 'ACTIVE', 'EARLY'].include?(new_call_state)
+      elsif new_call_state == 'EARLY'
         INTERFACES.each { |interface| interface.call_create(uuid, user, cid_num, dest, body) }
       else
         # Just an update to a call (HELD, ACTIVE, EARLY, RINGING, others?)
