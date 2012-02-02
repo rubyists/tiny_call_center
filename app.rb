@@ -1,4 +1,5 @@
 require "innate"
+require "ramaze"
 require_relative "lib/tiny_call_center"
 require_relative "options"
 
