@@ -16,6 +16,11 @@ module TinyCallCenter
         URI(ENV["TCC_WebSocketListenerURI"] || 'ws://127.0.0.1:8081/websocket')
     end
 
+    sub :live2 do
+      o "WebSocket server for live2", :server,
+        'ws://127.0.0.1:43444/websocket'
+    end
+
     sub :ribbon do
       o "WebSocket server URI for agents", :server,
         URI(ENV["TCC_WebSocketAgentURI"] || 'ws://127.0.0.1:8080/websocket')
@@ -34,8 +39,10 @@ module TinyCallCenter
     sub :beanstalk do
       o 'Beanstalk servers to use for queue (host:port)', :servers,
         ENV["TCC_BeanstalkServers"] ? ENV["TCC_BeanstalkServers"].to_s.split(',') : ["localhost:11300"]
+
       o 'Beanstalk tubes to listen for dequeueing', :listen_tubes,
-        ENV["TCC_BeanstalkListenTubes"] ? ENV["TCC_BeanstalkChannels"].to_s.split(":") : ["tcc_pg"]
+        ENV["TCC_BeanstalkListenTubes"] ? ENV["TCC_BeanstalkListenTubes"].to_s.split(":") : ["tcc_pg"]
+
       o 'Beanstalk tube to send for enqueueing', :send_tube,
         ENV["TCC_BeanstalkSendTube"] || "tcc_pg"
     end

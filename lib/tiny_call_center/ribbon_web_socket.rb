@@ -39,6 +39,9 @@ module TCC
     end
 
     def self.format_display_name_and_number(name, number)
+      name = nil unless name =~ /\S/
+      number = nil unless number =~ /\S/
+
       if name && number
         "#{name} (#{number})"
       elsif name
@@ -51,7 +54,7 @@ module TCC
     # Eventually want to have only those sent to the ribbon.
     KEEP_CALL_KEYS = %w[
       uuid call_uuid created_epoch state cid_name cid_num dest callee_name
-      callee_num secure callstate ribbon_name ribbon_number
+      callee_num secure callstate ribbon_name ribbon_number queue
     ]
 
     # don't even try to think about using direction, it's of no use.
@@ -153,6 +156,10 @@ module TCC
         transfer body['uuid'], body['dest']
       when 'DTMF'
         dtmf body['uuid'], body['tone']
+      when 'CallMe'
+        call_me
+      when 'Disposition'
+        disposition(*body.values_at('uuid', 'code', 'desc'))
       else
         raise 'Unknown url %p in %p' % [url, raw]
       end
@@ -169,6 +176,10 @@ module TCC
     def say(obj)
       log say: obj
       @socket.send(obj.to_json)
+    end
+
+    def disposition(uuid, code, desc)
+      log disposition: [uuid, code, desc]
     end
 
     def dtmf(uuid, tone)
@@ -251,11 +262,73 @@ module TCC
       if TCC.options.off_hook
         @account.state = 'Idle'
         @account.state = 'Waiting'
-        @account.get_queued
+        call_me
       end
 
       log "Register #{self} with #{@account.extension}"
       AGENTS[@account.extension] << self
+    end
+
+    def call_me
+      agent = @account.agent
+      registration_server = @account.registration_server
+      extension = @account.extension
+
+      log "Check whether we should call #{agent}, off_hook is #{TCC.options.off_hook}"
+      return unless TCC.options.off_hook
+
+      log "Calling #{agent}@#{registration_server}"
+
+      command_server = TCC.options.command_server
+      sock = FSR::CommandSocket.new(:server => command_server)
+      FSR.load_all_commands
+
+      log [registration_server, command_server]
+      orig = sock.originate(
+        target: registration_server == command_server ? "user/#{extension}" : "sofia/internal/#{extension}@#{registration_server}",
+        target_options: {tcc_agent: agent},
+        endpoint: "&transfer(19999)"
+      )
+      raw, run = orig.raw, orig.run
+      log [raw, run]
+    end
+
+    def give_initial_status
+      Log.debug "Give Initial Status"
+      fsock = FSR::CommandSocket.new(server: registration_server)
+      channels = fsock.channels(true).run
+
+      channels.map do |channel|
+        Log.debug channel: channel
+        next unless ['ACTIVE', 'EARLY', 'RINGING'].include?(channel.callstate) &&
+          (channel.dest == extension ||
+           channel.cid_num == extension ||
+           channel.name =~ /(^\/)#{extension}[@-]/)
+
+        msg = {
+          tiny_action: 'call_start',
+          call_created: Time.at(channel.created_epoch.to_i).rfc2822,
+          producer: 'give_initial_status',
+          original: channel,
+
+          left: {
+            cid_number:  channel.cid_num,
+            cid_name:    channel.cid_name,
+            channel:     channel.name,
+            destination: channel.dest,
+            uuid:        channel.uuid,
+          },
+          right: {
+            cid_number:  channel.cid_num,
+            cid_name:    channel.cid_name,
+            destination: channel.dest,
+            uuid:        channel.uuid,
+          }
+        }
+
+        reply msg
+        msg
+      end.compact
     end
 
     def pg_call_create(body)
@@ -279,6 +352,7 @@ module TCC
       # that won't happen
       say tag: 'pg', kind: 'agent_create', body: body
     end
+    alias pg_agent_insert pg_agent_create
 
     def pg_agent_update(body)
       log "update #{body}"

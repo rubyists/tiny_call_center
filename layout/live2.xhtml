@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Live CallCenter &middot; #{h @agent}</title>
+    <link rel="stylesheet" type="text/css" href="/bootstrap/css/bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="/bootstrap/css/bootstrap-responsive.css" />
+    <link rel="stylesheet" type="text/css" href="/css/live2.css" />
+    <script type="text/javascript" src="/js/jquery-1.7.1.min.js"></script>
+    <script type="text/javascript" src="/js/jquery-ui-1.8.10.custom.min.js"></script>
+    <script type="text/javascript" src="/js/jquery.isotope.1.5.09.js"></script>
+    <script type="text/javascript" src="/js/serenade.js"></script>
+    <script type="text/javascript" src="/bootstrap/js/bootstrap-button.js"></script>
+    <script type="text/javascript" src="/bootstrap/js/bootstrap-dropdown.js"></script>
+    <script type="text/javascript" src="/bootstrap/js/bootstrap-modal.js"></script>
+    <script type="text/javascript" src="/bootstrap/js/bootstrap-tab.js"></script>
+    <script type="text/javascript" src="/js/rubyists.js"></script>
+    <script type="text/javascript" src="/js/live2.js"></script>
+  </head>
+  <body>
+    <div class="navbar">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="#">Effortless CallCenter</a>
+          <ul class="nav">
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">#{l 'Queue'}<b class="caret"></b></a>
+              <ul id="queues" class="dropdown-menu">
+                <li><a href="#">Queue 1</a></li>
+                <li><a href="#">Queue 2</a></li>
+                <li><a href="#">Queue 3</a></li>
+                <li><a href="#">#{l 'Show All Queues'}</a></li>
+              </ul>
+            </li>
+
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">#{l 'Search'}<b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li>
+                </li>
+              </ul>
+            </li>
+
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">#{l 'Sort'}<b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="#">#{l 'Name' }</a></li>
+                <li><a href="#">#{l 'Extension' }</a></li>
+                <li><a href="#">#{l 'Status' }</a></li>
+                <li><a href="#">#{l 'Idle Time'}</a></li>
+              </ul>
+            </li>
+          </ul>
+
+          <ul class="nav pull-right">
+            <li>
+              <form class="navbar-search">
+                <input type="search" id="search" placeholder="Search anything" />
+              </form>
+            </li>
+            <li>#{TCC::Tiers.a(l('Tiers'), :/)}</li>
+            <li>#{TCC::Agents.a(l('Agents'), :/)}</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+        <div id="agents">
+        </div>
+      </div>
+    </div>
+
+    <div id="content">
+      <div id='proto-agent-dialog' class="agent-dialog">
+        <span class="agent-name"></span>
+        <div class="dialog-tabs">
+          <ul>
+            <li><a href="#" class="tab-title">#{l 'Overview' }</a></li>
+            <li><a href="#" class="tab-title">#{l 'Status Log'}</a></li>
+            <li><a href="#" class="tab-title">#{l 'State Log'}</a></li>
+            <li><a href="#" class="tab-title">#{l 'Call History'}</a></li>
+          </ul>
+
+          <div class="tab-content tab-overview">
+            <h2>#{l 'Calls'}</h2>
+            <ul class="calls">
+            </ul>
+
+            <h2>#{l 'Status'}</h2>
+            <ul class="status">
+              <li><a class="available" href="#">#{l 'Available'}</a></li>
+              <li><a class="available-on-demand" href="#">#{l 'Available (On Demand)'}</a></li>
+              <li><a class="on-break" href="#">#{l 'On Break'}</a></li>
+              <li><a class="logged-out" href="#">#{l 'Logged Out'}</a></li>
+            </ul>
+
+            <h2>#{l 'State'}</h2>
+            <ul class="state">
+              <li><a class="Waiting" href="#">#{l 'Ready'}</a></li>
+              <li><a class="Idle" href="#">#{l 'Wrap Up'}</a></li>
+            </ul>
+
+            <button class="calltap ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" role="button" aria-disabled="false">
+              <span class="ui-button-text">#{l 'Tap'}</span>
+            </button>
+          </div>
+
+          <div class="tab-content tab-status-log">
+            <h2>#{l 'Todays Status Log'}</h2>
+            <table class="tab-container">
+              <thead>
+                <th>#{l 'Status'}</th>
+                <th>#{l 'Time'}</th>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div class="tab-content tab-state-log">
+            <h2>#{l 'Todays State Log'}</h2>
+            <table class="tab-container">
+              <thead>
+                <th>#{l 'State'}</th>
+                <th>#{l 'Time'}</th>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div class="tab-content tab-call-log">
+            <h2>#{l 'Todays Call History'}</h2>
+            <table class="tab-container">
+              <thead>
+                <th>#{l 'Time'}</th>
+                <th>#{l 'CID #'}</th>
+                <th>#{l 'CID Name'}</th>
+                <th>#{l 'To'}</th>
+                <th>#{l 'Context'}</th>
+                <th>#{l 'Dur'}</th>
+                <th>#{l 'Bill' }</th>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <span id="agent_name">#{h @agent}</span>
+      <span id="server">#{h @server}</span>
+      <span id="couch_uri">#{h @couch_uri}</span>
+      <div id="copyright">Effortless CallCenter &copy; by The Rubyists LLC. 2010-2012</div>
+    </footer>
+  </body>
+</html>

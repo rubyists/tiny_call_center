@@ -3,7 +3,7 @@ require "json"
 
 module TCC
   class JackTube < EMJack::Connection
-    INTERFACES = [RibbonAgent]
+    INTERFACES = [RibbonAgent, LiveManager]
 
     # change this to :devel to see most messages here (anything without a loglevel as the second arg)
     def log(msg, level = :devel)
@@ -37,6 +37,16 @@ module TCC
           uuid = body["uuid"]
           __send__ channel, uuid, body
         end
+      elsif type == 'member'
+        body = JSON.parse(payload)
+        case action
+        when "update"
+          member_update(body)
+        when "delete"
+          member_delete(body)
+        else
+          INTERFACES.each { |interface| interface.__send__("pg_#{type}", action, body) }
+        end
       else
         body = JSON.parse(payload)
         INTERFACES.each { |interface| interface.__send__("pg_#{type}", action, body) }
@@ -46,6 +56,33 @@ module TCC
       log ex, :error
       log ex.backtrace.join("\n"), :error
       false
+    end
+
+    def member_delete(body)
+      if body["state"] == 'Answered'
+        uuid, cid_num, agent, queue = body.values_at("uuid", "cid_number", "serving_agent", "queue")
+        body["cid_num"] = cid_num
+        body["dest"] = user = dest = agent.split("-",2)[0]
+        body["name"] = "queue_call/#{user}@queue_server"
+        body["direction"] = "inbound"
+        INTERFACES.each { |interface| interface.call_delete(uuid, user, cid_num, dest, body) }
+      else
+        INTERFACES.each { |interface| interface.pg_member('delete', body) }
+      end
+    end
+
+    def member_update(body)
+      if body["state"] == 'Answered'
+        uuid, cid_num, agent, queue = body.values_at("uuid", "cid_number", "serving_agent", "queue")
+        body["cid_num"] = cid_num
+        body["dest"] = user = dest = agent.split("-",2)[0]
+        body["name"] = "queue_call/#{user}@queue_server"
+        body["direction"] = "inbound"
+        body["created_epoch"] = Time.now.to_i
+        INTERFACES.each { |interface| interface.call_create(uuid, user, cid_num, dest, body) }
+      else
+        INTERFACES.each { |interface| interface.pg_member('update', body) }
+      end
     end
 
     def channel_insert(uuid, body)
@@ -75,10 +112,8 @@ module TCC
       return false if user == 'loopback/voicemail-b'
       return false if cid_num.nil? && dest.nil?
       return false if new_call_state == last_call_state
-      if new_call_state == 'ACTIVE' || last_call_state != 'EARLY'
+      if new_call_state == 'ACTIVE'
         # This is a new call,
-        INTERFACES.each { |interface| interface.call_create(uuid, user, cid_num, dest, body) }
-      elsif new_call_state == 'EARLY'
         INTERFACES.each { |interface| interface.call_create(uuid, user, cid_num, dest, body) }
       else
         # Just an update to a call (HELD, ACTIVE, EARLY, RINGING, others?)

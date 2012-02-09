@@ -2,8 +2,9 @@
 require_relative "../lib/tiny_call_center"
 require TCC::ROOT/:options
 require TCC::LIBROOT/"tiny_call_center/ribbon_web_socket"
-require TCC::LIBROOT/"tiny_call_center/jack_tube"
 require TCC::LIBROOT/"tiny_call_center/fs_listener"
+require TCC::LIBROOT/"tiny_call_center/live_web_socket"
+require TCC::LIBROOT/"tiny_call_center/jack_tube"
 
 TCC::Log.level = Log4r.const_get(TCC.options.log_level)
 p = Log4r::PatternFormatter.new :pattern => '%l <%x> %m'
@@ -18,6 +19,14 @@ EM.run do
     # TODO TCC::SwitchBoard.new(ws)
     # TODO TCC::LiveView.new(ws)
     TCC::RibbonAgent.new(ws)
+  end
+  Log4r::NDC.pop
+
+  host, port = '0.0.0.0', 43444
+  Log4r::NDC.push 'Live WebSocket'
+  TCC::Log.info "Starting on #{host}:#{port}"
+  EM::WebSocket.start(host: host, port: port, debug: false) do |ws|
+    TCC::LiveManager.new(ws)
   end
   Log4r::NDC.pop
 

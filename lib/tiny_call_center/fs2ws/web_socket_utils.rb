@@ -14,10 +14,6 @@ module TinyCallCenter
       'waiting' => 'Ready',
     }
 
-    def fsr_socket(server)
-      FSR::CommandSocket.new(:server => server)
-    end
-
     # Check the agents extension against all the calls passed in.
     # When new Channel or Call fields are added, the calls.select
     # block needs to know about them
@@ -38,24 +34,22 @@ module TinyCallCenter
           FSR::Log.debug "<<< Found Dest >>>\n" + found.inspect
           # got a Transfer here
           h = {
-            caller_cid_num:     found.cid_num,
-            caller_cid_name:    found.cid_name,
-            caller_dest_num:    found.dest,
-            callee_cid_num:     found.dest,
-            uuid:               found.uuid,
-            call_created:       Time.at(found.created_epoch.to_i).rfc2822,
+            cid_name: found.cid_name,
+            cid_number: found.cid_num,
+            uuid: found.uuid,
+            created: Time.at(found.created_epoch.to_i).rfc2822,
+            agentId: extension,
           }
           FSR::Log.debug "<<< Channel Hash >>>\n" + h.inspect
           h
         elsif found.dest
           # got an FSR::Channel here
           {
-            caller_cid_num:     found.cid_num,
-            caller_cid_name:    found.cid_name,
-            caller_dest_num:    found.dest,
-            callee_cid_num:     found.dest,
-            uuid:               found.uuid,
-            call_created:       Time.at(found.created_epoch.to_i).rfc2822,
+            cid_name: found.dest,
+            cid_number: found.dest,
+            uuid: found.uuid,
+            created: Time.at(found.created_epoch.to_i).rfc2822,
+            agentId: extension,
           }
         else
           # Assume an FSR::Call here
@@ -67,15 +61,12 @@ module TinyCallCenter
             callee_cid_num:     found.callee_cid_num,
             uuid:               found.call_uuid,
             call_created:       Time.at(found.call_created_epoch.to_i).rfc2822,
+            agentId: extension,
           }
         end
       }
       FSR::Log.debug "Sending agent status: #{found_calls}"
       found_calls.uniq{|call| call[:uuid] }
-    end
-
-    def reply(obj)
-      socket.send(obj.to_json)
     end
   end
 end

@@ -66,8 +66,7 @@ class CallsView extends View
 
   removeCall: (call, calls, options) ->
     p 'remove Call', arguments ...
-    call.callView.remove()
-    delete call.callView
+    call.callView.done()
 
 class CallView extends View
   tagName: 'div'
@@ -86,6 +85,7 @@ class CallView extends View
 <div class="call-data">
   <span class="name-and-number"><%- nameAndNumber %></span>
   <span class="answered"><%- answered %></span>
+  <span class="queue"><%- queue %></span>
 </div>
 <form class="dtmf-form">
   <input type="dtmf" class="dtmf-input" />
@@ -113,7 +113,7 @@ class CallView extends View
   transfer: ->
     view = new TransferView(ribbon: @options.ribbon, call: @call)
     view.render()
-    
+
   dtmf: ->
     form = @.$('.dtmf-form')
     input = $('.dtmf-input', form)
@@ -155,8 +155,31 @@ class CallView extends View
     $(@el).html(@template(
       nameAndNumber: @call.get('display_name_and_number'),
       answered: @call.get('callstate'), # this should be the time counter
+      queue: [@call.get('queue')].join(), # the to_s equivalent...
     ))
     this
+
+  done: ->
+    # if it's a queue call, ask for disposition.
+    if queue = @call.get('queue')
+      $('#disposition button').one 'click', (event) =>
+        jbutton = $(event.target)
+        @options.ribbon.sendMessage(
+          body: {
+            url: 'Disposition',
+            code: jbutton.attr('id').split('-')[1],
+            desc: jbutton.attr('label'),
+            uuid: @call.id,
+          }
+        )
+        $('#disposition').hide()
+        @remove()
+        delete @call.callView
+        false
+      $('#disposition').show()
+    else
+      @remove()
+      delete @call.callView
 
 class DispositionView extends View
   tagName: 'form'
@@ -277,6 +300,7 @@ class Ribbon extends View
   el: '#ribbon'
   events: {
     'click #originate': 'showOriginate',
+    'click #callme': 'callMe',
   }
 
   initialize: ->
@@ -297,6 +321,9 @@ class Ribbon extends View
 
   showOriginate: ->
     @originateView.show()
+
+  callMe: ->
+    @sendMessage(body: {url: 'CallMe'})
 
   sendMessage: ->
     @options.socket.say(arguments ...)
@@ -329,7 +356,10 @@ $ ->
         agent.set(msg.body)
       when 'call_create'
         msg.body.id = msg.body.uuid
-        calls.create(msg.body)
+        if got = calls.get(msg.body.id)
+          got.set(msg.body)
+        else
+          calls.create(msg.body)
       when 'call_update'
         calls.get(msg.body.uuid).set(msg.body)
       when 'call_delete'

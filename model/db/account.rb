@@ -123,14 +123,5 @@ module TinyCallCenter
         listener.callcenter!{|cc| cc.set(agent, :state, new_state) }
       end
     end
-
-    # TODO: might not work
-    def get_queued
-      sock.originate(
-        target: "user/#{extension}",
-        target_options: {tcc_agent: agent},
-        endpoint: "&transfer(19999)"
-      )
-    end
   end
 end

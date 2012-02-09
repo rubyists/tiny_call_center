@@ -7,6 +7,8 @@ class Socket
     @webSocket = if "MozWebSocket" of window then MozWebSocket else WebSocket
     @connected = false
     @tags = {}
+    @frames = {}
+    @callbacks = {}
     @connect()
 
   connect: () ->
@@ -46,11 +48,33 @@ class Socket
 
   onerror: (error) ->
 
+  tag: (name, callback) ->
+    @frames[name] = 0
+    @callbacks[name] = {all: callback}
+
+    @[name] = (go, args) =>
+      frame = (@frames[name] += 1)
+      @callbacks[name][frame] = {success: args.success, error: args.error}
+      msg = {tag: name, frame: frame, go: go, body: {}}
+      for key, value of args
+        msg.body[key] = value unless key == 'success' || key == 'error'
+      delete msg.body if Object.keys(msg.body).length < 1
+      @send(JSON.stringify(msg))
+
+    @listen name, (msg) =>
+      if cb = @callbacks[name][msg.frame]
+        if msg.error?
+          return cb.error?(msg.error)
+        else if msg.body?
+          return cb.success?(msg.body)
+      @callbacks[name].all?(msg)
+
   listen: (tag, callback) ->
     @tags[tag] = callback
 
   send: ->
     @socket.send(arguments ...)
+    null
 
 window.Rubyists.Socket = Socket
 
@@ -68,6 +92,7 @@ class BackboneWebSocket
 
   send: ->
     @socket.send(arguments ...)
+    null
 
   say: (msg) ->
     @socket.send(JSON.stringify(msg))

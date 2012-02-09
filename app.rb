@@ -16,6 +16,7 @@ require_relative 'node/accounts'
 require_relative 'node/ribbon'
 require_relative 'node/ribbon2'
 require_relative 'node/live'
+require_relative 'node/live2'
 require_relative 'node/live_log'
 
 require_relative 'node/fxc/user'
@@ -42,7 +43,12 @@ end
 class WorkAroundRackStatic
   def initialize(app)
     @app = app
-    @static = Rack::Static.new(@app, urls: %w[/css /stylesheets /js /images], root: "public", cache_control: 'public')
+    @static = Rack::Static.new(
+      @app,
+      urls: %w[/bootstrap /css /stylesheets /js /images],
+      root: "public",
+      cache_control: 'public'
+    )
   end
 
   def call(env)
