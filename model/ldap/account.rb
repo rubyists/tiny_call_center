@@ -1,4 +1,6 @@
 require "nrs_ldap"
+require "ramaze"
+require "./helper/fsr"
 require_relative '../manager'
 
 module TinyCallCenter
