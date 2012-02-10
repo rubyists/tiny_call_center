@@ -41,34 +41,34 @@ dialstring: Nummer
 "Click add to make this agent available in the Tiers view": Klicken Sie auf Hinzufügen, um dieses Anbieters in den Tiers Blick
 Password: Kennwort
 "Show All": Alle
-Sort: Art
+Sort: Sortieren
 Day: Tag
 Days: Tage
-"Idle Time": Idle-Ziet
+"Idle Time": Idle-Zeit
 Overview: Überblick
-"Status Log": Status-Protokoll
-"State Log": Staat Log
+"Status Log": Statusprotokoll
+"State Log": Zustandsprotokoll
 "Call History": Anrufliste
 Available: Verfügbar
 "Available (on Demand)": Verfügbar (auf Anfrage)
 "On Break": Pause
 "Logged Out": Abgemeldet
 Ready: Bereit
-"Wrap Up": Einpacken
-"Todays Status Log": Der heutige Status-Log
+"Wrap Up": Zusammenfassung
+"Todays Status Log": Heutiges Statusprotokoll
 Status: Status
 Time: Zeit
-"Todays State Log": Der heutige Zustand log
+"Todays State Log": Heutiges Zustandsprotokoll
 "CID #": CID #
-"CID Name": CID Namen
+"CID Name": CID Name
 To: Zu
 Context: Kontext
 Dur: Dauer
 Bill: Rechnung
 Calls: Anrufe
-Tap: Hahn
-Suspend: Aussetzen
-Resume: Wieder
+Tap: Abhören
+Suspend: Pause
+Resume: Fortfahren
 Action: Aktion
 Agent: Agent
 Detail: Details
@@ -77,11 +77,11 @@ Exclude: Ausschließen
 Username: Benutzername
 Strategy: Strategie
 "In a queue call": In Warteschlange
-"Call Me": Rufen Sie mich an
+"Call Me": Ruf mich an
 "Make Call": Anruf tätigen
 Logout: Ausloggen
 Phone: Telefon
-"Reference ID": Kennziffer
+"Reference ID": Aktenzeichen
 Tier: Stufe
 Position: Position
 "Available Agents": Verfügbare Agenten
