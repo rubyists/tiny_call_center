@@ -26,11 +26,11 @@
       <action application="export" data="cc_warning_tone=tone_stream://%(800,0,500)/"/> -->
       <action application="answer" />
       <action application="playback" data="$${hold_music}"/>
-      <action application="transfer" data="19999 XML default"/> <!-- Remove this if you just want to get a single call --> 
+      <action application="transfer" data="19999 XML default"/> <!-- Remove this if you just want to get a single call -->
     </condition>
   </extension>
   <extension name="dialer_in">
-    
+
   </extension>
   <extension name="sales">
     <condition field="destination_number" expression="^(sales|19998)$">
