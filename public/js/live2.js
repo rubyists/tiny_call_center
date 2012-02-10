@@ -124,6 +124,7 @@
     AgentController.prototype.details = function() {
       var view,
         _this = this;
+      if (this.model.agent != null) this.model = this.model.agent;
       view = $(Serenade.render('agentDetail', this.model));
       view.on('shown', function() {
         var stateClass, statusClass;

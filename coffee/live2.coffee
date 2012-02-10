@@ -165,6 +165,8 @@ Serenade.controller 'agentCallLog', AgentCallLogController
 
 class AgentController
   details: ->
+    # looks like a bug
+    @model = @model.agent if @model.agent?
     view = $(Serenade.render('agentDetail', @model))
     view.on 'shown', =>
       statusClass = statusOrStateToClass('status-', @model.status)
