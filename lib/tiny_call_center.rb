@@ -2,8 +2,7 @@ require "pathname"
 require 'log4r'
 require 'log4r/configurator'
 
-Log4r::Configurator.custom_levels(:DEBUG, :DEVEL, :INFO, :NOTICE, :WARN,
-                                  :ERROR, :CRIT)
+Log4r::Configurator.custom_levels(:DEBUG, :DEVEL, :INFO, :NOTICE, :WARN, :ERROR, :CRIT)
 
 require 'fsr'
 

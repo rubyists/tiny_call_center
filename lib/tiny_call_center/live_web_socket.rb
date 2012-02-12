@@ -26,19 +26,6 @@ module TCC
       log([ex, *ex.backtrace].join("\n"), :error)
     end
 
-    def self.format_display_name_and_number(name, number)
-      name = nil unless name =~ /\S/
-      number = nil unless number =~ /\S/
-
-      if name && number
-        "#{name} (#{number})"
-      elsif name
-        name
-      elsif number
-        number
-      end
-    end
-
     # Eventually want to have only those sent to the live view.
     KEEP_CALL_KEYS = %w[
       uuid call_uuid created_epoch state cid_name cid_num dest callee_name
@@ -55,13 +42,13 @@ module TCC
       case user
       when dest
         # we're sure this is a call for user and he's the receiver
-        body['display_name_and_number'] =
-          format_display_name_and_number(body['cid_name'], body['cid_num'])
+        body['display_cid'] =
+          WebSocketUtils.format_display_name_and_number(body['cid_name'], body['cid_num'])
         MANAGERS.push ["#{__method__}_#{action}", body.merge(agentId: dest)]
       when cid_num
         # we're sure this is a call from user and he's the caller
-        body['display_name_and_number'] =
-          format_display_name_and_number(body['callee_name'], body['dest'])
+        body['display_cid'] =
+          WebSocketUtils.format_display_name_and_number(body['callee_name'], body['dest'])
         MANAGERS.push ["#{__method__}_#{action}", body.merge(agentId: cid_num)]
       else
         log 'unhandled call'
@@ -145,32 +132,32 @@ module TCC
     end
 
     def channel_call_create(msg)
-      msg['id'] = msg['uuid']
+      msg['id'] = msg['uuid'] || msg['call_uuid']
       say tag: 'live:Call:create', body: msg
     end
 
     def channel_call_update(msg)
-      msg['id'] = msg['uuid']
+      msg['id'] = msg['uuid'] || msg['call_uuid']
       say tag: 'live:Call:update', body: msg
     end
 
     def channel_call_delete(msg)
-      msg['id'] = msg['uuid']
+      msg['id'] = msg['uuid'] || msg['call_uuid']
       say tag: 'live:Call:delete', body: msg
     end
 
     def channel_call_insert(msg)
-      msg['id'] = msg['uuid']
+      msg['id'] = msg['uuid'] || msg['call_uuid']
       say tag: 'live:Call:insert', body: msg
     end
 
     def channel_call_update(msg)
-      msg['id'] = msg['uuid']
+      msg['id'] = msg['uuid'] || msg['call_uuid']
       say tag: 'live:Call:update', body: msg
     end
 
     def channel_call_delete(msg)
-      msg['id'] = msg['uuid']
+      msg['id'] = msg['uuid'] || msg['call_uuid']
       say tag: 'live:Call:delete', body: msg
     end
 
@@ -204,14 +191,11 @@ module TCC
     end
 
     def live_agent_call_log(msg)
-    end
-
-    def got_agent_call_history(msg)
       account = msg_to_account(msg)
 
       if TCC.options.tiny_cdr.db
         TCC::TinyCdr::Call.history(account.extension).map{|row|
-          row.values.merge(start_time: row.start_stamp.rfc2822)
+          row.values.merge(start_time: row.start_stamp.utc.iso8601)
         }
       else
         TCC::CallRecord.agent_history_a(account.agent)
@@ -240,7 +224,8 @@ module TCC
 
     def live_queue_agents(msg)
       queue = msg.fetch('queue')
-      fsr{|s| s.call_center(:tier).list(queue) }.group_by(&:queue)
+      queues = fsr{|s| s.call_center(:tier).list(queue) }.group_by(&:queue)
+      queues[queue]
     end
 
     UTIMES = %w[last_bridge_start last_offered_call last_bridge_end last_status_change]
@@ -268,7 +253,7 @@ module TCC
       calls = all_calls[server]
 
       agent_hash = agent.to_hash
-      agent_hash[:calls] = agent_status(ext, calls)
+      agent_hash[:calls] = WebSocketUtils.agent_status(ext, calls)
       agent_hash[:extension] = ext
       agent_hash[:id] = ext
       agent_hash[:username] = username
@@ -276,7 +261,7 @@ module TCC
         agent.name, ext, agent_hash[:last_bridge_end]
       )
 
-      UTIMES.each{|key| agent_hash[key] = Time.at(agent_hash[key].to_i).rfc2822 }
+      UTIMES.each{|key| agent_hash[key] = agent_hash[key].to_i }
 
       agent_hash
     end
@@ -293,10 +278,10 @@ module TCC
       end
 
       last_call_time = [
-        call_record_created_at, call_start_at,
-        Time.at(last_bridge_end.to_i),
-        Date.today.to_time + (8 * 60 * 60), # 08:00
-      ].compact.max.rfc2822
+        call_record_created_at.to_i, call_start_at.to_i,
+        last_bridge_end.to_i,
+        (Date.today.to_time + (8 * 60 * 60)).to_i, # 08:00
+      ].compact.max
     end
 
     def agent_calls(agents)
@@ -319,18 +304,19 @@ module TCC
 
     # TODO: allow safe reuse of socket
     def fsr(server = TCC.options.command_server)
+      log server: server
       sock = FSR::CommandSocket.new(server: server)
       cmd = yield(sock)
       log cmd.raw
       cmd.run.tap{|response| log(response) }
     ensure
-      sock.socket.close
+      sock.socket.close if sock.respond_to?(:socket)
     end
 
     def msg_to_account(msg)
-      account = Account[extension: msg.fetch('agent')]
+      account = Account.from_extension(msg.fetch('agent'))
       return account if account
-      raise "No such agent: %p" % [ext]
+      raise "No such agent: %p" % [msg['agent']]
     end
   end
 end

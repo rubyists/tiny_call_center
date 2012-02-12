@@ -5,10 +5,9 @@
 desc "migrate to latest version of db"
 task :migrate, :version do |_, args|
   args.with_defaults(:version => nil)
-  require File.expand_path("../../lib/tiny_call_center", __FILE__)
-
-
-  require "tiny_call_center/db"
+  require_relative '../lib/tiny_call_center'
+  require_relative '../lib/tiny_call_center/db'
+  require 'sequel'
   require 'sequel/extensions/migration'
   raise "No DB found" unless DB = TinyCallCenter.db
 

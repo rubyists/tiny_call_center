@@ -113,10 +113,6 @@ module TinyCallCenter
       end
     end
 
-    # we cannot give status to the web interface this way
-    def status
-    end
-
     def state=(new_state)
       Log.debug "set state of #{agent} to #{new_state}"
       FSListener.execute registration_server do |listener|

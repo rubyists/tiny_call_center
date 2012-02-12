@@ -15,6 +15,7 @@
     <script type="text/javascript" src="/bootstrap/js/bootstrap-modal.js"></script>
     <script type="text/javascript" src="/bootstrap/js/bootstrap-tab.js"></script>
     <script type="text/javascript" src="/js/rubyists.js"></script>
+    <script type="text/javascript" src="/js/live2_views.js"></script>
     <script type="text/javascript" src="/js/live2.js"></script>
   </head>
   <body>
@@ -33,21 +34,15 @@
               </ul>
             </li>
 
-            <li class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown">#{l 'Search'}<b class="caret"></b></a>
-              <ul class="dropdown-menu">
-                <li>
-                </li>
-              </ul>
-            </li>
+            <li><a href="#" id="show-all-queues">#{l 'All Queues'}</a></li>
 
             <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown">#{l 'Sort'}<b class="caret"></b></a>
-              <ul class="dropdown-menu">
-                <li><a href="#">#{l 'Name' }</a></li>
-                <li><a href="#">#{l 'Extension' }</a></li>
-                <li><a href="#">#{l 'Status' }</a></li>
-                <li><a href="#">#{l 'Idle Time'}</a></li>
+              <ul class="dropdown-menu" id="sort-agents">
+                <li><a href="#username">#{l 'Name' }</a></li>
+                <li><a href="#extension">#{l 'Extension' }</a></li>
+                <li><a href="#status">#{l 'Status' }</a></li>
+                <li><a href="#idle">#{l 'Idle Time'}</a></li>
               </ul>
             </li>
           </ul>
@@ -68,82 +63,6 @@
     <div class="container-fluid">
       <div class="row-fluid">
         <div id="agents">
-        </div>
-      </div>
-    </div>
-
-    <div id="content">
-      <div id='proto-agent-dialog' class="agent-dialog">
-        <span class="agent-name"></span>
-        <div class="dialog-tabs">
-          <ul>
-            <li><a href="#" class="tab-title">#{l 'Overview' }</a></li>
-            <li><a href="#" class="tab-title">#{l 'Status Log'}</a></li>
-            <li><a href="#" class="tab-title">#{l 'State Log'}</a></li>
-            <li><a href="#" class="tab-title">#{l 'Call History'}</a></li>
-          </ul>
-
-          <div class="tab-content tab-overview">
-            <h2>#{l 'Calls'}</h2>
-            <ul class="calls">
-            </ul>
-
-            <h2>#{l 'Status'}</h2>
-            <ul class="status">
-              <li><a class="available" href="#">#{l 'Available'}</a></li>
-              <li><a class="available-on-demand" href="#">#{l 'Available (On Demand)'}</a></li>
-              <li><a class="on-break" href="#">#{l 'On Break'}</a></li>
-              <li><a class="logged-out" href="#">#{l 'Logged Out'}</a></li>
-            </ul>
-
-            <h2>#{l 'State'}</h2>
-            <ul class="state">
-              <li><a class="Waiting" href="#">#{l 'Ready'}</a></li>
-              <li><a class="Idle" href="#">#{l 'Wrap Up'}</a></li>
-            </ul>
-
-            <button class="calltap ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" role="button" aria-disabled="false">
-              <span class="ui-button-text">#{l 'Tap'}</span>
-            </button>
-          </div>
-
-          <div class="tab-content tab-status-log">
-            <h2>#{l 'Todays Status Log'}</h2>
-            <table class="tab-container">
-              <thead>
-                <th>#{l 'Status'}</th>
-                <th>#{l 'Time'}</th>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-
-          <div class="tab-content tab-state-log">
-            <h2>#{l 'Todays State Log'}</h2>
-            <table class="tab-container">
-              <thead>
-                <th>#{l 'State'}</th>
-                <th>#{l 'Time'}</th>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-
-          <div class="tab-content tab-call-log">
-            <h2>#{l 'Todays Call History'}</h2>
-            <table class="tab-container">
-              <thead>
-                <th>#{l 'Time'}</th>
-                <th>#{l 'CID #'}</th>
-                <th>#{l 'CID Name'}</th>
-                <th>#{l 'To'}</th>
-                <th>#{l 'Context'}</th>
-                <th>#{l 'Dur'}</th>
-                <th>#{l 'Bill' }</th>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
         </div>
       </div>
     </div>

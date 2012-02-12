@@ -4,12 +4,52 @@
 
 p = -> window.console?.debug?(arguments ...)
 socket = null
+isotopeRoot = null
+
+searchToQuery = (raw) ->
+  if /^[,\s]*$/.test(raw)
+    $('#agents').isotope(filter: '*')
+    return false
+
+  query = []
+  for part in raw.split(/\s*,\s*/g)
+    part = part.replace(/'/, '')
+    query.push(":contains('#{part}')")
+
+  return query.join(", ")
 
 statusOrStateToClass = (prefix, str) ->
-  if str
-    prefix + str.toLowerCase().replace(/\W+/g, "-").replace(/^-+|-+$/g, "")
+  return unless str
+  prefix + str.toLowerCase().replace(/\W+/g, "-").replace(/^-+|-+$/g, "")
+
+queueToClass = (queue) ->
+  return unless queue
+  queue.toLowerCase().replace(/\W+/g, '_').replace(/^_+|_+$/g, "")
+
+formatInterval = (start) ->
+  total = parseInt((Date.now() - start) / 1000, 10)
+  [hours, rest] = divmod(total, 60 * 60)
+  [minutes, seconds] = divmod(rest, 60)
+  sprintTime(hours, minutes, seconds)
+
+sprintTime = ->
+  parts = for arg in arguments
+    num = parseInt(arg, 10)
+    if num < 10
+      '0' + num
+    else
+      num
+  parts.join(":")
+
+divmod = (num1, num2) ->
+  [num1 / num2, num1 % num2]
 
 initializeIsotope = (elt) ->
+  $('#sort-agents a').click (event) ->
+    sorter = $(event.target).attr('href').replace(/^#/, "")
+    p sorter
+    elt.isotope(sortBy: sorter)
+    false
   elt.isotope(
     itemSelector: '.agent',
     layoutMode: 'fitRows',
@@ -52,107 +92,14 @@ Serenade.Helpers.liStatus = (klass, name, status) ->
   a.get(0)
 
 #
-# Views
-#
-
-Serenade.view 'queueList', """
-ul[id="queues" class="dropdown-menu"]
-  - collection @queues
-      li
-        a[href="#" event:click=showQueue!] @name
-"""
-
-Serenade.view 'agent', """
-div.agent.span2[class=@statusClass event:dblclick=details!]
-  span.extension @extension
-  span.username @username
-  span.state @state
-  span.status @status
-  span.time-since-status-change @timeSinceStatusChange
-  span.queue @queue
-  span.calls
-    - collection @calls
-      - view "call"
-  span.more-calls @moreCalls
-"""
-
-Serenade.view 'call', """
-div
-  .cid-name @cid_name
-  .cid-number @cid_number
-  .arrow "&harr;"
-  .destination @destination
-  .time-of-call-start @created
-  .answered @answered
-  .queue-name @queueName
-  .channel @channel
-  .uuid @uuid
-  a.calltap-uuid[href="#"]
-    img[src="/images/ear.png"]
-"""
-
-Serenade.view 'agentDetail', """
-.modal.fade
-  .modal-header
-    a.close[data-dismiss="modal"] "x"
-    h3 @username " - " @id
-  .modal-body
-    ul.nav.nav-tabs
-      li
-        a[data-toggle="tab" href="#agentDetailOverview"] "Overview"
-      li
-        a[data-toggle="tab" href="#agentDetailStatusLog"] "Status Log"
-      li
-        a[data-toggle="tab" href="#agentDetailStateLog"] "State Log"
-      li
-        a[data-toggle="tab" href="#agentDetailCallHistory"] "Call History"
-    .tab-content
-      #agentDetailOverview.tab-pane.fade
-        h2 "Status"
-        .btn-group[data-toggle="buttons-radio"]
-          button.btn.status-available[event:click=statusAvailable] "Available"
-          button.btn.status-available-on-demand[event:click=statusAvailableOnDemand] "Available (On Demand)"
-          button.btn.status-on-break[event:click=statusOnBreak] "On Break"
-          button.btn.status-logged-out[event:click=statusLoggedOut] "Logged Out"
-
-        h2 "State"
-        .btn-group[data-toggle="buttons-radio"]
-          button.btn.state-waiting[event:click=stateWaiting] "Ready"
-          button.btn.state-idle[event:click=stateIdle] "Wrap Up"
-      #agentDetailStatusLog.tab-pane
-        "Loading Status Log..."
-      #agentDetailStateLog.tab-pane
-        "Loading State Log..."
-      #agentDetailCallHistory.tab-pane
-        "Loading Call History..."
-        
-  .modal-footer
-    button.calltap
-      i.icon-headphones
-      "Tap"
-"""
-
-Serenade.view 'agentStatusLog', """
-ul
-  - collection @statuses
-    li @created_at " : " @new_status
-"""
-
-Serenade.view 'agentStateLog', """
-ul
-  - collection @states
-    li @created_at " : " @new_state
-"""
-
-Serenade.view 'agentCallLog', """
-ul
-  - collection @calls
-    li @created_at " : " @new_state
-"""
-
-#
 # Controllers
 #
+
+class AgentCallController
+  calltap: ->
+    p 'calltap', arguments ...
+    p this
+Serenade.controller 'agentCall', AgentCallController
 
 class AgentStatusLogController
 Serenade.controller 'agentStatusLog', AgentStatusLogController
@@ -171,7 +118,7 @@ class AgentController
     view.on 'shown', =>
       statusClass = statusOrStateToClass('status-', @model.status)
       stateClass = statusOrStateToClass('state-', @model.state)
-      $("button.#{statusClass}, button.#{stateClass}", view).
+      $("button." + statusClass + ", button." + stateClass, view).
         button('reset').button('toggle')
     view.on 'hidden', -> view.remove()
     view.modal('show')
@@ -220,11 +167,14 @@ Serenade.controller 'agentDetail', AgentDetailController
 
 class QueueController
   showQueue: (event) ->
-    target = $(event.target)
+    queue = $(event.target).text()
     socket.live 'queue_agents',
-      queue: target.text(),
+      queue: queue,
       success: (msg) =>
-        p 'queue_agents', msg
+        for tier in msg
+          id = tier.agent.split("-")[0]
+          new Agent(id: id, queue: tier.queue, state: tier.state)
+        isotopeRoot.isotope(filter: "." + queueToClass(queue))
 
 Serenade.controller 'queueList', QueueController
 
@@ -233,14 +183,24 @@ Serenade.controller 'queueList', QueueController
 #
 
 class Call extends Serenade.Model
-  @property 'legA'
-  @property 'legB'
+  @property 'display_cid'
+  @property 'created_epoch'
   @belongsTo 'agent', as: (-> Agent)
+
+  @property 'createdTime',
+    get: (-> (new Date(@created)).toLocaleString()),
+    dependsOn: ['created']
+
+  @property 'created',
+    get: (-> @created_epoch * 1000),
+    dependsOn: ['created_epoch']
 
   constructor: -> @initialize(arguments ...) unless super
 
   initialize: ->
-    p 'initialize Call', arguments ...
+    @timer = setInterval((=>
+      @set('duration', formatInterval(@created))
+    ) , 1000)
 
 Agents = new Serenade.Collection([])
 
@@ -258,18 +218,45 @@ class Agent extends Serenade.Model
     get: (-> statusOrStateToClass('status-', @status)),
     dependsOn: ['status']
 
-  constructor: -> @initialize(arguments ...) unless super
+  @property 'queueClass',
+    get: (-> queueToClass(@queue)),
+    dependsOn: ['queue']
+
+  constructor: -> @initialize(arguments ...) unless super(arguments ...)
 
   initialize: ->
-    p 'initialize Agent', arguments ...
-    tmp = Serenade.render('agent', this)
-    $('#agents').isotope('insert', $(tmp))
+    p this unless @id
+    jtag = $(Serenade.render('agent', this))
+    jtag.addClass(@statusClass)
+    $('#agents').isotope('insert', jtag)
+    @bind 'change:queue', (value) =>
+      jtag.addClass(value)
+    @bind 'change:statusClass', (value) =>
+      for klass in jtag.attr('class').split(' ')
+        jtag.removeClass(klass) if /^status-/.test(klass)
+      jtag.addClass(value)
 
 class Queue extends Serenade.Model
   @property 'name', serialize: true
 
 $ ->
-  initializeIsotope($('#agents'))
+  isotopeRoot = $('#agents')
+  initializeIsotope(isotopeRoot)
+
+  $('#show-all-queues').on 'click', ->
+    isotopeRoot.isotope(filter: "*")
+
+  $('.navbar-search').on 'submit', (event) ->
+    false
+
+  $('#search').on 'input', (event) ->
+    term = searchToQuery($(event.target).val())
+    isotopeRoot.isotope(filter: term)
+    false
+
+  $('#search').on 'keyup', (event) =>
+    if event.keyCode == 13
+      event.preventDefault()
 
   server = $('#server').text()
   socket = new Rubyists.Socket(server: server)
@@ -285,21 +272,17 @@ $ ->
     socket.tag 'live:Call:create', (msg) ->
       p 'live:Call:create', msg
       call = new Call(msg.body)
-      p call
-      p call.agent
-      p call.agent.calls.push(call)
+      call.agent.calls.push(call)
     socket.tag 'live:Call:update', (msg) ->
       p 'live:Call:update', msg
       call = new Call(msg.body)
-      p call
-      p call.agent
-      p call.agent.calls
     socket.tag 'live:Call:delete', (msg) ->
       p 'live:Call:delete', msg
       toDelete = new Call(msg.body)
       toDeleteId = toDelete.id
 
-      calls = toDelete.agent.calls
+      return unless agent = toDelete.agent
+      calls = agent.calls
 
       pendingDeletion = []
       calls.forEach (call, index) ->

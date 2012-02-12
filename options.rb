@@ -4,6 +4,14 @@ require 'pgpass'
 module TinyCallCenter
   include Innate::Optioned
 
+  pgpass = lambda{|options|
+    if found = Pgpass.match(options)
+      found.to_url
+    else
+      raise "No entry in .pgpass for %p" % [options]
+    end
+  }
+
   options.dsl do
     o "SIP External Proxy Server Format String (To make calls to PSTN)", :proxy_server_fmt,
       ENV["TCC_ProxyServerFormatString"] || 'sofia/gateway/default/%s'
@@ -28,7 +36,7 @@ module TinyCallCenter
 
     sub :mod_callcenter do
       o 'Mod_callcenter postgres database uri (postgres://user:pass@host/callcenter)', :db,
-        ENV["TCC_ModCallcenterDB"] || Pgpass.match(database: 'callcenter').to_url
+        ENV["TCC_ModCallcenterDB"] || pgpass.(database: 'callcenter')
     end
 
     sub :memcached do
@@ -83,7 +91,7 @@ module TinyCallCenter
       ENV["TCC_OffHook"] || false
 
     o "Sequel Database URI (adapter://user:pass@host/database)", :db,
-      ENV["TCC_DB"] || Pgpass.match(database: 'tcc').to_url
+      ENV["TCC_DB"] || pgpass.(database: 'tcc')
 
     o "Accounts Backend", :backend, (ENV["TCC_Backend"] || 'db')
 

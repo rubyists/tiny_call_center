@@ -20,7 +20,7 @@ class Socket
     @socket = new @webSocket(@options.server)
 
     @socket.onmessage = (messageEvent) =>
-      p 'message', messageEvent.data
+      # p 'message', messageEvent.data
       @onmessage(arguments ...)
 
     @socket.onerror = =>

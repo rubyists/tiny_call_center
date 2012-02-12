@@ -1,5 +1,4 @@
 require "nrs_ldap"
-require "ramaze"
 require "./helper/fsr"
 require_relative '../manager'
 
@@ -152,13 +151,17 @@ module TinyCallCenter
     end
 
     def status=(new_status)
-      TCC::Log.debug "Set status of #{agent} to #{new_status}"
-      fsr.callcenter!{|cc| cc.set(agent, :status, new_status) }
+      Log.debug "set status of #{agent} to #{new_status}"
+      FSListener.execute registration_server do |listener|
+        listener.callcenter!{|cc| cc.set(agent, :status, new_status) }
+      end
     end
 
-    def status
-      TCC::Log.debug "Get status of #{agent}"
-      fsr.callcenter!{|cc| cc.get(agent, :status) }
+    def state=(new_state)
+      Log.debug "set state of #{agent} to #{new_state}"
+      FSListener.execute registration_server do |listener|
+        listener.callcenter!{|cc| cc.set(agent, :state, new_state) }
+      end
     end
   end
 end

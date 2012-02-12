@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+
 require_relative "../lib/tiny_call_center"
 require TCC::ROOT/:options
 require TCC::LIBROOT/"tiny_call_center/ribbon_web_socket"

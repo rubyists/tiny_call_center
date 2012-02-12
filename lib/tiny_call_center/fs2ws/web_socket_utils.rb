@@ -14,10 +14,23 @@ module TinyCallCenter
       'waiting' => 'Ready',
     }
 
+    def self.format_display_name_and_number(name, number)
+      name = nil unless name =~ /\S/
+      number = nil unless number =~ /\S/
+
+      if name && number
+        "#{name} (#{number})"
+      elsif name
+        name
+      elsif number
+        number
+      end
+    end
+
     # Check the agents extension against all the calls passed in.
     # When new Channel or Call fields are added, the calls.select
     # block needs to know about them
-    def agent_status(extension, calls)
+    def self.agent_status(extension, calls)
       return {} unless extension && calls
 
       sip = /sip:#{extension}@/
@@ -34,10 +47,11 @@ module TinyCallCenter
           FSR::Log.debug "<<< Found Dest >>>\n" + found.inspect
           # got a Transfer here
           h = {
+            display_cid: format_display_name_and_number(found.cid_name, found.cid_num),
             cid_name: found.cid_name,
             cid_number: found.cid_num,
             uuid: found.uuid,
-            created: Time.at(found.created_epoch.to_i).rfc2822,
+            created_epoch: found.created_epoch.to_i,
             agentId: extension,
           }
           FSR::Log.debug "<<< Channel Hash >>>\n" + h.inspect
@@ -45,22 +59,24 @@ module TinyCallCenter
         elsif found.dest
           # got an FSR::Channel here
           {
+            display_cid: format_display_name_and_number(found.dest, found.dest),
             cid_name: found.dest,
             cid_number: found.dest,
             uuid: found.uuid,
-            created: Time.at(found.created_epoch.to_i).rfc2822,
+            created_epoch: found.created_epoch.to_i,
             agentId: extension,
           }
         else
           # Assume an FSR::Call here
           FSR::Log.debug "<<< FSR::Call >>>\n" + found.inspect
           {
+            display_cid: format_display_name_and_number(found.caller_cid_name, found.caller_cid_num),
             caller_cid_num:     found.caller_cid_num,
             caller_cid_name:    found.caller_cid_name,
             caller_dest_num:    found.caller_dest_num,
             callee_cid_num:     found.callee_cid_num,
             uuid:               found.call_uuid,
-            call_created:       Time.at(found.call_created_epoch.to_i).rfc2822,
+            created_epoch:      found.call_created_epoch.to_i,
             agentId: extension,
           }
         end

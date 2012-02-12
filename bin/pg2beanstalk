@@ -1,33 +1,55 @@
 #!/usr/bin/env ruby
 
+require 'optparse'
 require 'sequel'
 require 'pgpass'
 require 'beanstalk-client'
 require_relative '../lib/tiny_call_center'
 require_relative '../options'
 
-TCC::Log.level = Log4r.const_get(TCC.options.log_level)
-p TCC.options.log_level
+options = {
+  beanstalk: TCC.options.beanstalk.servers,
+  postgres: 'freeswitch',
+  log: TCC.options.log_level,
+  tube: TCC.options.beanstalk.send_tube,
+}
 
-channels = ARGV
-if channels.empty?
-  TCC::Log.warn "No Channels Specified, falling back to defaults"
-  channels = %w[channel call agent tier member].map{|prefix|
+options[:channels] =
+  %w[channel call agent tier member].map{|prefix|
     %w[insert update delete].map{|suffix|
       "#{prefix}_#{suffix}" }}.flatten
+
+op = OptionParser.new{|o|
+  o.on('--channels [channel,call,agent,tier,member]', Array, 'list of event classes to listen to'){|c| options[:channels] = c }
+  o.on('--postgres database', 'database for sequel that matches .pgpass entry'){|u| options[:postgres] = u }
+  o.on('--beanstalk [server1,server2]', Array, 'list of beanstalk servers to submit the events to'){|b| options[:beanstalk] = b }
+  o.on('--tube name', 'Beanstalk tube to push events into'){|t| options[:tube] = t }
+  o.on('--log-level', 'log level'){|l| options[:log] = l }
+  o.on('-h', '--help'){ puts o; exit }
+}
+
+op.parse!
+
+TCC::Log.level = Log4r.const_get(options[:log])
+puts "Log level: #{TCC.options.log_level}"
+
+if url = Pgpass.match(database: options[:postgres])
+  DB = Sequel.connect(url.to_url)
+elsif url = options[:postgres]
+  DB = Sequel.connect(url)
+else
+  raise ArgumentError, "No database called %p found" % [options[:postgres]]
 end
 
-url = Pgpass.match(database: 'freeswitch').to_url
-DB = Sequel.connect(url)
+TCC::Log.info "connected to pg: %p" % [DB.uri]
 
-TCC::Log.info "connected to pg: %p (%p)" % [url, DB]
-TCC::Log.info "listening on %p" % [channels]
+TCC::Log.info "Connecting to Beanstalk %p" % [options[:beanstalk]]
+beanstalk = Beanstalk::Pool.new(options[:beanstalk])
+TCC::Log.info "Sending on tube: %p" % [options[:tube]]
+beanstalk.use(options[:tube])
 
-beanstalk = Beanstalk::Pool.new(servers = TCC.options.beanstalk.servers)
-beanstalk.use(tube = TCC.options.beanstalk.send_tube)
-TCC::Log.info "Sending to #{servers} => #{tube}"
-
-DB.listen channels, loop: true do |channel, pid, payload|
+TCC::Log.info "listening on %p" % [options[:channels]]
+DB.listen options[:channels], loop: true do |channel, pid, payload|
   TCC::Log.debug channel => payload.size
   beanstalk.put("#{channel}\t#{payload}\t#{rand}")
 end

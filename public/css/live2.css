@@ -1,20 +1,11 @@
-#proto-agent-dialog {
-  display: none;
-}
-
 #show-all-agents {
   color: #f00;
 }
 
 #agents .agent {
   color: #000;
-  height: 6em;
-  width: 15em;
-  float: left;
+  min-height: 4em;
   border-radius: 0.5em;
-  padding: 0.5em;
-  margin: 0.1em;
-  font-size: 0.7em;
 }
 
 .agent > span {
