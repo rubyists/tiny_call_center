@@ -203,14 +203,17 @@ module TCC
     end
 
     def live_subscribe(msg)
-      log msg
       name = msg.fetch('name')
       log "Subscribe #{name}"
 
       unless @channel_name
-        @channel_name = MANAGERS.subscribe{|method, body|
-          __send__("channel_#{method}", body)
-        }
+        if @account = Account.from_call_center_name(name)
+          @channel_name = MANAGERS.subscribe{|method, body|
+            __send__("channel_#{method}", body)
+          }
+        else
+          raise "#{name} doesn't have an account"
+        end
       end
 
       {subscribed: true}
@@ -244,6 +247,42 @@ module TCC
       calls = agent_calls(agents_with_contact)
 
       {agents: agents_with_contact.map{|agent| agent_hash(agent, calls) }}
+    end
+
+    def live_uuid_calltap(msg)
+      uuid, agent_ext = msg.fetch('uuid'), msg.fetch('agent')
+      agent = Account.from_extension(agent_ext)
+
+      return eavesdrop(uuid, agent)
+
+      extension, name, tapper, uuid, phoneNumber = msg.values_at('extension', 'name', 'tapper', 'uuid', 'phoneNumber')
+
+      if manager = Account.from_call_center_name(tapper)
+        return false unless manager.manager?
+        return false unless agent = Account.from_call_center_name(name)
+        if manager.manager.authorized_to_listen?(extension, phoneNumber)
+          eavesdrop(uuid, agent, manager)
+        end
+      end
+    end
+
+    def eavesdrop(uuid, agent)
+      Log.notice("Requestion Tap of #{agent} by #{@account} -> #{uuid}")
+      return false unless agent.registration_server
+
+      Log.notice("Tapping #{agent.full_name} at #{agent.registration_server}: #{uuid}")
+      sock = FSR::CommandSocket.new(:server => agent.registration_server)
+
+      if target = @account.manager.eavesdrop_extension
+      elsif @account.registration_server == agent.registration_server
+        target = "user/#{@account.extension}"
+      else
+        target = "sofia/internal/#{@account.extension}@#{@account.registration_server}"
+      end
+
+      cmd = sock.originate(target: target, endpoint: "&eavesdrop(#{uuid})")
+      Log.debug("Tap Command %p" % cmd.raw)
+      cmd.run
     end
 
     def agent_hash(agent, all_calls)

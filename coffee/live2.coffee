@@ -97,8 +97,8 @@ Serenade.Helpers.liStatus = (klass, name, status) ->
 
 class AgentCallController
   calltap: ->
-    p 'calltap', arguments ...
     p this
+    socket.live 'uuid_calltap', uuid: @model.id, agent: @model.agent.id
 Serenade.controller 'agentCall', AgentCallController
 
 class AgentStatusLogController

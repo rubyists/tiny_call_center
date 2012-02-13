@@ -60,7 +60,7 @@ Serenade.view('agentDetail', """
               th "CID"
               th "Time"
               th "Queue"
-              th "&nbsp;"
+              th "Tap"
           tbody
             - collection @calls
               - view "agentCall"
