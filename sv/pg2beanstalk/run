@@ -1,0 +1,14 @@
+#!/bin/bash -e
+exec 2>&1
+TERM=screen
+envdir=$PWD/env
+root=$(<env/TCC_Root)
+port=$(<env/TCC_Innate_Port)
+echo Starting from $root
+cd $root
+if [ -s $HOME/.rvm/scripts/rvm ]; then
+  source $HOME/.rvm/scripts/rvm
+  echo "Using RVM $(which rvm)"
+  source .rvmrc.tcc
+fi
+exec chpst -e $envdir ./bin/pg2beanstalk --channels channel_insert,channel_update,channel_delete,call_insert,call_update,call_delete --postgres postgres://freeswitch:switchfree@pip/freeswitch 2>&1
