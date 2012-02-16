@@ -11,29 +11,34 @@ TCC::Log.level = Log4r.const_get(TCC.options.log_level)
 p = Log4r::PatternFormatter.new :pattern => '%l <%x> %m'
 TCC::Log.outputters.each { |outputter| outputter.formatter = p }
 
+with_log = lambda do |name, &block|
+  begin
+    Log4r::NDC.push name
+    block.call
+  ensure
+    Log4r::NDC.pop
+  end
+end
+
+websocket = lambda do |uri, handler|
+  host, port = uri.host, uri.port
+
+  with_log.('websocket') do
+    TCC::Log.info "Starting Websocket on #{host}:#{port}"
+
+    EM::WebSocket.start(host: host, port: port, debug: false) do |ws|
+      handler.new(ws)
+    end
+  end
+end
+
 EM.run do
-  host, port = '0.0.0.0', 43443
+  websocket.(TCC.options.live2.server, TCC::LiveManager)
+  websocket.(TCC.options.ribbon2.server, TCC::RibbonAgent)
 
-  Log4r::NDC.push 'websocket'
-  TCC::Log.info "Starting Websocket on #{host}:#{port}"
-  EM::WebSocket.start(host: host, port: port, debug: false) do |ws|
-    # TODO TCC::SwitchBoard.new(ws)
-    # TODO TCC::LiveView.new(ws)
-    TCC::RibbonAgent.new(ws)
-  end
-  Log4r::NDC.pop
-
-  host, port = '0.0.0.0', 43444
-  Log4r::NDC.push 'Live WebSocket'
-  TCC::Log.info "Starting on #{host}:#{port}"
-  EM::WebSocket.start(host: host, port: port, debug: false) do |ws|
-    TCC::LiveManager.new(ws)
-  end
-  Log4r::NDC.pop
-
-  tubes = TCC.options.beanstalk.listen_tubes
-  Log4r::NDC.push 'jack_tube'
-  TCC::Log.info "Starting JackTube for #{tubes}"
-  TCC::JackTube.new.watch_socket(tubes)
-  Log4r::NDC.pop
+  with_log.('jack_tube'){
+    tubes = TCC.options.beanstalk.listen_tubes
+    TCC::Log.info "Starting JackTube for #{tubes}"
+    TCC::JackTube.new.watch_socket(tubes)
+  }
 end
