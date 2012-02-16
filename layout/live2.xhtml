@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>Live CallCenter &middot; #{h @agent}</title>
+    <title>Effortless CallCenter &middot; #{h @agent}</title>
     <link rel="stylesheet" type="text/css" href="/bootstrap/css/bootstrap.css" />
     <link rel="stylesheet" type="text/css" href="/bootstrap/css/bootstrap-responsive.css" />
     <link rel="stylesheet" type="text/css" href="/css/live2.css" />
@@ -60,18 +60,18 @@
       </div>
     </div>
 
-    <div class="container-fluid">
+    <section id="app" class="container-fluid">
       <div class="row-fluid">
         <div id="agents">
         </div>
       </div>
-    </div>
 
-    <footer>
-      <span id="agent_name">#{h @agent}</span>
-      <span id="server">#{h @server}</span>
-      <span id="couch_uri">#{h @couch_uri}</span>
-      <div id="copyright">Effortless CallCenter &copy; by The Rubyists LLC. 2010-2012</div>
-    </footer>
+      <footer class="row-fluid">
+        <div class="span12" id="copyright">Effortless CallCenter &copy; by The Rubyists LLC. 2010-2012</div>
+        <span id="agent_name">#{h @agent}</span>
+        <span id="server">#{h @server}</span>
+        <span id="couch_uri">#{h @couch_uri}</span>
+      </footer>
+    </div>
   </body>
 </html>

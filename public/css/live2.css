@@ -1,70 +1,39 @@
-#show-all-agents {
+footer {
+  text-align: center;
+}
+
+#show-all-queues {
   color: #f00;
 }
 
-#agents .agent {
-  color: #000;
-  min-height: 4em;
-  border-radius: 0.5em;
+.agent {
+  padding: 0.25em;
+  border-radius: 0.25em;
+  border: 1px solid rgba(255,255,255,0.5);
 }
 
-.agent > span {
+.agent .status, .agent .queue, .agent .lastStatusChange {
   display: none;
 }
 
 .agent .username, .agent .extension {
-  display: inline;
   font-weight: bold;
 }
 
 .agent .state {
-  display: block;
-  position: absolute;
-  bottom: 0.5em;
-  right: 0.5em;
+  text-align: right;
 }
 
-.agent .more-calls {
-  display: block;
-  color: #f00;
-  font-weight: bold;
-}
-
-.agent .calls {
-  display: block;
-}
-
-.agent .calls .call:first-of-type {
-  display: block;
-}
-
-.agent .calls .call {
-  display: none;
-}
-
-.calls .call {
+.agent .call {
   background: rgba(255,255,255,0.5);
 }
 
-.calls .call .time-of-call-start {
+.agent .call .time-of-call-start {
   float: right;
 }
 
 .agent .time-since-status-change {
   display: block;
-}
-
-.call .uuid, .call .channel, .call .calltap-uuid {
-  display: none;
-}
-
-.agent-dialog .call .calltap-uuid {
-  display: inline;
-  float: right;
-}
-
-.agent-dialog .state .active, .agent-dialog .status .active {
-  border: 1px solid #f00;
 }
 
 .tab-status-log table, .tab-state-log table {
@@ -75,6 +44,7 @@
 #agents .agent.status-available {
   -webkit-transition: 500ms;
      -moz-transition: 500ms;
+       -o-transition: 500ms;
   transition: 500ms;
   background: #6f6;
 }
@@ -82,6 +52,7 @@
 #agents .agent.status-available-on-demand {
   -webkit-transition: 500ms;
      -moz-transition: 500ms;
+       -o-transition: 500ms;
   transition: 500ms;
   background: #f6f;
 }
@@ -89,6 +60,7 @@
 #agents .agent.status-on-break {
   -webkit-transition: 500ms;
      -moz-transition: 500ms;
+       -o-transition: 500ms;
   transition: 500ms;
   background: #999;
 }
@@ -96,6 +68,7 @@
 #agents .agent.status-logged-out {
   -webkit-transition: 500ms;
      -moz-transition: 500ms;
+       -o-transition: 500ms;
   transition: 500ms;
   background: #f66;
 }
@@ -112,17 +85,20 @@
 .isotope, .isotope .isotope-item {
   -webkit-transition-duration: 0.8s;
      -moz-transition-duration: 0.8s;
+       -o-transition-duration: 0.8s;
           transition-duration: 0.8s;
 }
 
 .isotope {
   -webkit-transition-property: height, width;
      -moz-transition-property: height, width;
+       -o-transition-property: height, width;
           transition-property: height, width;
 }
 
 .isotope .isotope-item {
   -webkit-transition-property: -webkit-transform, opacity;
      -moz-transition-property:    -moz-transform, opacity;
+       -o-transition-property:      -o-transform, opacity;
           transition-property:         transform, opacity;
 }

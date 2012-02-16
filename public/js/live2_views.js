@@ -3,7 +3,7 @@
 
   Serenade.view('queueList', "ul#queues.dropdown-menu\n  - collection @queues\n      li\n        a[href=\"#\" event:click=showQueue!] @name");
 
-  Serenade.view('agent', "div.agent.span2[event:change:status=change! event:dblclick=details!]\n  span.extension @extension\n  span.username @username\n  span.state @state\n  span.status @status\n  span.time-since-status-change @timeSinceStatusChange\n  span.queue @queue\n  span[class=@queue]\n  span.calls\n    - collection @calls\n      .name-and-number @display_cid\n      .duration @duration\n  span.more-calls @moreCalls");
+  Serenade.view('agent', ".span2.agent[event:dblclick=details!]\n  .row-fluid\n    .span2.extension @extension\n    .span10.username @username\n  - collection @calls\n    .row-fluid.call\n      .span3.duration @duration\n      .span9.name-and-number @display_cid\n  .row-fluid\n    .span3.atime @timeSinceStatusChange\n    .span9.state @state\n  .status @status\n  .queue @queue\n  .lastStatusChange @lastStatusChange\n  div[class=@queue]");
 
   Serenade.view('agentCall', "tr\n  td @display_cid\n  td @createdTime\n  td @queue\n  td\n    a[event:click=calltap!]\n      i.icon-headphones");
 

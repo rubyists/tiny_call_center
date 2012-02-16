@@ -94,27 +94,27 @@
           return e.find('.extension').text();
         },
         status: function(e) {
-          var extension, order, s;
-          s = e.find('.status').text();
+          var ext, order, status;
+          ext = e.find('.extension').text();
+          status = e.find('.status').text();
           order = (function() {
-            switch (s) {
+            switch (status) {
               case 'Available':
-                return 0.7;
+                return 5;
               case 'Available (On Demand)':
-                return 0.8;
+                return 6;
               case 'On Break':
-                return 0.9;
+                return 7;
               case 'Logged Out':
-                return 1.0;
+                return 8;
+              default:
+                return 4;
             }
           })();
-          extension = e.find('.extension').text();
-          return parseFloat("" + order + extension);
+          return parseInt([order, ext].join(''), 10);
         },
         idle: function(e) {
-          var min, sec, _ref;
-          _ref = e.find('.time-since-status-change').text().split(':'), min = _ref[0], sec = _ref[1];
-          return ((parseInt(min, 10) * 60) + parseInt(sec, 10)) * -1;
+          return parseInt(e.find('.lastStatusChange').text(), 10) * -1;
         }
       },
       sortBy: 'status'
@@ -136,7 +136,6 @@
     function AgentCallController() {}
 
     AgentCallController.prototype.calltap = function() {
-      p(this);
       return socket.live('uuid_calltap', {
         uuid: this.model.id,
         agent: this.model.agent.id
@@ -349,6 +348,10 @@
 
     Call.property('created_epoch');
 
+    Call.property('duration');
+
+    Call.property('initializeRan');
+
     Call.belongsTo('agent', {
       as: (function() {
         return Agent;
@@ -369,17 +372,27 @@
       dependsOn: ['created_epoch']
     });
 
-    function Call() {
-      if (!Call.__super__.constructor.apply(this, arguments)) {
-        this.initialize.apply(this, arguments);
-      }
+    function Call(obj) {
+      Call.__super__.constructor.apply(this, arguments);
+      if (this.initializeRan == null) this.initialize.apply(this, arguments);
     }
 
     Call.prototype.initialize = function() {
       var _this = this;
-      return this.timer = setInterval((function() {
-        return _this.set('duration', formatInterval(_this.created));
+      this.timer = setInterval((function() {
+        return _this.duration = formatInterval(_this.created);
       }), 1000);
+      this.bind('delete', (function() {
+        return _this.onDelete.apply(_this, arguments);
+      }));
+      return this.initializeRan = true;
+    };
+
+    Call.prototype.onDelete = function() {
+      var _ref;
+      p('onDelete', this);
+      clearInterval(this.timer);
+      return (_ref = this.agent) != null ? _ref.lastStatusChange = Date.now() : void 0;
     };
 
     return Call;
@@ -387,6 +400,8 @@
   })(Serenade.Model);
 
   Agents = new Serenade.Collection([]);
+
+  window.Agents = Agents;
 
   Agent = (function(_super) {
 
@@ -404,7 +419,11 @@
 
     Agent.property('timeSinceStatusChange');
 
+    Agent.property('lastStatusChange');
+
     Agent.property('queue');
+
+    Agent.property('initializeRan');
 
     Agent.hasMany('calls', {
       as: (function() {
@@ -426,31 +445,72 @@
       dependsOn: ['queue']
     });
 
-    function Agent() {
-      if (!Agent.__super__.constructor.apply(this, arguments)) {
-        this.initialize.apply(this, arguments);
-      }
+    function Agent(obj) {
+      Agent.__super__.constructor.apply(this, arguments);
+      if (this.initializeRan == null) this.initialize.apply(this, arguments);
     }
 
     Agent.prototype.initialize = function() {
-      var jtag,
-        _this = this;
-      if (!this.id) p(this);
-      jtag = $(Serenade.render('agent', this));
-      jtag.addClass(this.statusClass);
-      $('#agents').isotope('insert', jtag);
+      var dom;
+      this.setupTimer();
+      dom = this.setupDOM();
+      this.setupBinds(dom);
+      return this.initializeRan = true;
+    };
+
+    Agent.prototype.setupTimer = function() {
+      var _this = this;
+      this.lastStatusChange = Date.now();
+      return this.timer = setInterval((function() {
+        return _this.timeSinceStatusChange = formatInterval(_this.lastStatusChange);
+      }), 1000);
+    };
+
+    Agent.prototype.setupDOM = function() {
+      var tag;
+      tag = $(Serenade.render('agent', this));
+      tag.addClass(this.statusClass);
+      $('#agents').isotope('insert', tag);
+      return tag;
+    };
+
+    Agent.prototype.setupBinds = function(tag) {
+      var _this = this;
+      this.bind('change:status', function(value) {
+        return _this.lastStatusChange = Date.now();
+      });
+      this.bind('change:state', function(value) {
+        return _this.lastStatusChange = Date.now();
+      });
+      this.calls.bind('delete', function(value) {
+        return _this.lastStatusChange = Date.now();
+      });
       this.bind('change:queue', function(value) {
-        return jtag.addClass(value);
+        return tag.addClass(value);
+      });
+      this.bind('change:lastStatusChange', function(value) {
+        p('change:lastStatusChange', value);
+        return isotopeRoot.isotope('updateSortData', tag);
       });
       return this.bind('change:statusClass', function(value) {
         var klass, _i, _len, _ref;
-        _ref = jtag.attr('class').split(' ');
+        _ref = tag.attr('class').split(' ');
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           klass = _ref[_i];
-          if (/^status-/.test(klass)) jtag.removeClass(klass);
+          if (/^status-/.test(klass)) tag.removeClass(klass);
         }
-        return jtag.addClass(value);
+        return tag.addClass(value);
       });
+    };
+
+    Agent.prototype.updateCall = function(msg) {
+      var call, id;
+      id = msg.id;
+      this.calls.forEach(function(call) {
+        if (call.id === id) return call.set(msg);
+      });
+      call = new Call(msg, false);
+      return this.calls.set(call.id, call);
     };
 
     return Agent;
@@ -478,6 +538,7 @@
   $(function() {
     var server,
       _this = this;
+    Serenade.useJQuery();
     isotopeRoot = $('#agents');
     initializeIsotope(isotopeRoot);
     $('#show-all-queues').on('click', function() {
@@ -511,31 +572,49 @@
         return new Agent(msg.body);
       });
       socket.tag('live:Call:create', function(msg) {
-        var call;
-        p('live:Call:create', msg);
-        call = new Call(msg.body);
-        return call.agent.calls.push(call);
+        var agentId;
+        p('live:Call:create', msg.body.agentId, msg.body.display_cid, msg.body.id, msg.body);
+        agentId = msg.body.agentId;
+        return Agents.forEach(function(agent) {
+          if (agent.id === agentId) return agent.updateCall(msg.body);
+        });
       });
       socket.tag('live:Call:update', function(msg) {
-        var call;
-        p('live:Call:update', msg);
-        return call = new Call(msg.body);
+        var agentId;
+        p('live:Call:update', msg.body.agentId, msg.body.display_cid, msg.body.id, msg.body);
+        agentId = msg.body.agentId;
+        return Agents.forEach(function(agent) {
+          if (agent.id === agentId) return agent.updateCall(msg.body);
+        });
       });
       socket.tag('live:Call:delete', function(msg) {
-        var agent, call, calls, pendingDeletion, toDelete, toDeleteId, _i, _len, _results;
-        p('live:Call:delete', msg);
-        toDelete = new Call(msg.body);
-        toDeleteId = toDelete.id;
-        if (!(agent = toDelete.agent)) return;
-        calls = agent.calls;
-        pendingDeletion = [];
-        calls.forEach(function(call, index) {
-          if (toDeleteId === call.id) return pendingDeletion.push(call);
+        var agent, agents, call, calls, ids, _i, _len, _results;
+        p('live:Call:delete', msg.body.agentId, msg.body.display_cid, msg.body.id, msg.body);
+        agents = Agents.select(function(agent) {
+          return agent.id === msg.body.agentId;
         });
+        ids = [msg.body.id, msg.body.uuid, msg.body.call_uuid];
         _results = [];
-        for (_i = 0, _len = pendingDeletion.length; _i < _len; _i++) {
-          call = pendingDeletion[_i];
-          _results.push(calls["delete"](call));
+        for (_i = 0, _len = agents.length; _i < _len; _i++) {
+          agent = agents[_i];
+          calls = agent.calls.select(function(call) {
+            var any, id, _j, _len2;
+            any = false;
+            for (_j = 0, _len2 = ids.length; _j < _len2; _j++) {
+              id = ids[_j];
+              any = any || call.id === id;
+            }
+            return any;
+          });
+          _results.push((function() {
+            var _j, _len2, _results2;
+            _results2 = [];
+            for (_j = 0, _len2 = calls.length; _j < _len2; _j++) {
+              call = calls[_j];
+              _results2.push(p('deleting', agent.calls["delete"](call)));
+            }
+            return _results2;
+          })());
         }
         return _results;
       });
@@ -554,12 +633,19 @@
           });
           return socket.live('agents', {
             success: function(msg) {
-              var agentMsg, _i, _len, _ref, _results;
+              var agentMsg, call, calls, _i, _j, _len, _len2, _ref, _results;
               _ref = msg.agents;
               _results = [];
               for (_i = 0, _len = _ref.length; _i < _len; _i++) {
                 agentMsg = _ref[_i];
-                _results.push(new Agent(agentMsg));
+                if (calls = agentMsg.calls) {
+                  for (_j = 0, _len2 = calls.length; _j < _len2; _j++) {
+                    call = calls[_j];
+                    delete call.agentId;
+                  }
+                  agentMsg.calls = calls;
+                }
+                _results.push(Agents.set(agentMsg.id, new Agent(agentMsg)));
               }
               return _results;
             }

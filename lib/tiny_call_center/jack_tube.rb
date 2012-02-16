@@ -16,7 +16,7 @@ module TCC
       tube_names.each{|tube_name| watch(tube_name) }
 
       each_job do |job|
-        log({job: job}, :debug)
+        # log({job: job}, :debug)
         delete(job) if handle_job(job)
       end
     end

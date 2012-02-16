@@ -26,12 +26,17 @@ module TinyCallCenter
 
     sub :live2 do
       o "WebSocket server for live2", :server,
-        'ws://127.0.0.1:43444/websocket'
+        URI(ENV['TCC_WebSocketListenerURI'] || 'ws://127.0.0.1:43444/websocket')
     end
 
     sub :ribbon do
       o "WebSocket server URI for agents", :server,
         URI(ENV["TCC_WebSocketAgentURI"] || 'ws://127.0.0.1:8080/websocket')
+    end
+
+    sub :ribbon2 do
+      o "WebSocket server URI for agents", :server,
+        URI(ENV["TCC_WebSocketAgentURI"] || 'ws://127.0.0.1:43443')
     end
 
     sub :mod_callcenter do

@@ -11,7 +11,6 @@ module TinyCallCenter
 
       @agent = user.agent
       @server = TinyCallCenter.options.live2.server if request.local_net?
-      @server = 'ws://falcon.rubyists.com:43444'
       @couch_uri = TinyCallCenter.options.tiny_cdr.couch_uri
       @title = @agent
     end

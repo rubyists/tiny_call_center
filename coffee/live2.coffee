@@ -59,23 +59,25 @@ initializeIsotope = (elt) ->
       extension: (e) ->
         e.find('.extension').text()
       status: (e) ->
-        s = e.find('.status').text()
-        order =
-          switch s
-            when 'Available'
-              0.7
-            when 'Available (On Demand)'
-              0.8
-            when 'On Break'
-              0.9
-            when 'Logged Out'
-              1.0
+        ext = e.find('.extension').text()
+        status = e.find('.status').text()
 
-        extension = e.find('.extension').text()
-        parseFloat("" + order + extension)
+        order =
+          switch status
+            when 'Available'
+              5
+            when 'Available (On Demand)'
+              6
+            when 'On Break'
+              7
+            when 'Logged Out'
+              8
+            else
+              4
+
+        parseInt([order, ext].join(''), 10)
       idle: (e) ->
-        [min, sec] = e.find('.time-since-status-change').text().split(':')
-        (((parseInt(min, 10) * 60) + parseInt(sec, 10)) * -1)
+        parseInt(e.find('.lastStatusChange').text(), 10) * -1
     },
     sortBy: 'status',
   )
@@ -97,7 +99,6 @@ Serenade.Helpers.liStatus = (klass, name, status) ->
 
 class AgentCallController
   calltap: ->
-    p this
     socket.live 'uuid_calltap', uuid: @model.id, agent: @model.agent.id
 Serenade.controller 'agentCall', AgentCallController
 
@@ -185,6 +186,8 @@ Serenade.controller 'queueList', QueueController
 class Call extends Serenade.Model
   @property 'display_cid'
   @property 'created_epoch'
+  @property 'duration'
+  @property 'initializeRan'
   @belongsTo 'agent', as: (-> Agent)
 
   @property 'createdTime',
@@ -195,14 +198,22 @@ class Call extends Serenade.Model
     get: (-> @created_epoch * 1000),
     dependsOn: ['created_epoch']
 
-  constructor: -> @initialize(arguments ...) unless super
+  constructor: (obj) ->
+    super(arguments ...)
+    @initialize(arguments ...) unless @initializeRan?
 
   initialize: ->
-    @timer = setInterval((=>
-      @set('duration', formatInterval(@created))
-    ) , 1000)
+    @timer = setInterval((=> @duration = formatInterval(@created)), 1000)
+    @bind('delete', (=> @onDelete(arguments ...)))
+    @initializeRan = true
+
+  onDelete: ->
+    p 'onDelete', this
+    clearInterval(@timer)
+    @agent?.lastStatusChange = Date.now()
 
 Agents = new Serenade.Collection([])
+window.Agents = Agents
 
 class Agent extends Serenade.Model
   @property 'extension'
@@ -210,7 +221,9 @@ class Agent extends Serenade.Model
   @property 'state'
   @property 'status'
   @property 'timeSinceStatusChange'
+  @property 'lastStatusChange'
   @property 'queue'
+  @property 'initializeRan'
 
   @hasMany 'calls', as: (-> Call)
 
@@ -222,24 +235,62 @@ class Agent extends Serenade.Model
     get: (-> queueToClass(@queue)),
     dependsOn: ['queue']
 
-  constructor: -> @initialize(arguments ...) unless super(arguments ...)
+  constructor: (obj) ->
+    super(arguments ...)
+    @initialize(arguments ...) unless @initializeRan?
 
   initialize: ->
-    p this unless @id
-    jtag = $(Serenade.render('agent', this))
-    jtag.addClass(@statusClass)
-    $('#agents').isotope('insert', jtag)
-    @bind 'change:queue', (value) =>
-      jtag.addClass(value)
+    @setupTimer()
+    dom = @setupDOM()
+    @setupBinds(dom)
+    @initializeRan = true
+
+  setupTimer: ->
+    @lastStatusChange = Date.now()
+    @timer = setInterval((=>
+      @timeSinceStatusChange = formatInterval(@lastStatusChange)
+    ), 1000)
+
+  setupDOM: ->
+    tag = $(Serenade.render('agent', this))
+    tag.addClass(@statusClass)
+    $('#agents').isotope('insert', tag)
+    tag
+
+  setupBinds: (tag) ->
+    # @calls.bind 'change', (value) => p '@calls.change', value
+    # @calls.bind 'add',    (value) => p '@calls.add', value
+    # @calls.bind 'update', (value) => p '@calls.update', value
+    # @calls.bind 'delete', => p('@calls.delete', arguments ...)
+
+    # @bind 'change:calls', (value) => p 'agent.change:calls', value
+
+    @bind 'change:status', (value) => @lastStatusChange = Date.now()
+    @bind 'change:state', (value) => @lastStatusChange = Date.now()
+    @calls.bind 'delete', (value) => @lastStatusChange = Date.now()
+    @bind 'change:queue', (value) => tag.addClass(value)
+    @bind 'change:lastStatusChange', (value) =>
+      p 'change:lastStatusChange', value
+      isotopeRoot.isotope('updateSortData', tag)
     @bind 'change:statusClass', (value) =>
-      for klass in jtag.attr('class').split(' ')
-        jtag.removeClass(klass) if /^status-/.test(klass)
-      jtag.addClass(value)
+      for klass in tag.attr('class').split(' ')
+        tag.removeClass(klass) if /^status-/.test(klass)
+      tag.addClass(value)
+
+  # new or existing calls come in here.
+  updateCall: (msg) ->
+    id = msg.id
+    @calls.forEach (call) ->
+      if call.id == id
+        return call.set(msg)
+    call = new Call(msg, false)
+    @calls.set(call.id, call)
 
 class Queue extends Serenade.Model
   @property 'name', serialize: true
 
 $ ->
+  Serenade.useJQuery()
   isotopeRoot = $('#agents')
   initializeIsotope(isotopeRoot)
 
@@ -270,25 +321,29 @@ $ ->
       new Agent(msg.body)
 
     socket.tag 'live:Call:create', (msg) ->
-      p 'live:Call:create', msg
-      call = new Call(msg.body)
-      call.agent.calls.push(call)
+      p 'live:Call:create', msg.body.agentId, msg.body.display_cid, msg.body.id, msg.body
+      agentId = msg.body.agentId
+      Agents.forEach (agent) ->
+        if agent.id == agentId
+          agent.updateCall(msg.body)
     socket.tag 'live:Call:update', (msg) ->
-      p 'live:Call:update', msg
-      call = new Call(msg.body)
+      p 'live:Call:update', msg.body.agentId, msg.body.display_cid, msg.body.id, msg.body
+      agentId = msg.body.agentId
+      Agents.forEach (agent) ->
+        if agent.id == agentId
+          agent.updateCall(msg.body)
     socket.tag 'live:Call:delete', (msg) ->
-      p 'live:Call:delete', msg
-      toDelete = new Call(msg.body)
-      toDeleteId = toDelete.id
-
-      return unless agent = toDelete.agent
-      calls = agent.calls
-
-      pendingDeletion = []
-      calls.forEach (call, index) ->
-        pendingDeletion.push(call) if toDeleteId == call.id
-      for call in pendingDeletion
-        calls.delete(call)
+      p 'live:Call:delete', msg.body.agentId, msg.body.display_cid, msg.body.id, msg.body
+      agents = Agents.select((agent) -> agent.id == msg.body.agentId)
+      ids = [msg.body.id, msg.body.uuid, msg.body.call_uuid]
+      for agent in agents
+        calls = agent.calls.select (call) ->
+          any = false
+          for id in ids
+            any = any || call.id == id
+          any
+        for call in calls
+          p 'deleting', agent.calls.delete(call)
 
     socket.live 'subscribe',
       name: $('#agent_name').text(),
@@ -299,4 +354,7 @@ $ ->
         socket.live 'agents',
           success: (msg) =>
             for agentMsg in msg.agents
-              new Agent(agentMsg)
+              if calls = agentMsg.calls
+                delete call.agentId for call in calls
+                agentMsg.calls = calls
+              Agents.set(agentMsg.id, new Agent(agentMsg))

@@ -39,6 +39,13 @@ module TinyCallCenter
       false
     end
 
+    # only handle extension, which is our equivalent to the sequel id
+    # this is used by the ribbon until we find time to get rid of backbone.
+    def self.[](criteria)
+      id = criteria.fetch(:id)
+      self.from_extension(id)
+    end
+
     def self.username(agent)
       s = agent_name(agent)
       s.gsub('_', '') if s
@@ -126,8 +133,37 @@ module TinyCallCenter
       attributes["telephoneNumber"]
     end
 
+    def uid_number
+      attributes["uidNumber"]
+    end
+
     def agent
       "%s-%s_%s" % [extension, first_name, last_name]
+    end
+
+    def to_json(*args)
+      obj = {
+        id: extension, first_name: first_name, last_name: last_name,
+        extension: extension, registration_server: registration_server
+      }
+      if args.first.respond_to?(:to_hash)
+        obj.to_json
+      else
+        obj.to_json(*args)
+      end
+    end
+
+    def update(attributes)
+      attributes.each do |key, value|
+        case key
+        when 'status'
+          self.status = value
+        when 'state'
+          self.state = value
+        else
+          raise "Unknown attribute: %p => %p" % [key, value]
+        end
+      end
     end
 
     def manager

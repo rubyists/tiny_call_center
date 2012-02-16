@@ -318,7 +318,10 @@
     };
 
     Collection.prototype.deleteAt = function(index) {
-      this._notIn(this.list[index]);
+      var item;
+      item = this.list[index];
+      if (typeof item.trigger === "function") item.trigger('delete', index);
+      this._notIn(item);
       this.list.splice(index, 1);
       this.trigger("delete", index);
       return this.trigger("change", this.list);
@@ -1085,7 +1088,12 @@
     };
 
     If.prototype.lastElement = function() {
-      return this.nodes[this.nodes.length - 1].lastElement();
+      var _ref2;
+      if ((_ref2 = this.nodes) != null ? _ref2.length : void 0) {
+        return this.nodes[this.nodes.length - 1].lastElement();
+      } else {
+        return this.anchor;
+      }
     };
 
     return If;
@@ -1816,7 +1824,7 @@ if (typeof module !== 'undefined' && require.main === module) {
 };require['./properties'] = new function() {
   var exports = this;
   (function() {
-  var Collection, Events, Serenade, define, exp, extend, map, pairToObject, prexix, serializeObject, _ref,
+  var Collection, Events, Serenade, define, exp, extend, map, pairToObject, prefix, serializeObject, _ref,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   Serenade = require('./serenade').Serenade;
@@ -1827,7 +1835,7 @@ if (typeof module !== 'undefined' && require.main === module) {
 
   _ref = require('./helpers'), pairToObject = _ref.pairToObject, serializeObject = _ref.serializeObject, extend = _ref.extend, map = _ref.map;
 
-  prexix = "_prop_";
+  prefix = "_prop_";
 
   exp = /^_prop_/;
 
@@ -1836,8 +1844,8 @@ if (typeof module !== 'undefined' && require.main === module) {
   Serenade.Properties = {
     property: function(name, options) {
       if (options == null) options = {};
-      this[prexix + name] = options;
-      this[prexix + name].name = name;
+      this[prefix + name] = options;
+      this[prefix + name].name = name;
       if (define) {
         Object.defineProperty(this, name, {
           get: function() {
@@ -1888,8 +1896,8 @@ if (typeof module !== 'undefined' && require.main === module) {
         this._undefer(name);
         names.push(name);
         this.attributes || (this.attributes = {});
-        if ((_ref2 = this[prexix + name]) != null ? _ref2.set : void 0) {
-          this[prexix + name].set.call(this, value);
+        if ((_ref2 = this[prefix + name]) != null ? _ref2.set : void 0) {
+          this[prefix + name].set.call(this, value);
         } else {
           this.attributes[name] = value;
         }
@@ -1900,15 +1908,15 @@ if (typeof module !== 'undefined' && require.main === module) {
     get: function(name) {
       var _ref2;
       this.attributes || (this.attributes = {});
-      if ((_ref2 = this[prexix + name]) != null ? _ref2.get : void 0) {
-        return this[prexix + name].get.call(this);
+      if ((_ref2 = this[prefix + name]) != null ? _ref2.get : void 0) {
+        return this[prefix + name].get.call(this);
       } else {
         return this.attributes[name];
       }
     },
     format: function(name) {
       var format, _ref2;
-      format = (_ref2 = this[prexix + name]) != null ? _ref2.format : void 0;
+      format = (_ref2 = this[prefix + name]) != null ? _ref2.format : void 0;
       if (typeof format === 'string') {
         return Serenade._formats[format].call(this, this.get(name));
       } else if (typeof format === 'function') {

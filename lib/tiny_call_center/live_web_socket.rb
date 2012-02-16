@@ -87,9 +87,10 @@ module TCC
       MANAGERS.push ["agent_#{action}", body]
     end
 
+    # this isn't interesting at all
     def self.pg_call(action, body)
       log [__method__, action, body]
-      MANAGERS.push ["call_#{action}", body]
+      # MANAGERS.push ["call_#{action}", body]
     end
 
     attr_reader :socket
@@ -133,32 +134,26 @@ module TCC
 
     def channel_call_create(msg)
       msg['id'] = msg['uuid'] || msg['call_uuid']
+      raise "No id in %p" % [msg] unless msg['id']
       say tag: 'live:Call:create', body: msg
     end
 
     def channel_call_update(msg)
       msg['id'] = msg['uuid'] || msg['call_uuid']
+      raise "No id in %p" % [msg] unless msg['id']
       say tag: 'live:Call:update', body: msg
     end
 
     def channel_call_delete(msg)
       msg['id'] = msg['uuid'] || msg['call_uuid']
+      raise "No id in %p" % [msg] unless msg['id']
       say tag: 'live:Call:delete', body: msg
     end
 
     def channel_call_insert(msg)
       msg['id'] = msg['uuid'] || msg['call_uuid']
+      raise "No id in %p" % [msg] unless msg['id']
       say tag: 'live:Call:insert', body: msg
-    end
-
-    def channel_call_update(msg)
-      msg['id'] = msg['uuid'] || msg['call_uuid']
-      say tag: 'live:Call:update', body: msg
-    end
-
-    def channel_call_delete(msg)
-      msg['id'] = msg['uuid'] || msg['call_uuid']
-      say tag: 'live:Call:delete', body: msg
     end
 
     def channel_agent_update(msg)
@@ -209,7 +204,9 @@ module TCC
       unless @channel_name
         if @account = Account.from_call_center_name(name)
           @channel_name = MANAGERS.subscribe{|method, body|
-            __send__("channel_#{method}", body)
+            if can_view?(method, body)
+              __send__("channel_#{method}", body)
+            end
           }
         else
           raise "#{name} doesn't have an account"
@@ -356,6 +353,24 @@ module TCC
       account = Account.from_extension(msg.fetch('agent'))
       return account if account
       raise "No such agent: %p" % [msg['agent']]
+    end
+
+    def can_view?(method, body)
+      case method
+      when 'call_insert'
+        raise "Unhandled method: %p => %p" % [method, body]
+      when 'call_create', 'call_update', 'call_delete'
+        if agent_account = Account.from_extension(body.fetch(:agentId))
+          return true
+        else
+          log("No such agent %p" % [body[:agentId]], :error)
+          return false
+        end
+      else
+        raise "Unhandled method: %p => %p" % [method, body]
+      end
+
+      false
     end
   end
 end

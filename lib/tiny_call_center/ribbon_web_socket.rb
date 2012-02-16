@@ -233,8 +233,7 @@ module TCC
     end
 
     EXPOSE = [
-      :id, :first_name, :last_name, :registration_server,
-      :username, :extension
+      :first_name, :last_name, :registration_server, :username, :extension
     ]
 
     def backbone_read(id, attributes)
@@ -244,7 +243,7 @@ module TCC
         @account = Account[id: id]
       else
         ext = attributes['extension']
-        @account = Account[extension: ext]
+        @account = Account.from_extension(ext)
       end
 
       raise 'no account found' unless @account
@@ -265,7 +264,7 @@ module TCC
         call_me
       end
 
-      log "Register #{self} with #{@account.extension}"
+      log "Register Ribbon for #{@account.extension}"
       AGENTS[@account.extension] << self
     end
 

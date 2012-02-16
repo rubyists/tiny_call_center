@@ -34,6 +34,7 @@
     Socket.prototype.reconnect = function() {
       var _this = this;
       if (this.connected) return;
+      p("Opening WebSocket to " + this.options.server);
       this.socket = new this.webSocket(this.options.server);
       this.socket.onmessage = function(messageEvent) {
         return _this.onmessage.apply(_this, arguments);

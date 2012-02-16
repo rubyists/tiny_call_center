@@ -19,7 +19,11 @@ module TinyCallCenter
       number = nil unless number =~ /\S/
 
       if name && number
-        "#{name} (#{number})"
+        if name == number
+          name
+        else
+          "#{name} (#{number})"
+        end
       elsif name
         name
       elsif number
@@ -50,7 +54,7 @@ module TinyCallCenter
             display_cid: format_display_name_and_number(found.cid_name, found.cid_num),
             cid_name: found.cid_name,
             cid_number: found.cid_num,
-            uuid: found.uuid,
+            id: found.uuid,
             created_epoch: found.created_epoch.to_i,
             agentId: extension,
           }
@@ -62,7 +66,7 @@ module TinyCallCenter
             display_cid: format_display_name_and_number(found.dest, found.dest),
             cid_name: found.dest,
             cid_number: found.dest,
-            uuid: found.uuid,
+            id: found.uuid,
             created_epoch: found.created_epoch.to_i,
             agentId: extension,
           }
@@ -75,14 +79,14 @@ module TinyCallCenter
             caller_cid_name:    found.caller_cid_name,
             caller_dest_num:    found.caller_dest_num,
             callee_cid_num:     found.callee_cid_num,
-            uuid:               found.call_uuid,
+            id:               found.call_uuid,
             created_epoch:      found.call_created_epoch.to_i,
             agentId: extension,
           }
         end
       }
       FSR::Log.debug "Sending agent status: #{found_calls}"
-      found_calls.uniq{|call| call[:uuid] }
+      found_calls.uniq{|call| call[:id] }
     end
   end
 end

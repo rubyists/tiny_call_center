@@ -17,6 +17,7 @@ class Socket
   reconnect: () ->
     return if @connected
 
+    p "Opening WebSocket to #{@options.server}"
     @socket = new @webSocket(@options.server)
 
     @socket.onmessage = (messageEvent) =>

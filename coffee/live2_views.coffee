@@ -10,19 +10,21 @@ ul#queues.dropdown-menu
 """)
 
 Serenade.view('agent', """
-div.agent.span2[event:change:status=change! event:dblclick=details!]
-  span.extension @extension
-  span.username @username
-  span.state @state
-  span.status @status
-  span.time-since-status-change @timeSinceStatusChange
-  span.queue @queue
-  span[class=@queue]
-  span.calls
-    - collection @calls
-      .name-and-number @display_cid
-      .duration @duration
-  span.more-calls @moreCalls
+.span2.agent[event:dblclick=details!]
+  .row-fluid
+    .span2.extension @extension
+    .span10.username @username
+  - collection @calls
+    .row-fluid.call
+      .span3.duration @duration
+      .span9.name-and-number @display_cid
+  .row-fluid
+    .span3.atime @timeSinceStatusChange
+    .span9.state @state
+  .status @status
+  .queue @queue
+  .lastStatusChange @lastStatusChange
+  div[class=@queue]
 """)
 
 Serenade.view('agentCall', """
