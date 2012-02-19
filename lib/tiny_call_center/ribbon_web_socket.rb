@@ -38,42 +38,31 @@ module TCC
       found_at_least_one
     end
 
-    def self.format_display_name_and_number(name, number)
-      name = nil unless name =~ /\S/
-      number = nil unless number =~ /\S/
-
-      if name && number
-        "#{name} (#{number})"
-      elsif name
-        name
-      elsif number
-        number
-      end
-    end
-
     # Eventually want to have only those sent to the ribbon.
     KEEP_CALL_KEYS = %w[
       uuid call_uuid created_epoch state cid_name cid_num dest callee_name
-      callee_num secure callstate ribbon_name ribbon_number queue
+      callee_num secure callstate queue display_cid
     ]
 
     # don't even try to think about using direction, it's of no use.
     def self.call_dispatch(body, user, &block)
-      log user: user, dest: body['dest'], cid_num: body['cid_num']
+      log body
       cid_num, dest = body.values_at('cid_num', 'dest')
 
       body.select!{|k,v| KEEP_CALL_KEYS.include?(k) }
 
       case user
       when dest
-        # we're sure this is a call for user and he's the receiver
-        body['display_name_and_number'] =
-          format_display_name_and_number(body['cid_name'], body['cid_num'])
+        # user is callee
+        body['display_cid'] = Utils::FSR.format_display_name_and_number(
+          body.fetch('cid_name'), body.fetch('cid_num'))
+        body['id'] = body.fetch('call_uuid', body.fetch('uuid'))
         each_agent(dest, &block)
       when cid_num
-        # we're sure this is a call from user and he's the caller
-        body['display_name_and_number'] =
-          format_display_name_and_number(body['callee_name'], body['dest'])
+        # user is caller
+        body['display_cid'] = Utils::FSR.format_display_name_and_number(
+          body.fetch('callee_name'), body.fetch('dest'))
+        body['id'] = body.fetch('call_uuid', body.fetch('uuid'))
         each_agent(cid_num, &block)
       else
         log 'unhandled call'
@@ -81,38 +70,43 @@ module TCC
     end
 
     def self.call_create(uuid, user, cid_num, dest, body)
-      call_dispatch(body, user){|agent| agent.pg_call_create(body) }
+      call_dispatch(body, user){|agent| agent.call_create(body) }
     end
 
     def self.call_update(uuid, user, cid_num, dest, last_call_state, last_state, body)
       call_state, state = body.values_at("callstate", "state")
       log "#{uuid} (#{user}) #{last_state}:#{last_call_state} to #{state}:#{call_state} #{cid_num} => #{dest}"
 
-      call_dispatch(body, user){|agent| agent.pg_call_update(body) }
+      call_dispatch(body, user){|agent| agent.call_update(body) }
     end
 
     def self.call_delete(uuid, user, cid_num, dest, body)
       log "Call ended for #{uuid} (#{user}): #{cid_num} => #{dest}"
 
-      call_dispatch(body, user){|agent| agent.pg_call_delete(body) }
+      call_dispatch(body, user){|agent| agent.call_delete(body) }
     end
 
     def self.pg_tier(action, body)
-      log [action, body]
+      log pg_tier: [action, body]
     end
 
     def self.pg_member(action, body)
+      log pg_member: [action, body]
+    end
+
+    def self.pg_call(action, body)
+      log pg_call: [action, body]
     end
 
     def self.pg_agent(action, body)
-      log [action, body]
+      log pg_agent: [action, body]
 
       return unless ext = body['name'].to_s.split('-', 2).first
       to_delete = []
       AGENTS[ext].each do |agent|
         if peer = agent.socket.get_peername
           log "Dispatch to #{ext} #{Socket.unpack_sockaddr_in(peer).reverse.join(":")}"
-          agent.__send__("pg_agent_#{action}", body)
+          agent.__send__("agent_#{action}", body)
         else
           to_delete << agent
         end
@@ -120,11 +114,8 @@ module TCC
       to_delete.each { |disconnected_agent| AGENTS[ext].delete(disconnected_agent) }
     end
 
-    def self.pg_call(action, body)
-      log [:call, action, body], :debug
-    end
-
     attr_reader :socket
+
     # Every time a ribbon connects
     # set up the @socket and callbacks for onmessage and onclose
     def initialize(socket)
@@ -133,40 +124,21 @@ module TCC
       @socket.onclose(&method(:trigger_on_close))
     end
 
-    def trigger_on_message(message)
-      log("Message: %p" % {message: message}, :debug)
-      raw = JSON.parse(message)
-      frame, body = raw.values_at('frame', 'body')
-      url, method, id, attr =
-        body.values_at('url', 'method', 'id', 'attributes')
+    def trigger_on_message(json)
+      msg = JSON.parse(json)
+      log "-"
+      log msg
 
-      bbm = "backbone_#{method}"
-      case url
-      when 'Agent'
-        if attr == false
-          say tag: 'backbone', frame: frame, ok: {id: id}
-        else
-          say tag: 'backbone', frame: frame, ok: __send__(bbm, id, attr)
-        end
-      when 'Originate'
-        originate(@account.extension, body['dest'], body['identifier'])
-      when 'Hangup'
-        hangup body['uuid'], body['cause']
-      when 'Transfer'
-        transfer body['uuid'], body['dest']
-      when 'DTMF'
-        dtmf body['uuid'], body['tone']
-      when 'CallMe'
-        call_me
-      when 'Disposition'
-        disposition(*body.values_at('uuid', 'code', 'desc'))
-      else
-        raise 'Unknown url %p in %p' % [url, raw]
+      case msg.fetch('tag')
+      when 'ribbon'
+        method_name = "ribbon_#{msg.fetch('go')}"
+        response = __send__(method_name, *[msg['body']].compact)
       end
 
+      say tag: 'ribbon', frame: msg.fetch('frame'), body: response
     rescue => ex
-      log([ex, *ex.backtrace].join("\n"), :error)
-      say tag: 'backbone', frame: frame, error: ex.to_s
+      log_error(ex)
+      say tag: 'ribbon', error: ex.to_s
     end
 
     def trigger_on_close
@@ -178,21 +150,97 @@ module TCC
       @socket.send(obj.to_json)
     end
 
-    def disposition(uuid, code, desc)
-      log disposition: [uuid, code, desc]
+    # TODO: allow safe reuse of socket
+    def fsr(server = TCC.options.command_server)
+      log server: server
+      sock = FSR::CommandSocket.new(server: server)
+      cmd = yield(sock)
+      log cmd.raw
+      cmd.run.tap{|response| log(response) }
+    ensure
+      sock.socket.close if sock.respond_to?(:socket)
     end
 
-    def dtmf(uuid, tone)
-      log "DTMF: #{uuid} (#{tone})"
+    def status=(new_status)
+      log "set status of #{@account.agent} to #{new_status}"
+      FSListener.execute TCC.options.command_server do |listener|
+        listener.callcenter!{|cc| cc.set(@account.agent, :status, new_status) }
+      end
+    end
+
+    def state=(new_state)
+      log "set state of #{@account.agent} to #{new_state}"
+      FSListener.execute TCC.options.command_server do |listener|
+        listener.callcenter!{|cc| cc.set(@account.agent, :state, new_state) }
+      end
+    end
+
+    def call_me
+      return unless TCC.options.off_hook
+
+      agent = @account.agent
+      registration_server = @account.registration_server
+      extension = @account.extension
 
       command_server = TCC.options.command_server
-      sock = FSR::CommandSocket.new(:server => TCC.options.command_server)
-      cmd = sock.uuid_send_dtmf(uuid: uuid, dtmf: tone)
+      sock = FSR::CommandSocket.new(:server => command_server)
+
+      if registration_server == command_server 
+        target = "user/#{extension}" 
+      else
+        target = "sofia/internal/#{extension}@#{registration_server}"
+      end
+
+      cmd = sock.originate(target: target, target_options: {tcc_agent: agent}, endpoint: "&transfer(19999)")
       log cmd.raw
-      log cmd.run(:bgapi)
+      log cmd.run
     end
 
-    def hangup(uuid, cause)
+    def give_initial_status
+      log "Give initial status"
+      agent_name = @account.agent
+      sock = FSR::CommandSocket.new(server: TCC.options.command_server)
+      agent = sock.call_center(:agent).list.run.find{|a| a.name == agent_name }
+      channels = fsr(@account.registration_server){|socket| socket.channels(true) }
+      calls = WebSocketUtils.agent_status(@account.extension, channels)
+      calls.uniq(&:uuid)
+      say tag: 'ribbon:initialStatus', body: {
+        agent: {status: agent.status, state: agent.state, uuid: agent.uuid},
+        calls: calls,
+      }
+    end
+
+    def ribbon_subscribe(msg)
+      log subscribe: msg
+
+      @account = Account.from_call_center_name(msg.fetch('agent'))
+      log "Register Ribbon for #{@account.agent}"
+      AGENTS[@account.extension] << self
+
+      give_initial_status
+
+      self.status = 'Available'
+
+      if TCC.options.off_hook
+        self.state = 'Waiting'
+        # call_me
+      end
+    end
+
+    def ribbon_call_me
+      call_me
+    end
+
+    def ribbon_status(msg)
+      self.status = msg.fetch('status')
+    end
+
+    def ribbon_state(msg)
+      self.state = msg.fetch('state')
+    end
+
+    def ribbon_hangup(msg)
+      uuid, cause = msg.fetch('uuid'), msg.fetch('cause')
       log "Hanging up: #{uuid} (#{cause})"
 
       sock = FSR::CommandSocket.new(:server => @account.registration_server)
@@ -211,6 +259,50 @@ module TCC
         log cmd.run
       end
     end
+
+    def agent_create(msg)
+    end
+
+    def agent_update(msg)
+      say tag: 'ribbon:Agent:update', body: msg
+    end
+
+    def agent_delete(msg)
+    end
+
+    def call_create(call)
+      log call_create: call
+      say tag: 'ribbon:Call:create', body: call
+    end
+
+    def call_update(call)
+      log call_update: call
+      say tag: 'ribbon:Call:update', body: call
+    end
+
+    def call_delete(call)
+      log call_delete: call
+      say tag: 'ribbon:Call:delete', body: call
+    end
+  end
+end
+
+__END__
+
+    def disposition(uuid, code, desc)
+      log disposition: [uuid, code, desc]
+    end
+
+    def dtmf(uuid, tone)
+      log "DTMF: #{uuid} (#{tone})"
+
+      command_server = TCC.options.command_server
+      sock = FSR::CommandSocket.new(:server => TCC.options.command_server)
+      cmd = sock.uuid_send_dtmf(uuid: uuid, dtmf: tone)
+      log cmd.raw
+      log cmd.run(:bgapi)
+    end
+
 
     def transfer(uuid, dest)
       log "Transfer #{uuid} => #{dest}"
@@ -268,29 +360,6 @@ module TCC
       AGENTS[@account.extension] << self
     end
 
-    def call_me
-      agent = @account.agent
-      registration_server = @account.registration_server
-      extension = @account.extension
-
-      log "Check whether we should call #{agent}, off_hook is #{TCC.options.off_hook}"
-      return unless TCC.options.off_hook
-
-      log "Calling #{agent}@#{registration_server}"
-
-      command_server = TCC.options.command_server
-      sock = FSR::CommandSocket.new(:server => command_server)
-      FSR.load_all_commands
-
-      log [registration_server, command_server]
-      orig = sock.originate(
-        target: registration_server == command_server ? "user/#{extension}" : "sofia/internal/#{extension}@#{registration_server}",
-        target_options: {tcc_agent: agent},
-        endpoint: "&transfer(19999)"
-      )
-      raw, run = orig.raw, orig.run
-      log [raw, run]
-    end
 
     def give_initial_status
       Log.debug "Give Initial Status"

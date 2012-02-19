@@ -18,14 +18,6 @@ module TCC
       Log4r::NDC.pop
     end
 
-    def log(msg, level = :devel)
-      self.class.log(msg, level)
-    end
-
-    def log_error(ex)
-      log([ex, *ex.backtrace].join("\n"), :error)
-    end
-
     # Eventually want to have only those sent to the live view.
     KEEP_CALL_KEYS = %w[
       uuid call_uuid created_epoch state cid_name cid_num dest callee_name
@@ -34,7 +26,6 @@ module TCC
 
     # don't even try to think about using direction, it's of no use.
     def self.call(action, user, body)
-      log user: user, dest: body['dest'], cid_num: body['cid_num']
       cid_num, dest = body.values_at('cid_num', 'dest')
 
       # body.select!{|k,v| KEEP_CALL_KEYS.include?(k) }
@@ -43,12 +34,12 @@ module TCC
       when dest
         # we're sure this is a call for user and he's the receiver
         body['display_cid'] =
-          WebSocketUtils.format_display_name_and_number(body['cid_name'], body['cid_num'])
+          Utils::FSR.format_display_name_and_number(body['cid_name'], body['cid_num'])
         MANAGERS.push ["#{__method__}_#{action}", body.merge(agentId: dest)]
       when cid_num
         # we're sure this is a call from user and he's the caller
         body['display_cid'] =
-          WebSocketUtils.format_display_name_and_number(body['callee_name'], body['dest'])
+          Utils::FSR.format_display_name_and_number(body['callee_name'], body['dest'])
         MANAGERS.push ["#{__method__}_#{action}", body.merge(agentId: cid_num)]
       else
         log 'unhandled call'
@@ -101,12 +92,6 @@ module TCC
       @socket.onclose(&method(:trigger_on_close))
     end
 
-    def on_channel(message)
-      log "Channel: %p" % [message]
-
-      say tag: 'live', body: message
-    end
-
     def trigger_on_message(json)
       msg = JSON.parse(json)
       log("trigger_on_message: %p" % [msg], :debug)
@@ -130,6 +115,15 @@ module TCC
     def say(obj)
       log say: obj
       @socket.send(obj.to_json)
+    end
+
+    def channel_tier_insert(msg)
+    end
+
+    def channel_tier_update(msg)
+    end
+
+    def channel_tier_delete(msg)
     end
 
     def channel_call_create(msg)
@@ -366,6 +360,18 @@ module TCC
           log("No such agent %p" % [body[:agentId]], :error)
           return false
         end
+      when 'agent_update'
+        if agent_account = Account.from_call_center_name(body['name'])
+          return true
+        else
+          log("No such agent %p" % [body['name']], :error)
+          return false
+        end
+      when /^member_/
+        # "member_update" => {"queue"=>"att_precollect", "system"=>"single_box", "uuid"=>"a16cbfdf-c3f4-45b1-a9bc-35aa5dc8c70f", "session_uuid"=>"9fcba877-a20b-421f-abe3-4cbac67ea681", "cid_number"=>"18173681497", "cid_name"=>"18173681497", "system_epoch"=>1329438708, "joined_epoch"=>1329438708, "rejoined_epoch"=>0, "bridge_epoch"=>0, "abandoned_epoch"=>0, "base_score"=>0, "skill_score"=>0, "serving_agent"=>"2443-Willie_Jairala", "serving_system"=>"single_box", "state"=>"Trying"}      
+      when /^tier_/
+        # TODO: those aren't handled in the UI... not sure we have to.
+        # "tier_update" => {"queue"=>"spanish_att1", "agent"=>"2443-Willie_Jairala", "state"=>"Standby", "level"=>1, "position"=>1}
       else
         raise "Unhandled method: %p => %p" % [method, body]
       end

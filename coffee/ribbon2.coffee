@@ -1,23 +1,6 @@
 p = ->
   window.console?.debug(arguments ...)
 
-formatInterval = (start) ->
-  total = parseInt((Date.now() - start) / 1000, 10)
-  [hours, rest] = divmod(total, 60 * 60)
-  [minutes, seconds] = divmod(rest, 60)
-  sprintTime(hours, minutes, seconds)
-
-sprintTime = ->
-  parts = _.map arguments, (arg) ->
-    if arg > 9
-      parseInt(arg, 10).toString()
-    else
-      "0#{parseInt(arg, 10)}"
-  parts.join(":")
-
-divmod = (num1, num2) ->
-  [num1 / num2, num1 % num2]
-
 class View extends Backbone.View
   show: ->
     $(@el).show()
@@ -107,7 +90,7 @@ class CallView extends View
   # server clock are in sync or which one is ahead.
   updateCallTimer: ->
     @.$('.answered').text("""
-      #{@callStart.toLocaleTimeString()} #{formatInterval(@callStart)}
+      #{@callStart.toLocaleTimeString()} #{Rubyists.formatInterval(@callStart)}
     """)
 
   transfer: ->

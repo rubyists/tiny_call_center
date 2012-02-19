@@ -26,28 +26,10 @@ queueToClass = (queue) ->
   return unless queue
   queue.toLowerCase().replace(/\W+/g, '_').replace(/^_+|_+$/g, "")
 
-formatInterval = (start) ->
-  total = parseInt((Date.now() - start) / 1000, 10)
-  [hours, rest] = divmod(total, 60 * 60)
-  [minutes, seconds] = divmod(rest, 60)
-  sprintTime(hours, minutes, seconds)
-
-sprintTime = ->
-  parts = for arg in arguments
-    num = parseInt(arg, 10)
-    if num < 10
-      '0' + num
-    else
-      num
-  parts.join(":")
-
-divmod = (num1, num2) ->
-  [num1 / num2, num1 % num2]
-
 initializeIsotope = (elt) ->
   $('#sort-agents a').click (event) ->
     sorter = $(event.target).attr('href').replace(/^#/, "")
-    p sorter
+    p "Sort by " + sorter
     elt.isotope(sortBy: sorter)
     false
   elt.isotope(
@@ -113,8 +95,6 @@ Serenade.controller 'agentCallLog', AgentCallLogController
 
 class AgentController
   details: ->
-    # looks like a bug
-    @model = @model.agent if @model.agent?
     view = $(Serenade.render('agentDetail', @model))
     view.on 'shown', =>
       statusClass = statusOrStateToClass('status-', @model.status)
@@ -137,7 +117,7 @@ class AgentController
           Serenade.render('agentStateLog',
             states: (new Serenade.Collection(logs))))
 
-    $('a[href="#agentDetailCallHistory"]').on 'shown', =>
+    $('a[href="#agentDetailCallLog"]').on 'shown', =>
       socket.live 'agent_call_log', agent: @model.id, success: (logs) =>
         $('#agentDetailCallLog').html(
           Serenade.render('agentCallLog',
@@ -203,12 +183,11 @@ class Call extends Serenade.Model
     @initialize(arguments ...) unless @initializeRan?
 
   initialize: ->
-    @timer = setInterval((=> @duration = formatInterval(@created)), 1000)
+    @timer = setInterval((=> @duration = Rubyists.formatInterval(@created)), 1000)
     @bind('delete', (=> @onDelete(arguments ...)))
     @initializeRan = true
 
   onDelete: ->
-    p 'onDelete', this
     clearInterval(@timer)
     @agent?.lastStatusChange = Date.now()
 
@@ -240,6 +219,7 @@ class Agent extends Serenade.Model
     @initialize(arguments ...) unless @initializeRan?
 
   initialize: ->
+    p "Creating agent:", @id, this
     @setupTimer()
     dom = @setupDOM()
     @setupBinds(dom)
@@ -248,7 +228,7 @@ class Agent extends Serenade.Model
   setupTimer: ->
     @lastStatusChange = Date.now()
     @timer = setInterval((=>
-      @timeSinceStatusChange = formatInterval(@lastStatusChange)
+      @timeSinceStatusChange = Rubyists.formatInterval(@lastStatusChange)
     ), 1000)
 
   setupDOM: ->
@@ -270,7 +250,6 @@ class Agent extends Serenade.Model
     @calls.bind 'delete', (value) => @lastStatusChange = Date.now()
     @bind 'change:queue', (value) => tag.addClass(value)
     @bind 'change:lastStatusChange', (value) =>
-      p 'change:lastStatusChange', value
       isotopeRoot.isotope('updateSortData', tag)
     @bind 'change:statusClass', (value) =>
       for klass in tag.attr('class').split(' ')
@@ -318,23 +297,29 @@ $ ->
 
     # apply updates to the agent
     socket.tag 'live:Agent', (msg) ->
-      new Agent(msg.body)
+      id = msg.body.id
+      if msg.body.state? || msg.body.status?
+        Agents.forEach (agent) ->
+          if agent.id == id
+            return agent.set(msg.body)
+      else
+        p "unknown agent message:", msg
 
     socket.tag 'live:Call:create', (msg) ->
-      p 'live:Call:create', msg.body.agentId, msg.body.display_cid, msg.body.id, msg.body
+      # p 'live:Call:create', msg.body.agentId, msg.body.display_cid, msg.body.id, msg.body
       agentId = msg.body.agentId
       Agents.forEach (agent) ->
         if agent.id == agentId
           agent.updateCall(msg.body)
     socket.tag 'live:Call:update', (msg) ->
-      p 'live:Call:update', msg.body.agentId, msg.body.display_cid, msg.body.id, msg.body
+      # p 'live:Call:update', msg.body.agentId, msg.body.display_cid, msg.body.id, msg.body
       agentId = msg.body.agentId
       Agents.forEach (agent) ->
         if agent.id == agentId
           agent.updateCall(msg.body)
     socket.tag 'live:Call:delete', (msg) ->
-      p 'live:Call:delete', msg.body.agentId, msg.body.display_cid, msg.body.id, msg.body
-      agents = Agents.select((agent) -> agent.id == msg.body.agentId)
+      # p 'live:Call:delete', msg.body.agentId, msg.body.display_cid, msg.body.id, msg.body
+      agents = Agents.select((agent) -> agent?.id == msg.body.agentId)
       ids = [msg.body.id, msg.body.uuid, msg.body.call_uuid]
       for agent in agents
         calls = agent.calls.select (call) ->
@@ -355,6 +340,7 @@ $ ->
           success: (msg) =>
             for agentMsg in msg.agents
               if calls = agentMsg.calls
+                p agentMsg.id, calls
                 delete call.agentId for call in calls
                 agentMsg.calls = calls
-              Agents.set(agentMsg.id, new Agent(agentMsg))
+              Agents.push(new Agent(agentMsg))

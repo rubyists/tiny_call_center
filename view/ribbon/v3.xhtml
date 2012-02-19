@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta encoding="UTF-8">
+    <title>Effortless Agent Ribbon v3 &middot; #{h @title}</title>
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap-responsive.css">
+    <link rel="stylesheet" href="/css/ribbon3.css">
+  </head>
+  <body>
+    <div class="navbar">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="#">EARv3</a>
+          <ul class="nav">
+            <li id="status"></li>
+            <li id="state"></li>
+          </ul>
+          <ul class="nav pull-right">
+            <li id="control">
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="calls"></div>
+
+    <footer id="console" class="container">
+      <div class="row">
+        <span class="span4 server">#{h @server}</span>
+        <span class="span4 agent">#{h @agent}</span>
+        <span class="span4 extension">#{h @extension}</span>
+        <div id="error" class="span12">Error Console</div>
+        <div id="debug" class="span12">Debug Console</div>
+      </div>
+    </footer>
+
+    <script src="/js/jquery-1.7.1.min.js"></script>
+    <script src="/bootstrap/js/bootstrap-button.js"></script>
+    <script src="/bootstrap/js/bootstrap-modal.js"></script>
+    <script src="/bootstrap/js/bootstrap-alert.js"></script>
+    <script src="/bootstrap/js/bootstrap-tooltip.js"></script>
+    <script src="/js/underscore.js"></script>
+    <script src="/js/serenade.js"></script>
+    <script src="/js/rubyists.js"></script>
+    <script src="/js/ribbon3.js"></script>
+    <!--
+    <div id="ribbon">
+      <ul id="status">
+        <li><button class="available green">#{l 'Available' }</button></li>
+        <li><button class="on_break yellow">#{l 'On Break'}</button></li>
+        <li><button class="logged_out red">#{l 'Logged Out'}</button></li>
+      </ul>
+
+      <ul id="state">
+        <li><button class="Waiting green">#{l 'Ready' }</button></li>
+        <li><button class="In_a_queue_call yellow" disabled="true">#{l 'In a queue call'}</button></li>
+        <li><button class="Idle red">#{l 'Wrap Up'}</button></li>
+      </ul>
+
+      <ul id="control">
+        <?r if TinyCallCenter.options.off_hook ?>
+          <li><button id="callme" class="red">#{l 'Call Me'}</button></li>
+        <?r end ?>
+        <li><button id="originate" class="green">#{l 'Make Call'}</button></li>
+        <li><button class="logout red">#{l 'Logout'}</button></li>
+      </ul>
+
+      <div id="calls">
+      </div>
+
+      <form id="disposition">
+        <ul>
+          <?r TinyCallCenter::Disposition.each do |d| ?>
+            <li>
+              <button id="disp-#{h d.code}" accesskey="#{h d.key}" label="#{h d.description}">
+                #{h d.description} (#{h d.key})
+              </button>
+            </li>
+          <?r end ?>
+        </ul>
+      </form>
+
+      <form id="originate-form">
+        <fieldset>
+          <input id="originate-dest" type="phone" placeholder="#{l 'Number To Call'}"><br>
+          <input id="originate-identifier" type="text" placeholder="#{l 'Reference Identifier'}"><br>
+
+          <a href="#" class="call">#{l 'Call'}</a>
+          <a href="#" class="close">#{l 'Close'}</a>
+        </fieldset>
+      </form>
+
+      <form id="transfer">
+        <fieldset>
+          <input id="transfer-dest" type="phone" placeholder="#{l 'Transfer to'}" />
+          <a href="#" class="transfer">#{l 'Transfer'}</a>
+          <a href="#" class="close">#{l 'Close'}</a>
+        </fieldset>
+      </form>
+    </div>
+    -->
+  </body>
+</html>

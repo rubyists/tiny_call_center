@@ -1,6 +1,22 @@
 p = -> window.console?.debug?(arguments ...)
 
-window.Rubyists ||= {}
+class Rubyists
+  @formatInterval:  (start) ->
+    total = parseInt((Date.now() - start) / 1000, 10)
+    [hours, rest] = @divmod(total, 60 * 60)
+    [minutes, seconds] = @divmod(rest, 60)
+    @sprintTime(hours, minutes, seconds)
+
+  @sprintTime:  ->
+    parts = for arg in arguments
+      num = parseInt(arg, 10)
+      if num < 10 then '0' + num else num
+    parts.join(":")
+
+  @divmod: (num1, num2) ->
+    [num1 / num2, num1 % num2]
+
+window.Rubyists = Rubyists
 
 class Socket
   constructor: (@options) ->
@@ -29,12 +45,12 @@ class Socket
       @onerror(arguments ...)
 
     @socket.onopen = =>
-      p 'open'
+      p "Opened WebSocket to #{@options.server}"
       @connected = true
       @onopen()
 
     @socket.onclose = =>
-      p 'close'
+      p "Closed WebSocket to #{@options.server}"
       @connected = false
       @onclose()
 
@@ -55,7 +71,7 @@ class Socket
 
     @[name] = (go, args) =>
       frame = (@frames[name] += 1)
-      @callbacks[name][frame] = {success: args.success, error: args.error}
+      @callbacks[name][frame] = {success: args?.success, error: args?.error}
       msg = {tag: name, frame: frame, go: go, body: {}}
       for key, value of args
         msg.body[key] = value unless key == 'success' || key == 'error'

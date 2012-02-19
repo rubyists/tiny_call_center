@@ -53,7 +53,7 @@ Serenade.view('agentDetail', """
       li
         a[data-toggle="tab" href="#agentDetailStateLog"] "State Log"
       li
-        a[data-toggle="tab" href="#agentDetailCallHistory"] "Call History"
+        a[data-toggle="tab" href="#agentDetailCallLog"] "Call History"
     .tab-content
       #agentDetailCalls.tab-pane
         table
@@ -82,7 +82,7 @@ Serenade.view('agentDetail', """
         "Loading Status Log..."
       #agentDetailStateLog.tab-pane
         "Loading State Log..."
-      #agentDetailCallHistory.tab-pane
+      #agentDetailCallLog.tab-pane
         "Loading Call History..."
 """)
 
@@ -94,9 +94,9 @@ table
       th "Time"
   tbody
     - collection @statuses
-    tr
-      td @new_status
-      td @created_at
+      tr
+        td @created_at
+        td @new_status
 """)
 
 Serenade.view('agentStateLog', """
@@ -107,29 +107,40 @@ table
       th "Time"
   tbody
     - collection @states
-    tr
-      td @new_state
-      td @created_at
+      tr
+        td @created_at
+        td @new_state
 """)
 
 Serenade.view('agentCallLog', """
 table
   thead
-    th "Time"
-    th "CID #"
-    th "CID Name"
-    th "To"
-    th "Context"
-    th "Dur"
-    th "Bill"
+    tr
+      th "username"
+      th "caller_id_number"
+      th "caller_id_name"
+      th "destination_number"
+      th "channel"
+      th "context"
+      th "start_stamp"
+      th "end_stamp"
+      th "couch_id"
+      th "duration"
+      th "billsec"
+      th "start_time"
   tbody
     - collection @calls
       tr
-        td @time
-        td @cid_number
-        td @cid_name
-        td @to
+        td @username
+        td @caller_id_number
+        td @caller_id_name
+        td @destination_number
+        td @channel
         td @context
+        td @start_stamp
+        td @end_stamp
+        td @couch_id
         td @duration
-        td @bill_sec
+        td @billsec
+        td @start_time
 """)

@@ -75,7 +75,7 @@ module TinyCallCenter
 
     sub :tiny_cdr do
       o 'TinyCdr postgres database uri', :db,
-        ENV["TCC_TinyCdrDB"]
+        ENV["TCC_TinyCdrDB"] || pgpass.(database: 'tiny_cdr')
       o 'TinyCdr couch db uri', :couch_uri,
         ENV["TCC_TinyCdrCouchURI"]
     end

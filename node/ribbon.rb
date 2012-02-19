@@ -11,7 +11,6 @@ module TinyCallCenter
     helper :user
     helper :localize
     trait :user_model => TinyCallCenter::Account
-    layout :ribbon
 
     def index
       redirect Accounts.r(:login) unless logged_in?
@@ -20,5 +19,8 @@ module TinyCallCenter
       @server = TinyCallCenter.options.ribbon.server if request.local_net?
       @title = @agent
     end
+
+    alias v2 index
+    alias v3 index
   end
 end

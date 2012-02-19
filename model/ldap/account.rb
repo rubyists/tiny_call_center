@@ -35,12 +35,13 @@ module TinyCallCenter
 
     def self.from_extension(ext)
       ldap_user = NrsLdap.find_user_by_extension(ext)
-      return(new ldap_user.first["uid"].first) if ldap_user.size == 1
+      return(new(ldap_user.first["uid"].first)) if ldap_user.size == 1
       false
     end
 
     # only handle extension, which is our equivalent to the sequel id
     # this is used by the ribbon until we find time to get rid of backbone.
+    # FIXME: deprecated
     def self.[](criteria)
       id = criteria.fetch(:id)
       self.from_extension(id)
@@ -141,6 +142,7 @@ module TinyCallCenter
       "%s-%s_%s" % [extension, first_name, last_name]
     end
 
+    # FIXME: deprecated
     def to_json(*args)
       obj = {
         id: extension, first_name: first_name, last_name: last_name,
@@ -153,6 +155,7 @@ module TinyCallCenter
       end
     end
 
+    # FIXME: deprecated
     def update(attributes)
       attributes.each do |key, value|
         case key
@@ -186,6 +189,7 @@ module TinyCallCenter
       }
     end
 
+    # FIXME: deprecated
     def status=(new_status)
       Log.debug "set status of #{agent} to #{new_status}"
       FSListener.execute registration_server do |listener|
@@ -193,6 +197,7 @@ module TinyCallCenter
       end
     end
 
+    # FIXME: deprecated
     def state=(new_state)
       Log.debug "set state of #{agent} to #{new_state}"
       FSListener.execute registration_server do |listener|

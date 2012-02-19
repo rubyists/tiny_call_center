@@ -76,19 +76,17 @@
 };require['./helpers'] = new function() {
   var exports = this;
   (function() {
-  var Helpers;
+  var Helpers,
+    __hasProp = {}.hasOwnProperty;
 
   Helpers = {
     extend: function(target, source) {
       var key, value, _results;
       _results = [];
       for (key in source) {
+        if (!__hasProp.call(source, key)) continue;
         value = source[key];
-        if (Object.prototype.hasOwnProperty.call(source, key)) {
-          _results.push(target[key] = value);
-        } else {
-          _results.push(void 0);
-        }
+        _results.push(target[key] = value);
       }
       return _results;
     },
@@ -320,7 +318,9 @@
     Collection.prototype.deleteAt = function(index) {
       var item;
       item = this.list[index];
-      if (typeof item.trigger === "function") item.trigger('delete', index);
+      if (item != null) {
+        if (typeof item.trigger === "function") item.trigger('delete', index);
+      }
       this._notIn(item);
       this.list.splice(index, 1);
       this.trigger("delete", index);
@@ -1825,7 +1825,8 @@ if (typeof module !== 'undefined' && require.main === module) {
   var exports = this;
   (function() {
   var Collection, Events, Serenade, define, exp, extend, map, pairToObject, prefix, serializeObject, _ref,
-    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
+    __hasProp = {}.hasOwnProperty;
 
   Serenade = require('./serenade').Serenade;
 
@@ -1946,7 +1947,7 @@ if (typeof module !== 'undefined' && require.main === module) {
     _defer: function(name) {
       var deferred, _ref2;
       deferred = this.get(name);
-      if (deferred != null ? deferred._triggerChangesTo : void 0) {
+      if ((deferred != null) && (deferred != null ? deferred._triggerChangesTo : void 0)) {
         deferred._deferTo || (deferred._deferTo = {});
         return (_ref2 = deferred._deferTo) != null ? _ref2[name] = this : void 0;
       }
@@ -2003,8 +2004,8 @@ if (typeof module !== 'undefined' && require.main === module) {
       }
       _results = [];
       for (deferName in allDefers) {
+        if (!__hasProp.call(allDefers, deferName)) continue;
         deferObject = allDefers[deferName];
-        if (!(allDefers.hasOwnProperty(deferName))) continue;
         keys = map(changedProperties, function(prop) {
           return "" + deferName + "." + prop;
         });

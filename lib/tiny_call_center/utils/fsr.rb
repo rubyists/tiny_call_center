@@ -7,6 +7,33 @@ module TinyCallCenter
         ::FSR::CommandSocket.new(:server => server, :auth => TCC.options.fs_auth)
       end
 
+      def log(msg, level = :devel)
+        self.class.log(msg, level)
+      end
+
+      def log_error(ex)
+        log([ex, *ex.backtrace].join("\n"), :error)
+      end
+
+      def format_display_name_and_number(name, number)
+        name = nil unless name =~ /\S/
+        number = nil unless number =~ /\S/
+
+        if name && number
+          if name == number
+            name
+          else
+            "#{name} (#{number})"
+          end
+        elsif name
+          name
+        elsif number
+          number
+        end
+      end
+
+      module_function :format_display_name_and_number
+
       def proxy_uri(destination)
         TCC.options.proxy_server_fmt % destination
       end
