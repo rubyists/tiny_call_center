@@ -14,6 +14,7 @@
           <a class="brand" href="#">EARv3</a>
           <ul class="nav">
             <li id="status"></li>
+            <li class="divider-vertical"></li>
             <li id="state"></li>
           </ul>
           <ul class="nav pull-right">
@@ -36,38 +37,17 @@
     </footer>
 
     <script src="/js/jquery-1.7.1.min.js"></script>
-    <script src="/bootstrap/js/bootstrap-button.js"></script>
-    <script src="/bootstrap/js/bootstrap-modal.js"></script>
+    <script src="/bootstrap/js/bootstrap-transition.js"></script>
     <script src="/bootstrap/js/bootstrap-alert.js"></script>
+    <script src="/bootstrap/js/bootstrap-button.js"></script>
+    <script src="/bootstrap/js/bootstrap-dropdown.js"></script>
+    <script src="/bootstrap/js/bootstrap-modal.js"></script>
     <script src="/bootstrap/js/bootstrap-tooltip.js"></script>
     <script src="/js/underscore.js"></script>
     <script src="/js/serenade.js"></script>
     <script src="/js/rubyists.js"></script>
     <script src="/js/ribbon3.js"></script>
     <!--
-    <div id="ribbon">
-      <ul id="status">
-        <li><button class="available green">#{l 'Available' }</button></li>
-        <li><button class="on_break yellow">#{l 'On Break'}</button></li>
-        <li><button class="logged_out red">#{l 'Logged Out'}</button></li>
-      </ul>
-
-      <ul id="state">
-        <li><button class="Waiting green">#{l 'Ready' }</button></li>
-        <li><button class="In_a_queue_call yellow" disabled="true">#{l 'In a queue call'}</button></li>
-        <li><button class="Idle red">#{l 'Wrap Up'}</button></li>
-      </ul>
-
-      <ul id="control">
-        <?r if TinyCallCenter.options.off_hook ?>
-          <li><button id="callme" class="red">#{l 'Call Me'}</button></li>
-        <?r end ?>
-        <li><button id="originate" class="green">#{l 'Make Call'}</button></li>
-        <li><button class="logout red">#{l 'Logout'}</button></li>
-      </ul>
-
-      <div id="calls">
-      </div>
 
       <form id="disposition">
         <ul>

@@ -14,15 +14,43 @@ li#status.btn-group[data-toggle="buttons-radio"]
 Serenade.view('state', """
 li#state.btn-group[data-toggle="buttons-radio"]
   button.btn.btn-success.waiting[event:click=stateWaiting!] "Ready"
-  button.btn.btn-info.in-a-queue-call[disabled="disabled"] "In a queue call"
+  button.btn.btn-info.disabled.in-a-queue-call[disabled="disabled"] "In a queue call"
   button.btn.btn-primary.idle[event:click=stateIdle!] "Wrap Up"
 """)
 
 Serenade.view('control', """
 li#control
-  button.btn.btn-primary[event:click=callMe!] "Call Me"
-  button.btn.btn-primary[event:click=makeCall!] "Make Call"
-  button.btn.btn-danger[event:click=logout!] "Logout"
+  .btn-group
+    button.btn.btn-primary.disabled.call-me[disabled="disabled" event:click=callMe!] "Call Me"
+    button.btn.btn-primary[event:click=makeCallToggle!] "Make Call"
+    button.btn.btn-danger.logout[event:click=logout!] "Logout"
+""")
+
+Serenade.view('makeCall', """
+#makeCall.modal
+  .modal-body
+    a.close[data-dismiss="modal"] "\u2715"
+    form.form-inline
+      input.number.input-small[type="text" placeholder="Number to dial"]
+      input.identifier.input-small[type="text" placeholder="Identifier"]
+      button.btn[type="submit" event:click=makeCall!] "Make Call"
+""")
+
+Serenade.view('callTransfer', """
+#callTransfer.modal
+  .modal-body
+    a.close[data-dismiss="modal"] "\u2715"
+    form.form-inline
+      input.number.input-small[type="text" placeholder="Destination"]
+      button.btn[type="submit" event:click=callTransfer!] "Transfer Call"
+""")
+
+Serenade.view('callDTMF', """
+#callDTMF.modal
+  .modal-body
+    a.close[data-dismiss="modal"] "\u2715"
+    form.form-inline
+      input.number.input-small[type="text" placeholder="DTMF Tones" event:input=sendDTMF!]
 """)
 
 Serenade.view('calls', """
@@ -41,7 +69,7 @@ Serenade.view('call', """
     a.span1.dtmf[href="#" event:click=dtmf!] "DTMF"
     .span3.cid @display_cid
     .span1.queue @queue
-    .span1.time @created_epoch
+    .span1.time @duration
 """)
 
 class StatusController
@@ -90,22 +118,54 @@ class StateController
 Serenade.controller 'state', StateController
 
 class ControlController
+  constructor: (@options) ->
+    @agent = @options.agent
+    @agent.bind 'change:offHook', (newOffHook) =>
+      p 'newOffHook', newOffHook
+      if newOffHook
+        $('.call-me', @view).removeAttr('disabled').removeClass('disabled')
+      else
+        $('.call-me', @view).attr('disabled', 'disabled').addClass('disabled')
   callMe: ->
     meta.socket.ribbon 'call_me'
-  makeCall: ->
-    p "make call"
+  makeCallToggle: ->
+    $(Serenade.render('makeCall')).modal()
   logout: ->
     p "Log out"
 Serenade.controller 'control', ControlController
+
+class MakeCallController
+  makeCall: (event) ->
+    number = $('input.number', @view).val()
+    identifier = $('input.identifier', @view).val()
+    meta.socket.ribbon 'call', number: number, identifier: identifier
+    $(@view).modal('hide')
+    setTimeout((=> $(@view).remove()), 1000)
+Serenade.controller 'makeCall', MakeCallController
+
+class CallTransferController
+  callTransfer: (event) ->
+    number = $('input.number', @view).val()
+    meta.socket.ribbon 'transfer', number: number, uuid: @model.call.id
+    $(@view).modal('hide')
+    setTimeout((=> $(@view).remove()), 1000)
+Serenade.controller 'callTransfer', CallTransferController
+
+class CallDTMFController
+  sendDTMF: (event) ->
+    tones = $('input', @view).val()
+    meta.socket.ribbon 'dtmf', uuid: @model.call.id, tones: tones
+    $('input', @view).val('')
+Serenade.controller 'callDTMF', CallDTMFController
 
 class CallController
   hangup: (event) ->
     event.stopPropagation()
     meta.socket.ribbon 'hangup', uuid: @model.id, cause: 'EAR hangup'
   transfer: (event) ->
-    p 'transfer', this
+    $(Serenade.render('callTransfer', call: @model)).modal()
   dtmf: (event) ->
-    p 'dtmf', this
+    $(Serenade.render('callDTMF', call: @model)).modal()
 Serenade.controller 'call', CallController
 
 class Call extends Serenade.Model
@@ -113,6 +173,11 @@ class Call extends Serenade.Model
   @property 'queue'
   @property 'display_cid'
   @property 'created_epoch'
+  @property 'duration'
+
+  @property 'created',
+    get: (-> @created_epoch * 1000),
+    dependsOn: ['created_epoch']
 
   constructor: ->
     super(arguments ...)
@@ -121,12 +186,14 @@ class Call extends Serenade.Model
 
   initialize: ->
     p "Created Call:", this
+    @timer = setInterval((=> @duration = Rubyists.formatInterval(@created)), 500)
 
 class Agent extends Serenade.Model
   @property 'initializeRan'
   @property 'name'
   @property 'status'
   @property 'state'
+  @property 'offHook'
 
   constructor: ->
     super(arguments ...)
@@ -148,11 +215,7 @@ $ ->
       p 'init status', msg
       raw = msg.body
       agent.set(raw.agent)
-
-      initialCalls = []
-      for rawCall in raw.calls
-        initialCalls.push(new Call(rawCall))
-      meta.calls.update(initialCalls)
+      meta.calls.update((new Call(rawCall)) for rawCall in raw.calls)
 
     meta.socket.tag 'ribbon:Call:create', (msg) ->
       p 'call create', msg
@@ -163,10 +226,7 @@ $ ->
       p 'call update', msg
     meta.socket.tag 'ribbon:Call:delete', (msg) ->
       p 'call delete', msg
-      p msg.body.id
-      p meta.calls
       toDelete = meta.calls.select (call) -> call.id == msg.body.id
-      p toDelete
       meta.calls.delete(call) for call in toDelete
 
     meta.socket.tag 'ribbon:Agent:update', (msg) ->
@@ -178,9 +238,10 @@ $ ->
       success: ->
         $('#status').replaceWith(Serenade.render('status', agent: agent))
         $('#state').replaceWith(Serenade.render('state', agent: agent))
-        $('#control').replaceWith(Serenade.render('control'))
+        $('#control').replaceWith(Serenade.render('control', agent: agent))
         $('#calls').replaceWith(Serenade.render('calls', calls: meta.calls))
         # Yay for tiny race conditions, there's a chance that we didn't get initial status yet.
         # The worst that can happen is that the buttons won't show initial status right.
         agent.trigger('change:status', agent.status)
         agent.trigger('change:state', agent.state)
+        agent.trigger('change:offHook', agent.offHook)

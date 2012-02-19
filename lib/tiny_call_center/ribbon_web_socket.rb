@@ -205,7 +205,7 @@ module TCC
       calls = WebSocketUtils.agent_status(@account.extension, channels)
       calls.uniq(&:uuid)
       say tag: 'ribbon:initialStatus', body: {
-        agent: {status: agent.status, state: agent.state, uuid: agent.uuid},
+        agent: {status: agent.status, state: agent.state, uuid: agent.uuid, offHook: TCC.options.off_hook},
         calls: calls,
       }
     end
@@ -247,17 +247,51 @@ module TCC
       cmd = sock.sched_hangup(uuid: uuid, cause: cause)
 
       log "Hangup #{cmd.raw}"
+      log res = cmd.run
 
-      res = cmd.run
+      return unless res['body'] == '+OK'
 
-      if res['body'] && res['body'] == '+OK'
-        log res
-      else
-        sock = FSR::CommandSocket.new(:server => TCC.options.command_server)
-        cmd = sock.sched_hangup(uuid: uuid, cause: cause)
-        log "Queue Server Hangup #{cmd.raw}"
-        log cmd.run
-      end
+      sock = FSR::CommandSocket.new(:server => TCC.options.command_server)
+      cmd = sock.sched_hangup(uuid: uuid, cause: cause)
+      log "Queue Server Hangup #{cmd.raw}"
+      log cmd.run
+    end
+
+    def ribbon_call(msg)
+      number, identifier = msg.fetch('number'), msg.fetch('identifier')
+      {ok: true} if originate(@account.agent, number, identifier)
+    end
+
+    def ribbon_transfer(msg)
+      number, uuid = msg.fetch('number'), msg.fetch('uuid')
+
+      sock = FSR::CommandSocket.new(server: @account.registration_server)
+      cmd = sock.sched_transfer(uuid: uuid, to: number)
+      log "Transfer #{cmd.raw}"
+      log res = cmd.run
+
+      return if res['body'] == '+OK'
+
+      sock = FSR::CommandSocket.new(server: TCC.options.command_server)
+      cmd = sock.sched_transfer(uuid: uuid, to: number)
+      log "Queue Server Transfer #{cmd.raw}"
+      log cmd.run
+    end
+
+    def ribbon_dtmf(msg)
+      tones, uuid = msg.fetch('tones'), msg.fetch('uuid')
+
+      sock = FSR::CommandSocket.new(:server => @account.registration_server)
+      cmd = sock.uuid_send_dtmf(uuid: uuid, dtmf: tones)
+      log "DTMF #{cmd.raw}"
+      log res = cmd.run
+
+      return if res['body'] == '+OK'
+
+      sock = FSR::CommandSocket.new(server: TCC.options.command_server)
+      cmd = sock.uuid_send_dtmf(uuid: uuid, dtmf: tones)
+      log "Queue Server DTMF #{cmd.raw}"
+      log cmd.run
     end
 
     def agent_create(msg)
