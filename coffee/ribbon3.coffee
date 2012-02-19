@@ -163,7 +163,10 @@ $ ->
       p 'call update', msg
     meta.socket.tag 'ribbon:Call:delete', (msg) ->
       p 'call delete', msg
-      toDelete = meta.calls.select (call) -> call.id == msg.body.uuid
+      p msg.body.id
+      p meta.calls
+      toDelete = meta.calls.select (call) -> call.id == msg.body.id
+      p toDelete
       meta.calls.delete(call) for call in toDelete
 
     meta.socket.tag 'ribbon:Agent:update', (msg) ->

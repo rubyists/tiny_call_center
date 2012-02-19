@@ -40,7 +40,7 @@ module TCC
 
     # Eventually want to have only those sent to the ribbon.
     KEEP_CALL_KEYS = %w[
-      uuid call_uuid created_epoch state cid_name cid_num dest callee_name
+      uuid created_epoch state cid_name cid_num dest callee_name
       callee_num secure callstate queue display_cid
     ]
 
@@ -56,13 +56,13 @@ module TCC
         # user is callee
         body['display_cid'] = Utils::FSR.format_display_name_and_number(
           body.fetch('cid_name'), body.fetch('cid_num'))
-        body['id'] = body.fetch('call_uuid', body.fetch('uuid'))
+        body['id'] = body.fetch('uuid')
         each_agent(dest, &block)
       when cid_num
         # user is caller
         body['display_cid'] = Utils::FSR.format_display_name_and_number(
           body.fetch('callee_name'), body.fetch('dest'))
-        body['id'] = body.fetch('call_uuid', body.fetch('uuid'))
+        body['id'] = body.fetch('uuid')
         each_agent(cid_num, &block)
       else
         log 'unhandled call'

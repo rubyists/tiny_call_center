@@ -269,9 +269,12 @@
       meta.socket.tag('ribbon:Call:delete', function(msg) {
         var call, toDelete, _i, _len, _results;
         p('call delete', msg);
+        p(msg.body.id);
+        p(meta.calls);
         toDelete = meta.calls.select(function(call) {
-          return call.id === msg.body.uuid;
+          return call.id === msg.body.id;
         });
+        p(toDelete);
         _results = [];
         for (_i = 0, _len = toDelete.length; _i < _len; _i++) {
           call = toDelete[_i];
