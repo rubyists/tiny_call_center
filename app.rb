@@ -60,15 +60,15 @@ class WorkAroundRackStatic
   end
 end
 
-Innate.middleware! do |mw|
-  mw.use Rack::CommonLogger
-  mw.use Rack::ShowExceptions
-  mw.use Rack::ETag
-  mw.use Rack::ConditionalGet
-  mw.use Rack::ContentLength
-  mw.use WorkAroundRackStatic
-  mw.use Rack::Reloader
-  mw.innate
+Innate.middleware :live do
+  use Rack::CommonLogger
+  use Rack::ShowExceptions
+  use Rack::ETag
+  use Rack::ConditionalGet
+  use Rack::ContentLength
+  use WorkAroundRackStatic
+  use Rack::Reloader
+  run Innate.core
 end
 
 Rack::Mime::MIME_TYPES['.coffee'] = 'text/coffeescript'

@@ -37,10 +37,10 @@ Innate.options.roots = [File.expand_path('../../', __FILE__)]
 
 require 'innate/spec/bacon'
 
-Innate.middleware! :spec do |m|
-  m.use Rack::Lint
-  m.use Rack::CommonLogger, Innate::Log
-  m.innate
+Innate.middleware :spec do
+  use Rack::Lint
+  use Rack::CommonLogger, Innate::Log
+  run Innate.core
 end
 
 Bacon.summary_on_exit
