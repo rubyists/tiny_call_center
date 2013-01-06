@@ -20,7 +20,7 @@ when 'postgres'
     system('createdb', '-U', 'postgres', db_name)
   end
   unless File.file?('.pgpass')
-    system('createuser', '-U', 'postgres', '-S', '-D', uri.user)
+    system('createuser', '-U', 'postgres', '-S', '-D', '-R', uri.user)
     File.open('.pgpass', 'w+'){|f| f.puts("#{uri.host}:*:*:#{uri.user}:*") }
     File.chmod(0600, '.pgpass')
   end
