@@ -18,6 +18,11 @@ when 'postgres'
   db_name = uri.path.split('/').last
   system('dropdb', '-U', 'postgres', db_name)
   system('createdb', '-U', 'postgres', db_name)
+  unless File.file?('.pgpass')
+    system('createuser', '-U', 'postgres', uri.user)
+    File.open('.pgpass', 'w+'){|f| f.puts("#{uri.host}:*:*:#{uri.user}:*") }
+    File.chmod(0600, '.pgpass')
+  end
 else
   raise 'we only support postgres for now'
 end
