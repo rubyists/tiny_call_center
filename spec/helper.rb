@@ -15,11 +15,12 @@ db = ENV['TCC_DB'] ||= "postgres://callcenter@localhost/tcc_spec"
 uri = URI(db)
 case uri.scheme
 when 'postgres'
-  db_name = uri.path.split('/').last
-  system('dropdb', '-U', 'postgres', db_name)
-  system('createdb', '-U', 'postgres', db_name)
+  ["callcenter", uri.path.split('/').last].each do |db_name|
+    system('dropdb', '-U', 'postgres', db_name)
+    system('createdb', '-U', 'postgres', db_name)
+  end
   unless File.file?('.pgpass')
-    system('createuser', '-U', 'postgres', uri.user)
+    system('createuser', '-U', 'postgres', '-S', '-D', uri.user)
     File.open('.pgpass', 'w+'){|f| f.puts("#{uri.host}:*:*:#{uri.user}:*") }
     File.chmod(0600, '.pgpass')
   end
