@@ -15,7 +15,7 @@ db = ENV['TCC_DB'] ||= "postgres://callcenter@localhost/tcc_spec"
 uri = URI(db)
 case uri.scheme
 when 'postgres'
-  ["callcenter", uri.path.split('/').last].each do |db_name|
+  ["callcenter", 'tiny_cdr', uri.path.split('/').last].each do |db_name|
     system('dropdb', '-U', 'postgres', db_name)
     system('createdb', '-U', 'postgres', db_name)
   end
