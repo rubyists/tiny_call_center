@@ -5,7 +5,7 @@ module TinyCallCenter
     many_to_one :disposition
 
     def self.last(username)
-      CallRecord.filter(agent: username).order(:created_at.desc).limit(1).first
+      CallRecord.filter(agent: username).order(Sequel.desc(:created_at)).limit(1).first
     end
 
     def self.agent_history(agent, from = Date.today, to = nil)

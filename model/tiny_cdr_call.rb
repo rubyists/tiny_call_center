@@ -8,12 +8,10 @@ module TinyCallCenter
       end
 
       def self.history(extension, from = Date.today, to = nil)
-        ds = filter{
-          ({:username => extension} | {:destination_number => extension}) &
-          (start_stamp > from)
-        }
+        Log.debug("Extension is %s" % extension)
+        ds = filter("(username = '#{extension}' or destination_number = '#{extension}') and (start_stamp > '#{from}')")
         ds = ds.filter{(start_stamp < to)} if to
-        ds.order_by(:start_stamp.desc)
+        ds.order_by(Sequel.desc(:start_stamp))
       end
 
       def destination

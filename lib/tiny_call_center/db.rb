@@ -5,7 +5,10 @@ module TinyCallCenter
   @db ||= nil
 
   def self.db
-    @db ||= Sequel.connect(TinyCallCenter.options.db)
+    return @db if @db
+    conn = TinyCallCenter.options.db
+    Log.debug "Connecting to #{conn}"
+    @db = Sequel.connect(conn)
   end
 
   def self.db=(other)

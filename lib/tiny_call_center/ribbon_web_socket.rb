@@ -12,6 +12,7 @@ module TCC
     include Utils::FSR
 
     AGENTS = Hash.new{|h,k| h[k] = [] }
+    UNHANDLED = Hash.new
 
     def self.log(msg, level = :devel)
       Log4r::NDC.push("ribbon")
@@ -47,7 +48,7 @@ module TCC
     # don't even try to think about using direction, it's of no use.
     def self.call_dispatch(body, user, &block)
       log body
-      cid_num, dest = body.values_at('cid_num', 'dest')
+      cid_num, dest, uuid, call_uuid = body.values_at('cid_num', 'dest', 'uuid', 'call_uuid')
 
       body.select!{|k,v| KEEP_CALL_KEYS.include?(k) }
 
@@ -56,17 +57,27 @@ module TCC
         # user is callee
         body['display_cid'] = Utils::FSR.format_display_name_and_number(
           body.fetch('cid_name'), body.fetch('cid_num'))
-        body['id'] = body.fetch('uuid')
+        body['id'] = uuid
         each_agent(dest, &block)
       when cid_num
         # user is caller
-        body['display_cid'] = Utils::FSR.format_display_name_and_number(
-          body.fetch('callee_name'), body.fetch('dest'))
+        log "#{uuid}: #{cid_num} -> #{dest}"
+        if UNHANDLED[uuid] && UNHANDLED[uuid][:cid_num] =~ /\d\d\d\d\d+/
+          body['display_cid'] = "%s -> %s" % [UNHANDLED[uuid][:cid_num], Utils::FSR.format_display_name_and_number(
+            body.fetch('callee_name'), body.fetch('dest'))]
+          UNHANDLED.delete(uuid)
+        else
+          body['display_cid'] = "%s -> %s" % [cid_num, Utils::FSR.format_display_name_and_number(
+            body.fetch('callee_name'), body.fetch('dest'))]
+        end
         body['id'] = body.fetch('uuid')
         each_agent(cid_num, &block)
       else
-        log 'unhandled call'
+        UNHANDLED[call_uuid] = {time: Time.now, cid_num: cid_num}
+        log "unhandled call, stored #{call_uuid} as #{cid_num}"
       end
+      stale = UNHANDLED.select { |k,v| (Time.now - v[:time]) > 60 }
+      stale.each { |(k,_)| UNHANDLED.delete(k) }
     end
 
     def self.call_create(uuid, user, cid_num, dest, body)
@@ -141,7 +152,8 @@ module TCC
       say tag: 'ribbon', error: ex.to_s
     end
 
-    def trigger_on_close
+    def trigger_on_close(msg=nil)
+      Log.devel "WS Closed: #{msg}"
       AGENTS[@extension].delete(self)
     end
 

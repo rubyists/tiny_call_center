@@ -38,8 +38,10 @@ module TCC
         MANAGERS.push ["#{__method__}_#{action}", body.merge(agentId: dest)]
       when cid_num
         # we're sure this is a call from user and he's the caller
-        body['display_cid'] =
+        body['display_cid'] = "%s -> %s" % [
+          Utils::FSR.format_display_name_and_number(body['cid_name'], body['cid_num']),
           Utils::FSR.format_display_name_and_number(body['callee_name'], body['dest'])
+        ]
         MANAGERS.push ["#{__method__}_#{action}", body.merge(agentId: cid_num)]
       else
         log 'unhandled call'
@@ -108,7 +110,9 @@ module TCC
       say tag: 'live', error: ex.to_s
     end
 
-    def trigger_on_close
+    def trigger_on_close(json)
+      msg = json
+      log("trigger_on_close: %p" % [msg], :debug)
       MANAGERS.unsubscribe(@channel_name)
     end
 
@@ -197,7 +201,11 @@ module TCC
 
       unless @channel_name
         if @account = Account.from_call_center_name(name)
+          log @account.inspect
           @channel_name = MANAGERS.subscribe{|method, body|
+            log @channel_name.inspect
+            log "can_view? %s %s" % [method, body]
+            log can_view?(method, body)
             if can_view?(method, body)
               __send__("channel_#{method}", body)
             end
@@ -211,6 +219,7 @@ module TCC
     end
 
     def live_queues
+      log "live_queues requested"
       all = fsr{|s| s.call_center(:queue).list }
       queues = all.select{|queue| queue.name !~ /_dialer$/ }
       {queues: queues}
@@ -245,7 +254,7 @@ module TCC
       agent = Account.from_extension(agent_ext)
 
       return eavesdrop(uuid, agent)
-
+=begin # statement not reached
       extension, name, tapper, uuid, phoneNumber = msg.values_at('extension', 'name', 'tapper', 'uuid', 'phoneNumber')
 
       if manager = Account.from_call_center_name(tapper)
@@ -255,6 +264,7 @@ module TCC
           eavesdrop(uuid, agent, manager)
         end
       end
+=end
     end
 
     def eavesdrop(uuid, agent)
@@ -312,6 +322,7 @@ module TCC
         last_bridge_end.to_i,
         (Date.today.to_time + (8 * 60 * 60)).to_i, # 08:00
       ].compact.max
+      last_call_time
     end
 
     def agent_calls(agents)

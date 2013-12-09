@@ -7,7 +7,7 @@ Class.new Sequel::Migration do
         -- Send NOTIFY events for every change to the calls table
         --
         IF (TG_OP = 'INSERT') THEN
-            PERFORM pg_notify('tier_insert', row_to_json_object(NEW));
+            PERFORM pg_notify('tier_insert', row_to_json(NEW)::text);
             RETURN NEW;
         ELSIF (TG_OP = 'UPDATE') THEN
           IF NEW.state <> OLD.state THEN
@@ -17,11 +17,11 @@ Class.new Sequel::Migration do
             IF (NEW.state = 'Waiting') AND (OLD.state = 'Receiving') THEN
               RETURN NEW;
             END IF;
-            PERFORM pg_notify('tier_update', row_to_json_object(NEW));
+            PERFORM pg_notify('tier_update', row_to_json(NEW)::text);
             RETURN NEW;
           END IF;
         ELSIF (TG_OP = 'DELETE') THEN
-            PERFORM pg_notify('tier_delete', row_to_json_object(OLD));
+            PERFORM pg_notify('tier_delete', row_to_json(OLD)::text);
             RETURN OLD;
         END IF;
         RETURN NULL; -- result is ignored since this is an AFTER trigger
@@ -50,7 +50,7 @@ Class.new Sequel::Migration do
         -- Send NOTIFY events for every change to the calls table
         --
         IF (TG_OP = 'INSERT') THEN
-            PERFORM pg_notify('agent_insert', row_to_json_object(NEW));
+            PERFORM pg_notify('agent_insert', row_to_json(NEW)::text);
             RETURN NULL;
         ELSIF (TG_OP = 'UPDATE') THEN
             IF OLD.status <> NEW.status THEN
@@ -60,7 +60,7 @@ Class.new Sequel::Migration do
             END IF;
             RETURN NULL;
         ELSIF (TG_OP = 'DELETE') THEN
-            PERFORM pg_notify('agent_delete', row_to_json_object(OLD));
+            PERFORM pg_notify('agent_delete', row_to_json(OLD)::text);
             RETURN OLD;
         END IF;
         RETURN NULL; -- result is ignored since this is an AFTER trigger
@@ -89,13 +89,13 @@ Class.new Sequel::Migration do
         -- Send NOTIFY events for every change to the calls table
         --
         IF (TG_OP = 'INSERT') THEN
-            PERFORM pg_notify('member_insert', row_to_json_object(NEW));
+            PERFORM pg_notify('member_insert', row_to_json(NEW)::text);
             RETURN NULL;
         ELSIF (TG_OP = 'UPDATE') THEN
-            PERFORM pg_notify('member_update', row_to_json_object(NEW));
+            PERFORM pg_notify('member_update', row_to_json(NEW)::text);
             RETURN NULL;
         ELSIF (TG_OP = 'DELETE') THEN
-            PERFORM pg_notify('member_delete', row_to_json_object(OLD));
+            PERFORM pg_notify('member_delete', row_to_json(OLD)::text);
             RETURN OLD;
         END IF;
         RETURN NULL; -- result is ignored since this is an AFTER trigger

@@ -5,9 +5,14 @@ module TinyCallCenter
   include Innate::Optioned
 
   pgpass = lambda{|options|
-    if found = Pgpass.match(options)
-      found.to_url
-    else
+    Log.info "Connecting to #{options}"
+    begin
+      if found = Pgpass.match(options)
+        found.to_url
+      else
+        raise "No entry in .pgpass for %p" % [options]
+      end
+    rescue
       raise "No entry in .pgpass for %p" % [options]
     end
   }

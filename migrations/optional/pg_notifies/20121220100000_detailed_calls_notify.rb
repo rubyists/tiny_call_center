@@ -7,15 +7,15 @@ Class.new Sequel::Migration do
         -- Send NOTIFY events for every change to the detailed_calls view
         --
         IF (TG_OP = 'INSERT') THEN
-            PERFORM pg_notify('channel_insert', row_to_json_object(NEW));
+            PERFORM pg_notify('channel_insert', row_to_json(NEW)::text);
             RETURN NEW;
         ELSIF (TG_OP = 'UPDATE') THEN
             IF (OLD.callstate <> NEW.callstate) OR (OLD.state <> NEW.state) THEN
-              PERFORM pg_notify('channel_update', OLD.callstate||':'||OLD.state||':'||row_to_json_object(NEW));
+              PERFORM pg_notify('channel_update', OLD.callstate||':'||OLD.state||':'||row_to_json(NEW)::text);
               RETURN NEW;
             END IF;
         ELSIF (TG_OP = 'DELETE') THEN
-            PERFORM pg_notify('channel_delete', row_to_json_object(OLD));
+            PERFORM pg_notify('channel_delete', row_to_json(OLD)::text);
             RETURN OLD;
         END IF;
         RETURN NULL; -- result is ignored since this is an AFTER trigger

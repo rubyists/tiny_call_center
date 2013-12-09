@@ -52,6 +52,8 @@ class WorkAroundRackStatic
   end
 
   def call(env)
+    warn "calling WorkAroundRackStatic"
+    warn env['PATH_INFO']
     if env['PATH_INFO'] == '/'
       @app.call(env)
     else
@@ -70,6 +72,18 @@ Innate.middleware :live do
   use Rack::Reloader
   run Innate.core
 end
+
+Innate.middleware :dev do
+  use Rack::CommonLogger
+  use Rack::ShowExceptions
+  use Rack::ETag
+  use Rack::ConditionalGet
+  use Rack::ContentLength
+  use WorkAroundRackStatic
+  use Rack::Reloader
+  run Innate.core
+end
+
 
 Rack::Mime::MIME_TYPES['.coffee'] = 'text/coffeescript'
 

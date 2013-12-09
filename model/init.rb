@@ -12,7 +12,10 @@ module TinyCallCenter
     @db ||= nil
 
     def self.db
-      @db ||= Sequel.connect(TinyCallCenter.options.mod_callcenter.db)
+      return @db if @db
+      conn = TinyCallCenter.options.mod_callcenter.db
+      Log.debug "Connecting to #{conn}"
+      @db = Sequel.connect(conn)
     end
 
     def self.db=(other)
@@ -24,7 +27,10 @@ module TinyCallCenter
     @db ||= nil
 
     def self.db
-      @db ||= Sequel.connect(TinyCallCenter.options.tiny_cdr.db)
+      return @db if @db
+      conn = TinyCallCenter.options.tiny_cdr.db
+      Log.debug "Connecting to #{conn}"
+      @db ||= Sequel.connect(conn)
     end
 
     def self.db=(other)
@@ -36,7 +42,10 @@ module TinyCallCenter
     @db ||= nil
 
     def self.db
-      @db ||= Sequel.connect(TinyCallCenter.options.fxc.db)
+      return @db if @db
+      conn = TinyCallCenter.options.fxc.db
+      Log.debug "Connecting to #{conn}"
+      @db = Sequel.connect(conn)
     end
 
     def self.db=(other)

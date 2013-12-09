@@ -3,14 +3,14 @@
   <nav>
     <ul>
       <li>
-        #{TCC::Ribbon2.a('Ribbon2', :/)}
+        #{TCC::Ribbon.a('Ribbon', "/v3")}
       </li>
       <?r if user.manager? ?>
         <li>
           #{TinyCallCenter::Tiers.a('Call Center View', :/)}
         </li>
         <li>
-          #{TinyCallCenter::Live.a('Real Time View', :/)}
+          #{TinyCallCenter::Live2.a('Real Time View', :/)}
         </li>
       <?r end ?>
       <li>
