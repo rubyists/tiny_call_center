@@ -47,7 +47,7 @@ module TinyCallCenter
     end
 
     def self.full_name(agent)
-      agent.split('-', 2).last.tr("_", " ")
+      agent.split('-', 2).last.tr("_", "")
     end
 
     def self.extension(agent)
