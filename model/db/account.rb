@@ -1,5 +1,5 @@
 require_relative '../manager'
-require "digest/sha1"
+require "digest/sha2"
 
 module TinyCallCenter
   class Account < Sequel::Model
@@ -16,7 +16,7 @@ module TinyCallCenter
     end
 
     def self.digestify(pass)
-      Digest::SHA1.hexdigest(pass.to_s)
+      Digest::SHA512.hexdigest(pass.to_s)
     end
 
     def password=(other)

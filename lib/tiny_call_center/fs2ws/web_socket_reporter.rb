@@ -181,6 +181,10 @@ module TinyCallCenter
     def got_hangup(msg)
       Log.debug "Hanging up: #{msg}"
       uuid, cause = msg.values_at('uuid', 'cause')
+      unless WebSocketUtils.validate_uuid(uuid)
+        Log.warn "Invalid UUID: #{uuid}"
+        return
+      end
       account = Account.from_call_center_name(agent)
       sock = FSR::CommandSocket.new(:server => account.registration_server)
       cmd = sock.sched_hangup(uuid: uuid, cause: cause)
@@ -199,6 +203,10 @@ module TinyCallCenter
     def got_transfer(msg)
       Log.info "Transfer: #{msg}"
       uuid, dest = msg.values_at('uuid', 'dest')
+      unless WebSocketUtils.validate_uuid(uuid)
+        Log.warn "Invalid UUID: #{uuid}"
+        return
+      end
       account = Account.from_call_center_name(agent)
       sock = FSR::CommandSocket.new(:server => account.registration_server)
       cmd = sock.sched_transfer(uuid: uuid, to: dest)
@@ -223,6 +231,10 @@ module TinyCallCenter
     def got_dtmf(msg)
       Log.info "DTMF: #{msg}"
       uuid, dtmf = msg.values_at('uuid', 'dtmf')
+      unless WebSocketUtils.validate_uuid(uuid)
+        Log.warn "Invalid UUID: #{uuid}"
+        return
+      end
       command_server = TCC.options.command_server
       sock = FSR::CommandSocket.new(:server => command_server)
       Log.info sock.uuid_send_dtmf(uuid: uuid, dtmf: dtmf).run

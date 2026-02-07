@@ -14,6 +14,14 @@ module TinyCallCenter
       'waiting' => 'Ready',
     }
 
+    def self.validate_uuid(uuid)
+      uuid.to_s =~ /^[0-9a-z-]{32,36}$/i
+    end
+
+    def self.validate_ext(ext)
+      ext.to_s =~ /^\d+$/
+    end
+
     # Check the agents extension against all the calls passed in.
     # When new Channel or Call fields are added, the calls.select
     # block needs to know about them

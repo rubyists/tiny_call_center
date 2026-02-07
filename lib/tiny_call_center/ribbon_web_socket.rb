@@ -253,6 +253,10 @@ module TCC
 
     def ribbon_hangup(msg)
       uuid, cause = msg.fetch('uuid'), msg.fetch('cause')
+      unless WebSocketUtils.validate_uuid(uuid)
+        Log.warn "Invalid UUID for hangup: #{uuid}"
+        return
+      end
       log "Hanging up: #{uuid} (#{cause})"
 
       sock = FSR::CommandSocket.new(:server => @account.registration_server)
@@ -276,6 +280,10 @@ module TCC
 
     def ribbon_transfer(msg)
       number, uuid = msg.fetch('number'), msg.fetch('uuid')
+      unless WebSocketUtils.validate_uuid(uuid)
+        Log.warn "Invalid UUID for transfer: #{uuid}"
+        return
+      end
 
       sock = FSR::CommandSocket.new(server: @account.registration_server)
       cmd = sock.sched_transfer(uuid: uuid, to: number)
@@ -292,6 +300,10 @@ module TCC
 
     def ribbon_dtmf(msg)
       tones, uuid = msg.fetch('tones'), msg.fetch('uuid')
+      unless WebSocketUtils.validate_uuid(uuid)
+        Log.warn "Invalid UUID for dtmf: #{uuid}"
+        return
+      end
 
       sock = FSR::CommandSocket.new(:server => @account.registration_server)
       cmd = sock.uuid_send_dtmf(uuid: uuid, dtmf: tones)

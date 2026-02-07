@@ -92,7 +92,7 @@ module TinyCallCenter
       ENV["TCC_FsPort"] || 8021
 
     o "FreeSWITCH Command Server Authentication", :fs_auth,
-      ENV["TCC_FsAuth"] || "ClueCon"
+      ENV["TCC_FsAuth"] || "ClueCon" # SECURITY: Change this default in production!
 
     o "FreeSWITCH Registration Servers For Agents", :registration_servers,
       (ENV["TCC_Monitors"] ? ENV["TCC_Monitors"].split(":") : ['127.0.0.1'])

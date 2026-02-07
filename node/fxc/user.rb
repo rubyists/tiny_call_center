@@ -3,7 +3,12 @@ module TCC
     class User
       Innate.node '/fxc/user', self
       layout :fxc
-      helper :localize
+      helper :user, :localize
+      trait :user_model => TinyCallCenter::Account
+
+      before_all do
+        redirect TCC::Accounts.r(:login) unless logged_in?
+      end
 
       def index
         @users = ::FXC::User.order(:extension)

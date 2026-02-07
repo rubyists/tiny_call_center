@@ -7,6 +7,7 @@ module TinyCallCenter
     layout :managers
 
     before_all do
+      redirect TCC::Accounts.r(:login) unless logged_in?
       @title = "Managers"
     end
 

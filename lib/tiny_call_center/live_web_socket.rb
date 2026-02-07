@@ -270,6 +270,10 @@ module TCC
     def eavesdrop(uuid, agent)
       Log.notice("Requestion Tap of #{agent} by #{@account} -> #{uuid}")
       return false unless agent.registration_server
+      unless WebSocketUtils.validate_uuid(uuid)
+        Log.warn "Invalid UUID for eavesdrop: #{uuid}"
+        return false
+      end
 
       Log.notice("Tapping #{agent.full_name} at #{agent.registration_server}: #{uuid}")
       sock = FSR::CommandSocket.new(:server => agent.registration_server)
